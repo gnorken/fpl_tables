@@ -9,12 +9,14 @@ headers = {
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/102.0.0.0 Safari/537.36"
-    )
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.5",
+    "Referer": "https://fantasy.premierleague.com/",
 }
 
+
 # Helper to validate team ID
-
-
 def validate_team_id(team_id, max_users):
     try:
         team_id = int(team_id)  # Ensure team_id is an integer
@@ -44,7 +46,7 @@ def validate_team_id(team_id, max_users):
 # Helper to fetch `MAX_USERS`
 def get_max_users():
     try:
-        response = requests.get(FPL_STATIC_URL)
+        response = requests.get(FPL_STATIC_URL, headers=headers)
         response.raise_for_status()
         static_data = response.json()
         return static_data["total_players"]
@@ -76,7 +78,7 @@ def get_static_data():
 
 def get_player_detail_data():
     response = requests.get(
-        f"https://fantasy.premierleague.com/api/element-summary/")
+        f"https://fantasy.premierleague.com/api/element-summary/", headers=headers)
     response.raise_for_status()
     player_detail_data = response.json()
     return player_detail_data

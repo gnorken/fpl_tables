@@ -20,12 +20,16 @@ app.secret_key = os.urandom(24)  # Generates a random 24-byte key
 DATABASE = "page_views.db"
 
 # Utility function to get a database connection
+
+
 def get_db():
     if "db" not in g:
         g.db = sqlite3.connect(DATABASE, check_same_thread=False)
         g.db.row_factory = sqlite3.Row  # Enable dict-like access to rows
-        g.db.execute("PRAGMA journal_mode=WAL;")  # Enable WAL mode for better concurrency
+        # Enable WAL mode for better concurrency
+        g.db.execute("PRAGMA journal_mode=WAL;")
     return g.db
+
 
 @app.before_request
 def log_request():
@@ -80,6 +84,7 @@ def log_request():
     # Store the last inserted row ID for later use in log_response
     g.last_inserted_id = cursor.lastrowid
 
+
 @app.after_request
 def log_response(response):
     # Measure execution time
@@ -99,6 +104,7 @@ def log_response(response):
     db.commit()
     return response
 
+
 @app.teardown_appcontext
 def close_db(exception):
     db = g.pop("db", None)
@@ -106,6 +112,8 @@ def close_db(exception):
         db.close()
 
 # Middleware for making sure current gameweek is in session regardless of URL entry point
+
+
 @app.before_request
 def initialize_session():
     if 'current_gw' not in session:
@@ -137,38 +145,40 @@ def about():
 
 # TOP_SCORERS
 # Dynamic team route for top_scorers
+
+
 @app.route("/<int:team_id>/team/top_scorers")
 def top_scorers(team_id):
-        try:
-            current_gw = session.get('current_gw', '__')  # Default to 'N/A' if not set
+    try:
+        # Default to 'N/A' if not set
+        current_gw = session.get('current_gw', '__')
 
-            # Set default values for sort_by and order
-            default_sort_by = 'goals_scored_team'
-            default_order = 'asc' # Reverse so the toggle works
+        # Set default values for sort_by and order
+        default_sort_by = 'goals_scored_team'
+        default_order = 'asc'  # Reverse so the toggle works
 
-            # Get query parameters, using default values if not provided
-            sort_by = request.args.get('sort_by', default_sort_by)
-            order = request.args.get('order', default_order)
+        # Get query parameters, using default values if not provided
+        sort_by = request.args.get('sort_by', default_sort_by)
+        order = request.args.get('order', default_order)
 
-            # Get manager and player data
-            manager = get_manager_data(team_id)
+        # Get manager and player data
+        manager = get_manager_data(team_id)
 
-            return render_template("top_scorers.html",
-                                    team_id=team_id,
-                                    current_gw=current_gw,
-                                    manager=manager,
-                                    sort_by=sort_by,
-                                    order=order,
-                                    current_page='top_scorers'
-                                )
+        return render_template("top_scorers.html",
+                               team_id=team_id,
+                               current_gw=current_gw,
+                               manager=manager,
+                               sort_by=sort_by,
+                               order=order,
+                               current_page='top_scorers'
+                               )
 
-        except ValueError:
-            flash("Team ID must be a valid number", "error")
-        except requests.exceptions.RequestException as e:
-            flash(f"Error fetching data: {e}", "error")
+    except ValueError:
+        flash("Team ID must be a valid number", "error")
+    except requests.exceptions.RequestException as e:
+        flash(f"Error fetching data: {e}", "error")
 
-        return redirect("/")
-
+    return redirect("/")
 
 
 # AJAX for goals table
@@ -188,7 +198,8 @@ def get_sorted_players_goals():
         cursor = conn.cursor()
 
         # Check if the gameweek has changed
-        current_gameweek = session.get('current_gw')  # Get the current gameweek from the session
+        # Get the current gameweek from the session
+        current_gameweek = session.get('current_gw')
         cursor.execute("SELECT DISTINCT gameweek FROM player_info_goals")
         stored_gameweek = cursor.fetchone()
 
@@ -203,7 +214,8 @@ def get_sorted_players_goals():
             conn.commit()
 
         # Try to fetch existing player_info from the database
-        cursor.execute("SELECT data FROM player_info_goals WHERE team_id = ?", (team_id,))
+        cursor.execute(
+            "SELECT data FROM player_info_goals WHERE team_id = ?", (team_id,))
         row = cursor.fetchone()
 
         if row:
@@ -212,8 +224,11 @@ def get_sorted_players_goals():
         else:
             # If no data exists, generate player_info
             static_data = get_static_data()
-            player_info = get_player_data_goals(static_data)  # Get player data for 'goals table'
-            player_info = get_live_data_goals(team_id, player_info, static_data)  # Get team-specific player data for 'goals table'
+            # Get player data for 'goals table'
+            player_info = get_player_data_goals(static_data)
+            # Get team-specific player data for 'goals table'
+            player_info = get_live_data_goals(
+                team_id, player_info, static_data)
 
             # Save the new player_info to the database
             player_info_json = json.dumps(player_info)
@@ -226,18 +241,18 @@ def get_sorted_players_goals():
         conn.close()
 
         # Filter and sort players
-        top_scorers, top_scorers_images = filter_and_sort_players(player_info, request.args)
+        top_scorers, top_scorers_images = filter_and_sort_players(
+            player_info, request.args)
 
         if not top_scorers:
             return jsonify({'error': 'No players to display', 'players': []}), 200
-
 
         # Prepare data to send back to the client
         response_data = {
             'players': top_scorers,
             'players_images': top_scorers_images
         }
-        #print("Response Data:", response_data)
+        # print("Response Data:", response_data)
 
         return jsonify(response_data)
 
@@ -245,42 +260,44 @@ def get_sorted_players_goals():
         return jsonify({'error': str(e)}), 500
 
 
-
 # STARTS
-#Dynamic team route for starts
+# Dynamic team route for starts
 @app.route("/<int:team_id>/team/starts")
 def starts(team_id):
-        try:
-            current_gw = session.get('current_gw', '__')  # Default to 'N/A' if not set
+    try:
+        # Default to 'N/A' if not set
+        current_gw = session.get('current_gw', '__')
 
-            # Set default values for sort_by and order
-            default_sort_by = 'starts_team'
-            default_order = 'asc' # Reverse so the toggle works
+        # Set default values for sort_by and order
+        default_sort_by = 'starts_team'
+        default_order = 'asc'  # Reverse so the toggle works
 
-            # Get query parameters, using default values if not provided
-            sort_by = request.args.get('sort_by', default_sort_by)
-            order = request.args.get('order', default_order)
+        # Get query parameters, using default values if not provided
+        sort_by = request.args.get('sort_by', default_sort_by)
+        order = request.args.get('order', default_order)
 
-            # Get manager and player data
-            manager = get_manager_data(team_id)
+        # Get manager and player data
+        manager = get_manager_data(team_id)
 
-            return render_template("starts.html",
-                                    team_id=team_id,
-                                    current_gw=current_gw,
-                                    manager=manager,
-                                    sort_by=sort_by,
-                                    order=order,
-                                    current_page='starts'
-                                )
+        return render_template("starts.html",
+                               team_id=team_id,
+                               current_gw=current_gw,
+                               manager=manager,
+                               sort_by=sort_by,
+                               order=order,
+                               current_page='starts'
+                               )
 
-        except ValueError:
-            flash("Team ID must be a valid number", "error")
-        except requests.exceptions.RequestException as e:
-            flash(f"Error fetching data: {e}", "error")
+    except ValueError:
+        flash("Team ID must be a valid number", "error")
+    except requests.exceptions.RequestException as e:
+        flash(f"Error fetching data: {e}", "error")
 
-        return redirect("/")
+    return redirect("/")
 
 # AJAX for starts table
+
+
 @app.route("/get-sorted-players-starts")
 def get_sorted_players_starts():
     try:
@@ -297,7 +314,8 @@ def get_sorted_players_starts():
         cursor = conn.cursor()
 
         # Check if the gameweek has changed
-        current_gameweek = session.get('current_gw')  # Get the current gameweek from the session
+        # Get the current gameweek from the session
+        current_gameweek = session.get('current_gw')
         cursor.execute("SELECT DISTINCT gameweek FROM player_info_starts")
         stored_gameweek = cursor.fetchone()
 
@@ -312,7 +330,8 @@ def get_sorted_players_starts():
             conn.commit()
 
         # Try to fetch existing player_info from the database
-        cursor.execute("SELECT data FROM player_info_starts WHERE team_id = ?", (team_id,))
+        cursor.execute(
+            "SELECT data FROM player_info_starts WHERE team_id = ?", (team_id,))
         row = cursor.fetchone()
 
         if row:
@@ -321,8 +340,11 @@ def get_sorted_players_starts():
         else:
             # If no data exists, generate player_info
             static_data = get_static_data()
-            player_info = get_player_data_starts(static_data)  # Get player data for 'starts table'
-            player_info = get_live_data_starts(team_id, player_info, static_data)  # Get team-specific player data for 'starts table'
+            # Get player data for 'starts table'
+            player_info = get_player_data_starts(static_data)
+            # Get team-specific player data for 'starts table'
+            player_info = get_live_data_starts(
+                team_id, player_info, static_data)
 
             # Save the new player_info to the database
             player_info_json = json.dumps(player_info)
@@ -335,7 +357,8 @@ def get_sorted_players_starts():
         conn.close()
 
         # Filter and sort players
-        top_scorers, top_scorers_images = filter_and_sort_players(player_info, request.args)
+        top_scorers, top_scorers_images = filter_and_sort_players(
+            player_info, request.args)
 
         if not top_scorers:
             return jsonify({'error': 'No players to display', 'players': []}), 200
@@ -353,38 +376,39 @@ def get_sorted_players_starts():
 
 
 # POINTS
-#Dynamic team route for points
+# Dynamic team route for points
 @app.route("/<int:team_id>/team/points")
 def points(team_id):
-        try:
-            current_gw = session.get('current_gw', '__')  # Default to 'N/A' if not set
+    try:
+        # Default to 'N/A' if not set
+        current_gw = session.get('current_gw', '__')
 
-            # Set default values for sort_by and order
-            default_sort_by = 'total_points_team'
-            default_order = 'asc' # Reverse so the toggle works
+        # Set default values for sort_by and order
+        default_sort_by = 'total_points_team'
+        default_order = 'asc'  # Reverse so the toggle works
 
-            # Get query parameters, using default values if not provided
-            sort_by = request.args.get('sort_by', default_sort_by)
-            order = request.args.get('order', default_order)
+        # Get query parameters, using default values if not provided
+        sort_by = request.args.get('sort_by', default_sort_by)
+        order = request.args.get('order', default_order)
 
-            # Get manager and player data
-            manager = get_manager_data(team_id)
+        # Get manager and player data
+        manager = get_manager_data(team_id)
 
-            return render_template("points.html",
-                                    team_id=team_id,
-                                    current_gw=current_gw,
-                                    manager=manager,
-                                    sort_by=sort_by,
-                                    order=order,
-                                    current_page='points'
-                                )
+        return render_template("points.html",
+                               team_id=team_id,
+                               current_gw=current_gw,
+                               manager=manager,
+                               sort_by=sort_by,
+                               order=order,
+                               current_page='points'
+                               )
 
-        except ValueError:
-            flash("Team ID must be a valid number", "error")
-        except requests.exceptions.RequestException as e:
-            flash(f"Error fetching data: {e}", "error")
+    except ValueError:
+        flash("Team ID must be a valid number", "error")
+    except requests.exceptions.RequestException as e:
+        flash(f"Error fetching data: {e}", "error")
 
-        return redirect("/")
+    return redirect("/")
 
 
 # AJAX for points table
@@ -404,7 +428,8 @@ def get_sorted_players_points():
         cursor = conn.cursor()
 
         # Check if the gameweek has changed
-        current_gameweek = session.get('current_gw')  # Get the current gameweek from the session
+        # Get the current gameweek from the session
+        current_gameweek = session.get('current_gw')
         cursor.execute("SELECT DISTINCT gameweek FROM player_info_points")
         stored_gameweek = cursor.fetchone()
 
@@ -419,7 +444,8 @@ def get_sorted_players_points():
             conn.commit()
 
         # Try to fetch existing player_info from the database
-        cursor.execute("SELECT data FROM player_info_points WHERE team_id = ?", (team_id,))
+        cursor.execute(
+            "SELECT data FROM player_info_points WHERE team_id = ?", (team_id,))
         row = cursor.fetchone()
 
         if row:
@@ -428,8 +454,11 @@ def get_sorted_players_points():
         else:
             # If no data exists, generate player_info
             static_data = get_static_data()
-            player_info = get_player_data_points(static_data)  # Get player data for 'starts table'
-            player_info = get_live_data_points(team_id, player_info, static_data)  # Get team-specific player data for 'starts table'
+            # Get player data for 'starts table'
+            player_info = get_player_data_points(static_data)
+            # Get team-specific player data for 'starts table'
+            player_info = get_live_data_points(
+                team_id, player_info, static_data)
 
             # Save the new player_info to the database
             player_info_json = json.dumps(player_info)
@@ -442,7 +471,8 @@ def get_sorted_players_points():
         conn.close()
 
         # Filter and sort players
-        top_scorers, top_scorers_images = filter_and_sort_players(player_info, request.args)
+        top_scorers, top_scorers_images = filter_and_sort_players(
+            player_info, request.args)
 
         if not top_scorers:
             return jsonify({'error': 'No players to display', 'players': []}), 200
