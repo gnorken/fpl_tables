@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+
+{% block body %}
+    <div class="d-flex align-items-center justify-content-center mt-5">
+        <form action="/" method="POST" class="w-25">
+            <h4 class="text-center mb-3">Please enter a team ID</h4>
+
+            <div class="input-group">
+                <div class="form-floating flex-grow-1">
+                    <input name="team_id" type="number" class="form-control" id="team_id" placeholder="placeholder" required>
+                    <label for="team_id">FPL ID</label>
+                </div>
+                <button class="btn bg-red " type="submit">GO!</button>
+            </div>
+        </form>
+    </div>
+
+
+{% endblock %}

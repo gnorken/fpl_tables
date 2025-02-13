@@ -1,0 +1,485 @@
+{% extends "info.html" %}
+
+{% block title %}Top Scorers{% endblock %}
+
+{% block page_content %}
+<!-- PLAYER TABLE -->
+    <div class="table-responsive">
+        <!-- PLAYER TABLE -->
+        <table id="goals-table" class="table table-striped table-borderless custom-striped text-nowrap">
+            <thead class="th-purple sticky-top">
+                <tr class="text-center">
+                    <th colspan="3" id="top-players" data-sort="top-players" class="align-middle round-border-top" >↑ Top Five Players</th>
+                    <th colspan="14" data-sort="team-data" class="bg-team round-border-top">Stats for {{ manager.team_name }}</th>
+                    <th colspan="9" data-sort="overall-data" class="round-border-top d-none d-xl-table-cell">Player Totals</th>
+                </tr>
+                <tr class="text-center">
+                    <th id="entries" data-sort="entries" colspan="3"></th>
+                    <th id="goals_scored" data-sort="goals_scored_team" onclick="sortTable('goals_scored_team')" class="sort-team bg-team {% if request.args.get('sort_by') == 'goals_scored_team' %}sorted{% endif %}">
+                        G
+                    </th>
+                    <th id="expected_goals_team" data-sort="expected_goals_team" onclick="sortTable('expected_goals_team')" class="d-none d-sm-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'expected_goals_team' %}sorted{% endif %}">
+                        xG
+                    </th>
+                    <th id="goals_performance_team" data-sort="goals_performance_team" onclick="sortTable('goals_performance_team')" class="d-none d-sm-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'goals_performance_team' %}sorted{% endif %}">
+                        +/-
+                    </th>
+                    <th id="goals_benched_team" data-sort="goals_benched_team" onclick="sortTable('goals_benched_team')" class="sort-team bg-team {% if request.args.get('sort_by') == 'goals_benched_team' %}sorted{% endif %}">
+                        bG
+                    </th>
+                    <th id="goals_captained_team" data-sort="goals_captained_team" onclick="sortTable('goals_captained_team')" class="sort-team bg-team {% if request.args.get('sort_by') == 'goals_captained_team' %}sorted{% endif %}">
+                        cG
+                    </th>
+                    <th id="assists_team" data-sort="assists_team" onclick="sortTable('assists_team')" class="d-none d-md-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'assists_team' %}sorted{% endif %}">
+                        A
+                    </th>
+                    <th id="expected_assists_team" data-sort="expected_assists_team" onclick="sortTable('expected_assists_team')" class="d-none d-md-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'expected_assists_team' %}sorted{% endif %}">
+                        xA
+                    </th>
+                    <th id="assists_performance_team" data-sort="assists_performance_team" onclick="sortTable('assists_performance_team')" class="d-none d-md-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'assists_performance_team' %}sorted{% endif %}">
+                        +/-
+                    </th>
+                    <th id="assists_benched_team" data-sort="assists_benched_team" onclick="sortTable('assists_benched_team')" class="d-none d-md-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'assists_benched_team' %}sorted{% endif %}">
+                        bA
+                    </th>
+                    <th id="assists_captained_team" data-sort="assists_captained_team" onclick="sortTable('assists_captained_team')" class="d-none d-md-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'assists_captained_team' %}sorted{% endif %}">
+                        cA
+                    </th>
+                    <th id="goals_assists_team" data-sort="goals_assists_team" onclick="sortTable('goals_assists_team')" class="d-none d-lg-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'goals_assists_team' %}sorted{% endif %}">
+                        GA
+                    </th>
+                    <th id="expected_goal_involvements_team" data-sort="expected_goal_involvements_team" onclick="sortTable('expected_goal_involvements_team')" class="d-none d-lg-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'expected_goal_involvements_team' %}sorted{% endif %}">
+                        xGA
+                    </th>
+                    <th id="goals_assists_performance_team" data-sort="goals_assists_performance_team" onclick="sortTable('goals_assists_performance_team')" class="d-none d-lg-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'goals_assists_performance_team' %}sorted{% endif %}">
+                        +/-
+                    </th>
+                    <th id="goals_assists_performance_team_vs_total" data-sort="goals_assists_performance_team_vs_total" onclick="sortTable('goals_assists_performance_team_vs_total')" class="d-none d-lg-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'goals_assists_performance_team_vs_total' %}sorted{% endif %}">
+                        +/-
+                    </th>
+                    <!-- Player Totals -->
+                    <th id="goals_scored" data-sort="goals_scored" onclick="sortTable('goals_scored')" class="sort d-none d-xl-table-cell {% if request.args.get('sort_by') == 'goals_scored' %}sorted{% endif %}">
+                        G
+                    </th>
+                    <th id="expected_goals" data-sort="expected_goals" onclick="sortTable('expected_goals')" class="sort d-none d-xl-table-cell {% if request.args.get('sort_by') == 'expected_goals' %}sorted{% endif %}">
+                        xG
+                    </th>
+                    <th id="goals_performance" data-sort="goals_performance" onclick="sortTable('goals_performance')" class="sort d-none d-xl-table-cell {% if request.args.get('sort_by') == 'goals_performance' %}sorted{% endif %}">
+                        +/-
+                    </th>
+                    <th id="assists" data-sort="assists" onclick="sortTable('assists')" class="sort d-none d-xxl-table-cell {% if request.args.get('sort_by') == 'assists' %}sorted{% endif %}">
+                        A
+                    </th>
+                    <th id="expected_assists" data-sort="expected_assists" onclick="sortTable('expected_assists')" class="sort d-none d-xxl-table-cell {% if request.args.get('sort_by') == 'expected_assists' %}sorted{% endif %}">
+                        xA
+                    </th>
+                    <th id="assists_performance" data-sort="assists_performance" onclick="sortTable('assists_performance')" class="sort d-none d-xxl-table-cell {% if request.args.get('sort_by') == 'assists_performance' %}sorted{% endif %}">
+                        +/-
+                    </th>
+                    <th id="goals_assists" data-sort="goals_assists" onclick="sortTable('goals_assists')"  class="sort d-none d-xxl-table-cell {% if request.args.get('sort_by') == 'goals_assists' %}sorted{% endif %}">
+                        GA
+                    </th>
+                    <th id="expected_goal_involvements" data-sort="expected_goal_involvements" onclick="sortTable('expected_goal_involvements')" class="d-none d-xxl-table-cell sort {% if request.args.get('sort_by') == 'expected_goal_involvements' %}sorted{% endif %}">
+                        xGA
+                    </th>
+                    <th id="goals_assists_performance" data-sort="goals_assists_performance" onclick="sortTable('goals_assists_performance')" class="d-none d-xxl-table-cell sort {% if request.args.get('sort_by') == 'goals_assists_performance' %}sorted{% endif %}">
+                        +/-
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="player-table-body">
+                <!-- Player rows will be inserted here dynamically by JavaScript -->
+            </tbody>
+            <tfoot>
+                <tr class="th-purple text-center">
+                    <th id="top-players" class="round-border-btm" colspan="3" style="color: var(--purple);">.</th>
+                    <th colspan="14" class="bg-team round-border-btm align-middle">
+                        <div id="loading" style="display: none;">Loading...</div>
+                    </th>
+                    <th colspan="9" class="round-border-btm d-none d-xl-table-cell"></th>
+                </tr>
+            </tfoot>
+        </table>
+    </div> <!-- Close the row div here -->
+
+<script>
+    currentSortColumn = {{ sort_by | tojson }};
+    currentSortOrder = {{ order | tojson }};
+    const managerName = {{ manager.team_name | tojson }};
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const table = document.querySelector('#goals-table');
+
+    // Hover
+    table.addEventListener('mouseover', function (event) {
+        const target = event.target;
+        const columnType = target.getAttribute('data-column');
+        const sortType = target.getAttribute('data-sort'); // Get primary/secondary type
+
+        if (columnType && sortType) {
+            const row = target.closest('tr');
+
+            if (row) {
+                // Determine highlight colors based on sort type
+                const targetBg = sortType === "primary" ? "#e90052" : "#38003c";
+                const matchBg = sortType === "primary" ? "#38003c" : "#e90052";
+
+                // Store the original colors
+                target.dataset.originalBg = target.style.backgroundColor || '';
+                target.dataset.originalColor = target.style.color || '';
+
+                // Highlight the target cell
+                target.style.backgroundColor = targetBg;
+                target.style.color = '#FFF';
+                target.style.borderRadius = '3px';
+
+                // Highlight all matching cells with the opposite color
+                const matchingCells = row.querySelectorAll(`[data-column="${columnType}"]`);
+                matchingCells.forEach(cell => {
+                    if (cell !== target) {
+                        cell.dataset.originalBg = cell.style.backgroundColor || '';
+                        cell.dataset.originalColor = cell.style.color || '';
+
+                        cell.style.backgroundColor = matchBg;
+                        cell.style.color = '#FFF';
+                        cell.style.borderRadius = '3px';
+                    }
+                });
+            }
+        }
+    });
+
+    // Mouseout to reset colors
+    table.addEventListener('mouseout', function (event) {
+        const target = event.target;
+        const columnType = target.getAttribute('data-column');
+
+        if (columnType) {
+            const row = target.closest('tr');
+
+            if (row) {
+                // Reset the target cell
+                target.style.backgroundColor = target.dataset.originalBg || '';
+                target.style.color = target.dataset.originalColor || '';
+                target.style.borderRadius = '';
+
+                // Reset all matching cells
+                const matchingCells = row.querySelectorAll(`[data-column="${columnType}"]`);
+                matchingCells.forEach(cell => {
+                    cell.style.backgroundColor = cell.dataset.originalBg || '';
+                    cell.style.color = cell.dataset.originalColor || '';
+                    cell.style.borderRadius = '';
+                });
+            }
+        }
+    });
+
+
+    table.addEventListener('mouseout', function(event) {
+        const target = event.target;
+        const columnType = target.getAttribute('data-column');
+
+        if (columnType) {
+            const row = target.closest('tr');
+
+            if (row) {
+                // Restore the original colors
+                target.style.backgroundColor = target.dataset.originalBg;
+                target.style.color = target.dataset.originalColor;
+                target.style.borderRadius = '0';
+
+                const matchingCells = row.querySelectorAll(`[data-column="${columnType}"]`);
+                matchingCells.forEach(cell => {
+                    if (cell !== target) {
+                        cell.style.backgroundColor = cell.dataset.originalBg;
+                        cell.style.color = cell.dataset.originalColor;
+                        cell.style.borderRadius = '0';
+                    }
+                });
+            }
+        }
+    });
+
+
+
+        // Initial call to fetch sorted player data
+        sortTable(currentSortColumn);
+
+        // Add event listener to checkboxes
+        const checkboxes = document.querySelectorAll('#checkboxForm input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                // Trigger the sortTable function with the current sort column and order
+                fetchData(currentSortColumn, currentSortOrder);
+            });
+        });
+    }); // End of DOMContentLoaded
+
+
+    // Function to get the selected positions based on checkboxes
+    function getSelectedPositions() {
+        const selectedPositions = [];
+        document.querySelectorAll('#checkboxForm input[type="checkbox"]:checked').forEach(checkbox => {
+            selectedPositions.push(checkbox.value);
+        });
+        return selectedPositions.join(',');
+    }
+
+
+    // When clicking on table col headers
+    function sortTable(sortBy) {
+    // Toggle the sort order
+        if (currentSortColumn === sortBy) {
+            currentSortOrder = currentSortOrder === 'desc' ? 'asc' : 'desc'; // Toggle between asc and desc
+        } else {
+            currentSortColumn = sortBy;
+            currentSortOrder = 'desc'; // Default to descending for a new column
+        }
+        updateSortIndicator(sortBy); // Update table header for sorting indicator
+        fetchData(sortBy, currentSortOrder); // Fetch the sorted data
+    }
+
+
+    // Sort arrow in table col headers
+    function updateSortIndicator(sortBy) {
+        const headers = document.querySelectorAll('th');
+        headers.forEach(header => {
+            // Remove the `sorted` class from all headers
+            header.classList.remove('sorted');
+
+            // Check if the header is the one being sorted
+            if (header.dataset.sort === sortBy) {
+                // Add the `sorted` class to the active header
+                header.classList.add('sorted');
+
+                // Handle the sort arrow
+                let arrow = header.querySelector('span');
+                if (!arrow) {
+                    // If no arrow exists, add it
+                    arrow = document.createElement('span');
+                    arrow.textContent = currentSortOrder === 'asc' ? '↑' : '↓';
+                    header.appendChild(arrow);
+                } else {
+                    // If an arrow exists, update its direction
+                    arrow.textContent = currentSortOrder === 'asc' ? '↑' : '↓';
+                }
+            } else {
+                // Remove the arrow for non-active headers
+                const arrow = header.querySelector('span');
+                if (arrow) {
+                    header.removeChild(arrow);
+                }
+            }
+        });
+    }
+
+    // Lookup table
+    const col_definitions = (managerName) => ({
+        "goals_scored_team": `Goals scored for ${managerName}`,
+        "expected_goals_team": `Expected goals for ${managerName}`,
+        "goals_performance_team": `Goals scored for ${managerName} versus expected`,
+        "goals_benched_team": `Goals benched for ${managerName}`,
+        "goals_captained_team": `Goals captained for ${managerName}`,
+        "assists_team": `Assists made for ${managerName}`,
+        "expected_assists_team": `Expected assists for ${managerName}`,
+        "assists_performance_team": `Assists for ${managerName} versus expected`,
+        "assists_benched_team": `Assists benched for ${managerName}`,
+        "assists_captained_team": `Assists captained for ${managerName}`,
+        "goals_assists_team": `Goals and assists for ${managerName}`,
+        "expected_goal_involvements_team": `Expected goals and assists for ${managerName}`,
+        "goals_assists_performance_team": `Goals and assists for ${managerName} versus expected`,
+        "goals_assists_performance_team_vs_total": `Goals and assists for ${managerName} versus expected compared to player total`,
+
+        "goals_scored": `Total goals scored`,
+        "expected_goals": `Total expected goals`,
+        "goals_performance": `Total goals scored versus expected`,
+        "assists": `Total assists`,
+        "expected_assists": `Total expected assists`,
+        "assists_performance": `Total assists versus expected`,
+        "goals_assists": `Total goals and assists`,
+        "expected_goal_involvements": `Total expected goals and assists`,
+        "goals_assists_performance": `Total goals and assists versus expected`,
+        "top-players": `Pictures of the top players for this category`,
+        "entries": `Number of entries for this category`,
+        "team-data": `Team stats`,
+        "overall-data": `Overall stats`,
+    });
+
+    const lookup = col_definitions(managerName);
+
+    // Hover on <th>
+    document.querySelectorAll("table thead th").forEach(th => {
+        th.addEventListener("mouseenter", function () {
+            const sortKey = this.getAttribute("data-sort"); // Get the data-sort value
+            const description = lookup[sortKey] || "No description available."; // Lookup description
+
+            document.getElementById("current-hover").textContent = ""; // Remove current text
+            document.getElementById("current-hover").textContent = description; // Replace with this
+            document.getElementById("current-hover").style.backgroundColor = "#EAFF04";
+        });
+
+        th.addEventListener("mouseleave", function () {
+            document.getElementById("current-hover").textContent = ""; // Remove current text
+            document.getElementById("current-hover").textContent = "Click table headers to change sort"; // Replace with this
+            document.getElementById("current-hover").style.backgroundColor = "white";
+        });
+    });
+
+
+    // Fetch new data based on table column
+    function fetchData(sortBy, sortOrder) {
+        const teamId = {{ team_id | tojson }};
+        const managerName = {{ manager.team_name | tojson }};
+
+        // Get the selected positions from the checkboxes
+        const selectedPositions = getSelectedPositions();
+
+        const lookup = col_definitions(managerName); // Get the object with the correct managerName
+
+        // Lookup the text for the current sort column
+        const categoriesColText = lookup[currentSortColumn] || "Unknown category";
+        const categoriesSortText = sortOrder === "desc" ? "" : "(ascending)";
+
+        // Show loading message and hide the table
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('player-table-body').style.display = 'none'; // Hide the table rows
+        document.getElementById('current-sort').innerHTML = categoriesColText;
+        document.getElementById('current-order').innerHTML = categoriesSortText;
+
+
+        // The AJAX
+        // Fetch new data for table body
+        fetch(`/get-sorted-players-goals?team_id=${teamId}&sort_by=${sortBy}&order=${sortOrder}&selected_positions=${selectedPositions}`)
+            .then(response => response.json())
+            .then(data => {
+
+                if (data.players) {
+                    console.log("Players Length:", data.players.length);
+                } else {
+                    console.error("Hello!!! Players data is undefined");
+                }
+
+                // Dynamically update the number of entries
+                const entryCount = data.players.length;
+                const entryText = entryCount === 1 ? "1 entry" : `${entryCount} entries`;
+                document.getElementById('entries').textContent = entryText;
+
+                // Dynamically update the text for Top Five Players
+                let topPlayersText;
+                const numberWords = {
+                    2: "Two",
+                    3: "Three",
+                    4: "Four",
+                };
+
+                if (entryCount === 1) {
+                    topPlayersText = "↑ Top Player";
+                } else if (entryCount < 5) {
+                    const countWord = numberWords[entryCount];
+                    topPlayersText = `↑ Top ${countWord} Players`;
+                } else {
+                    topPlayersText = "↑ Top Five Players";
+                }
+
+                const topPlayersEl = document.getElementById('top-players').textContent = topPlayersText;
+
+            // Dynamically update the table with the new player data
+                const tableBody = document.getElementById('player-table-body');
+                tableBody.innerHTML = ''; // Clear the existing rows
+
+                data.players.forEach((player, index) => {
+                    const row = document.createElement('tr');
+                    row.classList.add(`vert-border`, `text-center`, `align-middle`, `team-${player.team_code}`, `element-type-${player.element_type}`);
+
+                    // Truncate web_name to 11 characters
+                    const truncatedWebName = player.web_name.length > 11 ? player.web_name.slice(0, 11) + '...' : player.web_name;
+
+                    row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${player.team_name}</td>
+                <td class="text-start">${truncatedWebName}</td>
+
+                <td data-column="goals_scored" data-sort="primary">${player.goals_scored_team}</td>
+                <td data-column="expected_goals" data-sort="primary" class="d-none d-sm-table-cell">${(Math.round(player.expected_goals_team * 10) / 10).toFixed(1)}</td>
+                <td data-column="performance" data-sort="primary" class="d-none d-sm-table-cell ${player.goals_performance_team > 0 ? 'green-text' : player.goals_performance_team < 0 ? 'red-text' : ''}">${(Math.round(player.goals_performance_team * 10) / 10).toFixed(1)}</td>
+                <td data-column="benched_goals" data-sort="primary" >${player.goals_benched_team}</td>
+                <td data-column="goals_captained" data-sort="primary" class="vert-border-end">${player.goals_captained_team}</td>
+                <td data-column="assists" data-sort="primary" class="d-none d-md-table-cell">${player.assists_team}</td>
+                <td data-column="expected_assists" data-sort="primary" class="d-none d-md-table-cell">${(Math.round(player.expected_assists_team * 10) / 10).toFixed(1)}</td>
+                <td data-column="assists_performance" data-sort="primary" class="d-none d-md-table-cell ${player.assists_performance_team > 0 ? 'green-text' : player.assists_performance_team < 0 ? 'red-text' : ''}">${(Math.round(player.assists_performance_team * 10) / 10).toFixed(1)}</td>
+                <td data-column="benched_assists" data-sort="primary" class="d-none d-md-table-cell">${player.assists_benched_team}</td>
+                <td data-column="assists_captained" data-sort="primary" class="d-none d-md-table-cell vert-border-end">${player.assists_captained_team}</td>
+                <td data-column="goal_involvements" data-sort="primary" class="d-none d-lg-table-cell">${player.goals_assists_team}</td>
+                <td data-column="expected_goal_involvements" data-sort="primary" class="d-none d-lg-table-cell">${(Math.round(player.expected_goal_involvements_team * 10) / 10).toFixed(1)}</td>
+                <td data-column="goal_involvements_performance" data-sort="primary" class="d-none d-lg-table-cell ${player.goals_assists_performance_team > 0 ? 'green-text' : player.goals_assists_performance_team < 0 ? 'red-text' : ''}">${(Math.round(player.goals_assists_performance_team * 10) / 10).toFixed(1)}</td>
+                <td data-column="performance_performance" data-sort="primary" class="d-none d-lg-table-cell vert-border-end ${player.goals_assists_performance_team_vs_total > 0 ? 'green-text' : player.goals_assists_performance_team_vs_total < 0 ? 'red-text' : ''}">${(Math.round(player.goals_assists_performance_team_vs_total * 10) / 10).toFixed(1)}</td>
+
+                <td data-column="goals_scored" data-sort="secondary" class="d-none d-xl-table-cell vert-border">${player.goals_scored}</td>
+                <td data-column="expected_goals" data-sort="secondary" class="d-none d-xl-table-cell">${(Math.round(player.expected_goals * 10) / 10).toFixed(1)}</td>
+                <td data-column="performance" data-sort="secondary" class="d-none d-xl-table-cell vert-border-end ${player.goals_performance > 0 ? 'green-text' : player.goals_performance < 0 ? 'red-text' : ''}">${(Math.round(player.goals_performance * 10) / 10).toFixed(1)}</td>
+                <td data-column="assists" data-sort="secondary" class="d-none d-xxl-table-cell assists" data-column="assists">${player.assists}</td>
+                <td data-column="expected_assists" data-sort="secondary" class="d-none d-xxl-table-cell">${(Math.round(player.expected_assists * 10) / 10).toFixed(1)}</td>
+                <td data-column="assists_performance" data-sort="secondary" class="d-none d-xxl-table-cell vert-border-end ${player.assists_performance > 0 ? 'green-text' : player.assists_performance < 0 ? 'red-text' : ''}">${(Math.round(player.assists_performance * 10) / 10).toFixed(1)}</td>
+                <td data-column="goal_involvements" data-sort="secondary" class="d-none d-xxl-table-cell">${player.goals_assists}</td>
+                <td data-column="expected_goal_involvements" data-sort="secondary" class="d-none d-xxl-table-cell">${(Math.round(player.expected_goal_involvements * 10) / 10).toFixed(1)}</td>
+                <td data-column="goal_involvements_performance" data-sort="secondary" class="d-none d-xxl-table-cell vert-border-end ${player.goals_assists_performance > 0 ? 'green-text' : player.goals_assists_performance < 0 ? 'red-text' : ''}">${(Math.round(player.goals_assists_performance * 10) / 10).toFixed(1)}</td>
+            `;
+                    tableBody.appendChild(row);
+                });
+
+            // Check if skeleton has already been removed (use a flag to track it)
+            let skeletonRemoved = false;
+
+            // Update the player images
+            const imagesContainer = document.getElementById('player-images');
+            const skeletonContainer = imagesContainer.querySelector('.skeleton-loader-container'); // Find the skeleton container
+
+            // Clear the existing images for sorting
+            imagesContainer.innerHTML = '';
+
+            // Track the number of images loaded
+            let imagesLoaded = 0;
+            const totalImages = data.players_images.length; // Number of images to load
+
+            data.players_images.forEach((playerImage, index) => {
+                const imageDiv = document.createElement('div');
+                imageDiv.className = `player-image-${index + 1}`; // Add a class based on the index
+
+                // Create the img element
+                const img = document.createElement('img');
+                img.classList.add('img-fluid');
+                img.src = `https://resources.premierleague.com/premierleague/photos/players/110x140/p${playerImage.photo}`;
+                img.setAttribute('loading', 'lazy'); // Lazy load the image
+                img.setAttribute('alt', 'Player Photo'); // Set alt text
+
+                // Wait for the image to load
+                img.onload = function() {
+                    imagesLoaded++;
+
+                    // Remove the skeleton loader if all images are loaded, only on first load
+                    if (imagesLoaded === totalImages && !skeletonRemoved) {
+                        if (skeletonContainer) {
+                            skeletonContainer.remove();
+                        }
+                        skeletonRemoved = true; // Ensure skeleton is removed only once
+                    }
+                };
+
+                // Append the image to the div
+                imageDiv.appendChild(img);
+
+                // Append the whole player image div to the container
+                imagesContainer.appendChild(imageDiv);
+            });
+                // Hide loading message and show table and images
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('player-table-body').style.display = 'table-row-group'; // Show the table rows again
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+                document.getElementById('loading').textContent = 'Error loading data...';
+            });
+    }
+</script>
+
+{% endblock %}

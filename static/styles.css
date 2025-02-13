@@ -1,0 +1,290 @@
+a { text-decoration: none;} /* turns off default underline on links */
+
+/* Define colors at the root level */
+:root {
+    --purple: #38003c; /* Dark purple */
+    --light-purple: #963cff; /* Light Purpe */
+    --bright-green: #00ff85; /* Bright green */
+    --turqouise: #04f5ff; /* Turqouise */
+    --red: #e90052; /* Redish */
+    --yellow: #EAFF04; /* yellow */
+
+    --text-light: #ffffff; /* White for contrast */
+    --text-dark: #37003c; /* Dark purple */
+    --primary-hover-color: #2c0030; /* Slightly darker purple for hover */
+    --secondary-hover-color: #00ef77; /* Slightly darker purple for hover */
+}
+
+.text-color-light { color: var(--text-light);}
+
+.btn-turqouise {
+    background-color: var(--turqouise);
+    color: var(--text-dark);
+}
+
+.btn-turqouise:hover {
+    background-color: var(--yellow);
+    color: var(--text-dark);
+}
+
+
+/* Team colors */
+.team-1 td:nth-child(-n+3) { background-color: #EF0107; color: white;} /* Manchester United */
+.team-3 td:nth-child(-n+3) { background-color: #ef0107; color: white;} /* Arsenal */
+.team-4 td:nth-child(-n+3) { background-color: #241F20; color: white; }/* Newcastle */
+.team-6 td:nth-child(-n+3) { background-color: #FFFFFF; } /* Tottenham */
+.team-7 td:nth-child(-n+3) { background-color: #7A263A; color: white; } /* Aston Villa */
+.team-8 td:nth-child(-n+3) { background-color: #034694; color: white; } /* Chelsea */
+.team-9 td:nth-child(-n+3) { background-color: #1B458F; } /* Leicester City */
+.team-11 td:nth-child(-n+3) { background-color: #274488; color: white;} /* Everton */
+.team-13 td:nth-child(-n+3) { background-color: #0101e8; color: white;} /* Leicester */
+.team-14 td:nth-child(-n+3) { background-color: #dd0000; color: white;} /* Liverpool */
+.team-17 td:nth-child(-n+3) { background-color: #e53233;} /* Nottingham Forest */
+.team-20 td:nth-child(-n+3) { background-color: #ff0000; } /* Southampton */
+.team-31 td:nth-child(-n+3) { background-color: #0a4af5; color: white;} /* Crystal Palace */
+.team-39 td:nth-child(-n+3) { background-color: #FDB913;} /* Wolves */
+.team-36 td:nth-child(-n+3) { background-color: #0057B8; color: white;} /* Brighton */
+.team-40 td:nth-child(-n+3) { background-color: #3a64a3; } /* Ipswich */
+.team-43 td:nth-child(-n+3) { background-color: #6CABDD; } /* Manchester City */
+.team-54 td:nth-child(-n+3) { background-color: #ffffff; } /* Fulham */
+.team-91 td:nth-child(-n+3) { background-color: #DA291C; color: white;} /* Bournemouth */
+.team-94 td:nth-child(-n+3) { background-color: #D20000; color: white; } /* Brentford */
+.default-team td:nth-child(-n+3) { background-color: #EEEEEE; } /* Fallback */
+
+
+
+/* TABLE */
+/* table colours */
+.bg-team { background-color: var(--red) !important; color: white !important;}   /* th team */
+.bg-team a { background-color: var(--red) !important; color: white !important;} /* th links */
+
+.th-purple th { background-color: var(--purple); color: white;}     /* th */
+.th-purple th a { background-color: var(--purple); color: white;}   /* th links */
+
+.bg-purple {background-color: var(--purple);} /* in use? */
+.bg-green { background-color: var(--bright-green);} /* in use? */
+.bg-red { background-color: var(--red); color: white;}
+.bg-red:hover{ background-color: var(--yellow);}
+.bg-yellow { background-color: var(--yellow); color: black;}/* in use? */
+
+.th-yellow th { background-color: var(--yellow); } /* Totals, not in use? */
+.td-yellow td { background-color: var(--yellow); }
+
+td.green-text { color: green;}  /* +/- columns */
+td.red-text  { color: red;}     /* +/- columns */
+td.turqouise-text { color: var(--turqouise);}
+
+
+/* In order to overlap the player images */
+table {
+    z-index: 99;
+}
+
+
+/* TABLE HEADERS */
+th:hover.sort-team {color: var(--purple) !important;}
+th:hover.sort {color: var(--red);}
+
+/* Cursors */
+th {cursor: default;}
+th.sort, th.sort-team {cursor: pointer;} /* Changes the cursor to a pointer */
+td {cursor: default;}
+
+
+/* Table header row */
+th.sorted {
+    position: relative;
+    z-index: 1; /* Ensure text stays above the pseudo-element */
+}
+
+
+/* Curved background for the sorted team header */
+th.sorted.sort-team::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--red); /* Match the table header */
+    z-index: -2; /* Ensure the pseudo-element stays behind the text */
+}
+
+th.sorted.sort-team::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: white; /* Your desired header background color */
+    border-radius: 10px 10px 0 0; /* Match the header cell's rounded corners */
+    z-index: -1; /* Ensure the pseudo-element stays behind the text */
+}
+
+/* Curved background for the sorted header (totals) */
+th.sorted::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--purple); /* Match the table header */
+    z-index: -2; /* Ensure the pseudo-element stays behind the text */
+}
+
+/* Curved background for the sorted header (totals) */
+th.sorted::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: white; /* Your desired header background color */
+    border-radius: 10px 10px 0 0; /* Match the header cell's rounded corners */
+    z-index: -1; /* Ensure the pseudo-element stays behind the text */
+}
+
+th.sorted {color: black !important;} /* link */
+
+/* BORDERS */
+
+/* custom borders for the table */
+.vert-border {border-left: 1px solid rgb(222, 226, 230);}
+.vert-border-bold {border-left: 1px solid black;}
+.vert-border-end { border-right: 1px solid rgb(222, 226, 230);}
+
+/* Rounded borders */
+.round-border-top { border-radius: 20px 20px 0 0;}
+.round-border-btm { border-radius: 0 0 20px 20px;}
+
+
+/* Player images */
+.player-image-container div {
+    position: relative;
+    top: 20px;
+}
+.player-image-1 {z-index: 10;}
+.player-image-2 {left: -5%; z-index: 9;}
+.player-image-3 {left: -10%; z-index: 8;}
+.player-image-4 {left: -15%; z-index: 7;}
+.player-image-5 {left: -20%;z-index: 6;}
+
+
+/* Adjust image size and layering */
+.player-image-container div img {
+    width: 150px;
+    z-index: 11; /* Above skeleton loader */
+}
+
+.skeleton-loader {
+    width: 100%;
+    height: 190px;
+    background: linear-gradient(90deg, #ffffff 0%, #e0e0e0 50%, #ffffff 75%);
+    background-size: 100% 100%;
+    animation: skeleton-animation 1.5s infinite ease-in-out;
+}
+
+
+
+/* Removed striped from col 1-3 */
+.custom-striped > tbody > tr:nth-of-type(odd) > *:nth-child(1),
+.custom-striped > tbody > tr:nth-of-type(odd) > *:nth-child(2),
+.custom-striped > tbody > tr:nth-of-type(odd) > *:nth-child(3) {
+    --bs-table-bg-type: inherit;
+    --bs-table-color-type: inherit;
+}
+
+
+#header-logo-gw a {
+    border-radius: 5px;
+    padding: 0.5rem;
+}
+
+#header-logo {
+    color: black;
+    font-size: 1rem;
+    font-weight: bold;
+}
+#header-gw {
+    color: black;
+    font-size: 0.7rem;
+}
+
+#flag img{ border-radius: 5px;}
+#header-team-name {flex-direction: column;}
+#header-team-name h1 {font-size: 1rem;}
+#current-hover {padding: 0 1em 0 0}
+
+#tables-btn {
+    background-color: var(--red);
+    color: white;
+}
+#tables-btn:hover {
+    background-color: var(--red);
+    color: black;
+}
+#tables-btn.show {
+    background-color: yellow;
+    color: black;
+  }
+.dropdown-item:active { /* Just when clicking on it */
+    background-color: white;
+    color: var(--red) !important;
+}
+.dropdown-item:hover { /* Just when clicking on it */
+    background-color: white;
+    color: var(--red) !important;
+}
+.active {
+    background-color: var(--yellow) !important;
+    color: black !important;
+}
+
+/* Small screens (≥576px) */
+@media (min-width: 576px) and (max-width: 767.98px) {
+    #header-team-name { font-size: 1rem;}
+}
+
+/* Medium screens (≥768px) */
+@media (min-width: 768px) and (max-width: 991.98px) {
+    #header-logo-gw a {padding: 0.5rem;}
+    #header-logo {font-size: 1.1rem;}
+    #header-gw {font-size: 0.7rem;}
+
+    #header-team-name {flex-direction: row;}
+    #header-team-name h1 {font-size: 1.5rem;}
+
+}
+
+/* Large screens (≥992px) */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+    #header-logo-gw a {padding: 0.6rem;}
+    #header-logo {font-size: 1.2rem;}
+    #header-gw {font-size: 1rem;}
+
+
+    #header-team-name {flex-direction: row;}
+    #header-team-name h1 {font-size: 1.7rem;}
+    #flag { width: 66px;}
+}
+
+/* Extra large screens (≥1200px) */
+@media (min-width: 1200px) {
+    #header-logo-gw a {padding: 0.7rem;}
+    #header-logo {font-size: 1.5rem;}
+    #header-gw {font-size: 1.1rem;}
+    #flag { width: 66px;}
+    #header-team-name { flex-direction: row;}
+    #header-team-name h1 {font-size: 1.9rem;}
+
+}
+
+/* Extra large screens (≥1400px) */
+@media (min-width: 1400px) {
+    #points-table td, #points-table th {padding: 0.3rem;}
+}
+
+
