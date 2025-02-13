@@ -4,7 +4,17 @@ from flask import flash, request
 FPL_API_BASE = "https://fantasy.premierleague.com/api"
 FPL_STATIC_URL = f"{FPL_API_BASE}/bootstrap-static/"
 
+headers = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/102.0.0.0 Safari/537.36"
+    )
+}
+
 # Helper to validate team ID
+
+
 def validate_team_id(team_id, max_users):
     try:
         team_id = int(team_id)  # Ensure team_id is an integer
@@ -14,7 +24,8 @@ def validate_team_id(team_id, max_users):
             manager_response = requests.get(manager_url)
 
             if manager_response.status_code == 503:
-                flash("The game is currently being updated. Please try again later.", "warning")
+                flash(
+                    "The game is currently being updated. Please try again later.", "warning")
                 return None  # Return None to stop further processing
 
             manager_response.raise_for_status()  # Raise other HTTP errors
@@ -41,26 +52,31 @@ def get_max_users():
         return 10994911  # Fallback value
 
 # Helper to fetch current gameweek
+
+
 def get_current_gw():
-        static_data = get_static_data()
-        events = static_data["events"]
-        current_gw = next((event["id"] for event in events if event["is_current"]), 1)
-        return current_gw
+    static_data = get_static_data()
+    events = static_data["events"]
+    current_gw = next((event["id"]
+                      for event in events if event["is_current"]), 1)
+    return current_gw
 
 # Fetch static player data
+
+
 def get_static_data():
-            static_url = FPL_STATIC_URL
-            response = requests.get(static_url)
-            response.raise_for_status()
-            static_data = response.json()
-            return static_data
+    static_url = FPL_STATIC_URL
+    response = requests.get(static_url)
+    response = requests.get(url, headers=headers)
+    static_data = response.json()
+    return static_data
 
 # Fetch static Player’s Detailed Data
+
+
 def get_player_detail_data():
-            response = requests.get(f"https://fantasy.premierleague.com/api/element-summary/")
-            response.raise_for_status()
-            player_detail_data = response.json()
-            return player_detail_data
-
-
-
+    response = requests.get(
+        f"https://fantasy.premierleague.com/api/element-summary/")
+    response.raise_for_status()
+    player_detail_data = response.json()
+    return player_detail_data
