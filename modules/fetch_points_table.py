@@ -2,59 +2,71 @@ import requests
 
 FPL_API_BASE = "https://fantasy.premierleague.com/api"
 
+headers = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/102.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.5",
+    "Referer": "https://fantasy.premierleague.com/",
+}
+
 # And the for points table
+
+
 def get_player_data_points(static_data):
 
-            # Import stuff from static_data function
-            teams = static_data.get("teams", [])
-            players = static_data.get("elements", [])
+    # Import stuff from static_data function
+    teams = static_data.get("teams", [])
+    players = static_data.get("elements", [])
 
-            # Create a dictionary for quick player lookup by id
-            player_info = {
-                player["id"]: {
-                    "element_type": player["element_type"],
-                    "photo": player["photo"].replace(".jpg", ".png"),
-                    "team_code": player["team_code"],
-                    "team_name": next((team["short_name"] for team in teams if team["code"] == player["team_code"]), "N/A"),
-                    "web_name": player["web_name"],
-                    "now_cost": player["now_cost"],
+    # Create a dictionary for quick player lookup by id
+    player_info = {
+        player["id"]: {
+            "element_type": player["element_type"],
+            "photo": player["photo"].replace(".jpg", ".png"),
+            "team_code": player["team_code"],
+            "team_name": next((team["short_name"] for team in teams if team["code"] == player["team_code"]), "N/A"),
+            "web_name": player["web_name"],
+            "now_cost": player["now_cost"],
 
-                    "total_points_team": 0,
-                    "ppm_team": 0,
-                    "minutes_points_team": 0,
-                    "clean_sheets_points_team": 0,
-                    "assists_points_team": 0,
-                    "goals_points_team": 0,
-                    "yellow_cards_points_team": 0,
-                    "red_cards_points_team": 0,
-                    "bonus_points_team": 0,
-                    "save_points_team": 0,
-                    "own_goals_points_team": 0,
-                    "goals_conceded_points_team": 0,
-                    "penalties_saved_points_team": 0,
-                    "penalties_missed_points_team": 0,
-                    "benched_points_team": 0,
-                    "captained_points_team": 0,
+            "total_points_team": 0,
+            "ppm_team": 0,
+            "minutes_points_team": 0,
+            "clean_sheets_points_team": 0,
+            "assists_points_team": 0,
+            "goals_points_team": 0,
+            "yellow_cards_points_team": 0,
+            "red_cards_points_team": 0,
+            "bonus_points_team": 0,
+            "save_points_team": 0,
+            "own_goals_points_team": 0,
+            "goals_conceded_points_team": 0,
+            "penalties_saved_points_team": 0,
+            "penalties_missed_points_team": 0,
+            "benched_points_team": 0,
+            "captained_points_team": 0,
 
-                    "total_points": player["total_points"],
-                    "ppm": round(float(player["total_points"]) / float(player["now_cost"] / 10)),
-                    "minutes_points": 0,
-                    "clean_sheets_points": 0,
-                    "assists_points": 0,
-                    "goals_points": 0,
-                    "yellow_cards_points": 0,
-                    "red_cards_points": 0,
-                    "bonus_points": 0,
-                    "save_points": 0,
-                    "own_goals_points": 0,
-                    "goals_conceded_points": 0,
-                    "penalties_saved_points": 0,
-                    "penalties_missed_points": 0,
-                }
-                for player in players
-            }
-            return player_info
-
+            "total_points": player["total_points"],
+            "ppm": round(float(player["total_points"]) / float(player["now_cost"] / 10)),
+            "minutes_points": 0,
+            "clean_sheets_points": 0,
+            "assists_points": 0,
+            "goals_points": 0,
+            "yellow_cards_points": 0,
+            "red_cards_points": 0,
+            "bonus_points": 0,
+            "save_points": 0,
+            "own_goals_points": 0,
+            "goals_conceded_points": 0,
+            "penalties_saved_points": 0,
+            "penalties_missed_points": 0,
+        }
+        for player in players
+    }
+    return player_info
 
 
 # Find stats by looping thru gameweeks in live data and looping thru player history
@@ -62,20 +74,21 @@ def get_live_data_points(team_id, player_info, static_data):
     # Start of live data
     # static_data = get_static_data()
     events = static_data["events"]
-    current_gw = next((event["id"] for event in events if event["is_current"]), 1)
+    current_gw = next((event["id"]
+                      for event in events if event["is_current"]), 1)
 
     # Loop through gameweeks
     for gw in range(1, current_gw + 1):
         # Fetch live gameweek stats
         live_url = f"{FPL_API_BASE}/event/{gw}/live/"
-        live_response = requests.get(live_url)
+        live_response = requests.get(live_url, headers=headers)
         live_response.raise_for_status()
         live_data = live_response.json()
         live_elements = live_data.get("elements", [])
 
         # Fetch picks for the team
         picks_url = f"{FPL_API_BASE}/entry/{team_id}/event/{gw}/picks/"
-        picks_response = requests.get(picks_url)
+        picks_response = requests.get(picks_url, headers=headers)
         picks_response.raise_for_status()
         picks_data = picks_response.json()
 
@@ -104,7 +117,6 @@ def get_live_data_points(team_id, player_info, static_data):
                     pm = 0
                     gc = 0
                     captained_points = 0
-
 
                     for explanation in element.get("explain", []):
                         for stat in explanation.get("stats", []):
@@ -135,19 +147,22 @@ def get_live_data_points(team_id, player_info, static_data):
 
                     # Benched player
                     if multiplier == 0:
-                        benched_points = (minutes + clean_sheets + assists + goals_scored + bonus + saves + ps + pm + gc + yc + rc)
+                        benched_points = (minutes + clean_sheets + assists +
+                                          goals_scored + bonus + saves + ps + pm + gc + yc + rc)
                         player_info[player_id]["benched_points_team"] += benched_points
 
                     # Captained points
-                    if multiplier in [2, 3]: # Captain or triple captain
-                         captained_points = (minutes + clean_sheets + assists + goals_scored + bonus + saves + ps + pm + gc + yc + rc)
-                         player_info[player_id]["captained_points_team"] += captained_points
+                    if multiplier in [2, 3]:  # Captain or triple captain
+                        captained_points = (
+                            minutes + clean_sheets + assists + goals_scored + bonus + saves + ps + pm + gc + yc + rc)
+                        player_info[player_id]["captained_points_team"] += captained_points
 
                     # Playing or playing as captain
                     if multiplier in [1, 2]:
                         player_info[player_id]["total_points_team"] += points
                         # Where can put this?
-                        player_info[player_id]["ppm_team"] = round(float(player_info[player_id]["total_points_team"]) / float(player_info[player_id]["now_cost"] / 10))
+                        player_info[player_id]["ppm_team"] = round(float(
+                            player_info[player_id]["total_points_team"]) / float(player_info[player_id]["now_cost"] / 10))
                         # "ppm": round(float(player["total_points"]) / float(player["now_cost"] / 10)),
                         player_info[player_id]["minutes_points_team"] += minutes
                         player_info[player_id]["clean_sheets_points_team"] += clean_sheets

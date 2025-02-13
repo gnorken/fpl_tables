@@ -3,10 +3,22 @@ import sqlite3
 
 FPL_API_BASE = "https://fantasy.premierleague.com/api"
 
+headers = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/102.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.5",
+    "Referer": "https://fantasy.premierleague.com/",
+}
+
+
 def get_manager_data(team_id):
     # Fetch FPL Manager data
     manager_url = f"{FPL_API_BASE}/entry/{team_id}/"
-    manager_response = requests.get(manager_url)
+    manager_response = requests.get(manager_url, headers=headers)
     manager_data = manager_response.json()
 
     # Extract manager details
