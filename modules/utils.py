@@ -66,8 +66,8 @@ def get_current_gw():
 
 def get_static_data():
     static_url = FPL_STATIC_URL
-    response = requests.get(static_url)
-    response = requests.get(url, headers=headers)
+    response = requests.get(static_url, headers=headers)
+    response.raise_for_status()
     static_data = response.json()
     return static_data
 
