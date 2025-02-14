@@ -487,3 +487,9 @@ def get_sorted_players_points():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+app.config["TEMPLATES_AUTO_RELOAD"] = True
+
+if __name__ == "__main__":
+    app.run(debug=True)
