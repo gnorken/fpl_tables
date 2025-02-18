@@ -5,12 +5,12 @@
 {% block page_content %}
         <!-- PLAYER TABLE -->
             <div class="table-responsive">
-                <table id="starts-table" class="table table-striped table-borderless text-nowrap">
-                    <thead class="th-purple sticky-top">
+                <table id="starts-table" class="table table-borderless table-striped custom-striped text-nowrap">
+                    <thead class="th-purple">
                         <tr class="text-center">
                             <th id="top-players" data-sort="top-players" class="align-middle round-border-top" colspan="3" rowspan="1">↑ Top Five Players</th>
                             <th colspan="14" class="bg-team round-border-top" data-sort="team-data" title="Players that are or have been in {{ manager.team_name }} this season">Stats for {{ manager.team_name }}</th>
-                            <th colspan="11" class="round-border-top d-none d-xxl-table-cell" data-sort="overall-data">Player Totals</th>
+                            <th colspan="11" class="round-border-top  d-xxl-table-cell" data-sort="overall-data">Player Totals</th>
                         </tr>
 
                         <tr class="text-center">
@@ -42,52 +42,52 @@
                             <th id="minutes_benched_team" data-sort="minutes_benched_team" onclick="sortTable('minutes_benched_team')" class="sort-team bg-team {% if request.args.get('sort_by') == 'minutes_benched_team' %}sorted{% endif %}">
                                 M
                             </th>
-                            <th id="yellow_cards_team" data-sort="yellow_cards_team" onclick="sortTable('yellow_cards_team')" class="d-none d-xl-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'yellow_cards_team' %}sorted{% endif %}">
+                            <th id="yellow_cards_team" data-sort="yellow_cards_team" onclick="sortTable('yellow_cards_team')" class=" d-xl-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'yellow_cards_team' %}sorted{% endif %}">
                                 YC
                             </th>
-                            <th id="red_cards_team" data-sort="red_cards_team" onclick="sortTable('red_cards_team')" class="d-none d-xl-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'red_cards_team' %}sorted{% endif %}">
+                            <th id="red_cards_team" data-sort="red_cards_team" onclick="sortTable('red_cards_team')" class=" d-xl-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'red_cards_team' %}sorted{% endif %}">
                                 RC
                             </th>
-                            <th id="goals_conceded_team" data-sort="goals_conceded_team" onclick="sortTable('goals_conceded_team')" class="d-none d-xl-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'goals_conceded_team' %}sorted{% endif %}">
+                            <th id="goals_conceded_team" data-sort="goals_conceded_team" onclick="sortTable('goals_conceded_team')" class=" d-xl-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'goals_conceded_team' %}sorted{% endif %}">
                                 GC
                             </th>
-                            <th id="own_goals_team" data-sort="own_goals_team" onclick="sortTable('own_goals_team')" class="d-none d-xl-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'own_goals_team' %}sorted{% endif %}">
+                            <th id="own_goals_team" data-sort="own_goals_team" onclick="sortTable('own_goals_team')" class=" d-xl-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'own_goals_team' %}sorted{% endif %}">
                                 OG
                             </th>
-                            <th id="penalties_missed_team" data-sort="penalties_missed_team" onclick="sortTable('penalties_missed_team')" class="d-none d-xl-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'penalties_missed_team' %}sorted{% endif %}">
+                            <th id="penalties_missed_team" data-sort="penalties_missed_team" onclick="sortTable('penalties_missed_team')" class=" d-xl-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'penalties_missed_team' %}sorted{% endif %}">
                                 PM
                             </th>
-                            <th id="starts" data-sort="starts" onclick="sortTable('starts')" class="sort d-none d-xxl-table-cell {% if request.args.get('sort_by') == 'starts' %}sorted{% endif %}">
+                            <th id="starts" data-sort="starts" onclick="sortTable('starts')" class="sort  d-xxl-table-cell {% if request.args.get('sort_by') == 'starts' %}sorted{% endif %}">
                                 S
                             </th>
-                            <th id="minutes" data-sort="minutes" onclick="sortTable('minutes')" class="sort d-none d-xxl-table-cell {% if request.args.get('sort_by') == 'minutes' %}sorted{% endif %}">
+                            <th id="minutes" data-sort="minutes" onclick="sortTable('minutes')" class="sort  d-xxl-table-cell {% if request.args.get('sort_by') == 'minutes' %}sorted{% endif %}">
                                 M
                             </th>
-                            <th id="clean_sheets" data-sort="clean_sheets" onclick="sortTable('clean_sheets')" class="sort d-none d-xxl-table-cell {% if request.args.get('sort_by') == 'clean_sheets' %}sorted{% endif %}">
+                            <th id="clean_sheets" data-sort="clean_sheets" onclick="sortTable('clean_sheets')" class="sort  d-xxl-table-cell {% if request.args.get('sort_by') == 'clean_sheets' %}sorted{% endif %}">
                                 CS
                             </th>
-                            <th id="dreamteam_count" data-sort="dreamteam_count" onclick="sortTable('dreamteam_count')" class="sort d-none d-xxl-table-cell {% if request.args.get('sort_by') == 'dreamteam_count' %}sorted{% endif %}">
+                            <th id="dreamteam_count" data-sort="dreamteam_count" onclick="sortTable('dreamteam_count')" class="sort  d-xxl-table-cell {% if request.args.get('sort_by') == 'dreamteam_count' %}sorted{% endif %}">
                                 DT
                             </th>
-                            <th id="bps" data-sort="bps" onclick="sortTable('bps')" class="sort d-none d-xxl-table-cell {% if request.args.get('sort_by') == 'bps' %}sorted{% endif %}">
+                            <th id="bps" data-sort="bps" onclick="sortTable('bps')" class="sort  d-xxl-table-cell {% if request.args.get('sort_by') == 'bps' %}sorted{% endif %}">
                                 BPS
                             </th>
-                            <th id="penalties_saved" data-sort="penalties_saved" onclick="sortTable('penalties_saved')" class="sort d-none d-xxl-table-cell {% if request.args.get('sort_by') == 'penalties_saved' %}sorted{% endif %}">
+                            <th id="penalties_saved" data-sort="penalties_saved" onclick="sortTable('penalties_saved')" class="sort  d-xxl-table-cell {% if request.args.get('sort_by') == 'penalties_saved' %}sorted{% endif %}">
                                 PS
                             </th>
-                            <th id="yellow_cards" data-sort="yellow_cards" onclick="sortTable('yellow_cards')" class="sort d-none d-xxl-table-cell {% if request.args.get('sort_by') == 'yellow_cards' %}sorted{% endif %}">
+                            <th id="yellow_cards" data-sort="yellow_cards" onclick="sortTable('yellow_cards')" class="sort  d-xxl-table-cell {% if request.args.get('sort_by') == 'yellow_cards' %}sorted{% endif %}">
                                 YC
                             </th>
-                            <th id="red_cards" data-sort="red_cards" onclick="sortTable('red_cards')" class="sort d-none d-xxl-table-cell {% if request.args.get('sort_by') == 'red_cards' %}sorted{% endif %}">
+                            <th id="red_cards" data-sort="red_cards" onclick="sortTable('red_cards')" class="sort  d-xxl-table-cell {% if request.args.get('sort_by') == 'red_cards' %}sorted{% endif %}">
                                 RC
                             </th>
-                            <th id="goals_conceded" data-sort="goals_conceded" onclick="sortTable('goals_conceded')" class="sort d-none d-xxl-table-cell {% if request.args.get('sort_by') == 'goals_conceded' %}sorted{% endif %}">
+                            <th id="goals_conceded" data-sort="goals_conceded" onclick="sortTable('goals_conceded')" class="sort  d-xxl-table-cell {% if request.args.get('sort_by') == 'goals_conceded' %}sorted{% endif %}">
                                 GC
                             </th>
-                            <th id="own_goals" data-sort="own_goals" onclick="sortTable('own_goals')" class="sort d-none d-xxl-table-cell {% if request.args.get('sort_by') == 'own_goals' %}sorted{% endif %}">
+                            <th id="own_goals" data-sort="own_goals" onclick="sortTable('own_goals')" class="sort  d-xxl-table-cell {% if request.args.get('sort_by') == 'own_goals' %}sorted{% endif %}">
                                 OG
                             </th>
-                            <th id="penalties_missed" data-sort="penalties_missed" onclick="sortTable('penalties_missed')" class="sort d-none d-xxl-table-cell {% if request.args.get('sort_by') == 'penalties_missed' %}sorted{% endif %}">
+                            <th id="penalties_missed" data-sort="penalties_missed" onclick="sortTable('penalties_missed')" class="sort  d-xxl-table-cell {% if request.args.get('sort_by') == 'penalties_missed' %}sorted{% endif %}">
                                 PM
                             </th>
                         </tr>
@@ -101,7 +101,7 @@
                             <th colspan="14" class="bg-team round-border-btm align-middle">
                                 <div id="loading" style="display: none;">Loading...</div>
                             </th>
-                            <th colspan="11" class="round-border-btm d-none d-xxl-table-cell"></th>
+                            <th colspan="11" class="round-border-btm  d-xxl-table-cell"></th>
                         </tr>
                     </tfoot>
                 </table>
@@ -417,23 +417,23 @@
                     <td data-column="PS" data-sort="primary" class="">${player.penalties_saved_team}</td>
                     <td data-column="starts_benched" data-sort="primary" class="vert-border">${player.starts_benched_team}</td>
                     <td data-column="minutes_benched" data-sort="primary" class="vert-border-end">${player.minutes_benched_team}</td>
-                    <td data-column="YC" data-sort="primary" class="d-none d-xl-table-cell red-text">${player.yellow_cards_team}</td>
-                    <td data-column="RC" data-sort="primary" class="d-none d-xl-table-cell red-text">${player.red_cards_team}</td>
-                    <td data-column="GC" data-sort="primary" class="d-none d-xl-table-cell red-text">${player.goals_conceded_team}</td>
-                    <td data-column="OG" data-sort="primary" class="d-none d-xl-table-cell red-text">${player.own_goals_team}</td>
-                    <td data-column="PM" data-sort="primary" class="d-none d-xl-table-cell red-text vert-border-end">${player.penalties_missed_team}</td>
+                    <td data-column="YC" data-sort="primary" class=" d-xl-table-cell red-text">${player.yellow_cards_team}</td>
+                    <td data-column="RC" data-sort="primary" class=" d-xl-table-cell red-text">${player.red_cards_team}</td>
+                    <td data-column="GC" data-sort="primary" class=" d-xl-table-cell red-text">${player.goals_conceded_team}</td>
+                    <td data-column="OG" data-sort="primary" class=" d-xl-table-cell red-text">${player.own_goals_team}</td>
+                    <td data-column="PM" data-sort="primary" class=" d-xl-table-cell red-text vert-border-end">${player.penalties_missed_team}</td>
 
-                    <td data-column="starts" data-sort="secondary" class="d-none d-xxl-table-cell vert-border">${player.starts}</td>
-                    <td data-column="minutes" data-sort="secondary"class="d-none d-xxl-table-cell">${player.minutes}</td>
-                    <td data-column="CS" data-sort="secondary" class="d-none d-xxl-table-cell">${player.clean_sheets}</td>
-                    <td data-column="DT" data-sort="secondary" class="d-none d-xxl-table-cell">${player.dreamteam_count}</td>
-                    <td data-column="BPS" data-sort="secondary" class="d-none d-xxl-table-cell">${player.bps}</td>
-                    <td data-column="PS" data-sort="secondary" class="d-none d-xxl-table-cell">${player.penalties_saved}</td>
-                    <td data-column="YC" data-sort="secondary" class="d-none d-xxl-table-cell red-text vert-border">${player.yellow_cards}</td>
-                    <td data-column="RC" data-sort="secondary" class="d-none d-xxl-table-cell red-text">${player.red_cards}</td>
-                    <td data-column="GC" data-sort="secondary" class="d-none d-xxl-table-cell red-text">${player.goals_conceded}</td>
-                    <td data-column="OG" data-sort="secondary" class="d-none d-xxl-table-cell red-text">${player.own_goals}</td>
-                    <td data-column="PM" data-sort="secondary" class="d-none d-xxl-table-cell red-text vert-border-end">${player.penalties_missed}</td>
+                    <td data-column="starts" data-sort="secondary" class=" d-xxl-table-cell vert-border">${player.starts}</td>
+                    <td data-column="minutes" data-sort="secondary"class=" d-xxl-table-cell">${player.minutes}</td>
+                    <td data-column="CS" data-sort="secondary" class=" d-xxl-table-cell">${player.clean_sheets}</td>
+                    <td data-column="DT" data-sort="secondary" class=" d-xxl-table-cell">${player.dreamteam_count}</td>
+                    <td data-column="BPS" data-sort="secondary" class=" d-xxl-table-cell">${player.bps}</td>
+                    <td data-column="PS" data-sort="secondary" class=" d-xxl-table-cell">${player.penalties_saved}</td>
+                    <td data-column="YC" data-sort="secondary" class=" d-xxl-table-cell red-text vert-border">${player.yellow_cards}</td>
+                    <td data-column="RC" data-sort="secondary" class=" d-xxl-table-cell red-text">${player.red_cards}</td>
+                    <td data-column="GC" data-sort="secondary" class=" d-xxl-table-cell red-text">${player.goals_conceded}</td>
+                    <td data-column="OG" data-sort="secondary" class=" d-xxl-table-cell red-text">${player.own_goals}</td>
+                    <td data-column="PM" data-sort="secondary" class=" d-xxl-table-cell red-text vert-border-end">${player.penalties_missed}</td>
             `;
                         tableBody.appendChild(row);
                     });

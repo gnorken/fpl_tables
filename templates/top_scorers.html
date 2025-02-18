@@ -6,22 +6,22 @@
 <!-- PLAYER TABLE -->
     <div class="table-responsive">
         <!-- PLAYER TABLE -->
-        <table id="goals-table" class="table table-striped table-borderless custom-striped text-nowrap">
-            <thead class="th-purple sticky-top">
+        <table id="goals-table" class="table table-borderless table-striped custom-striped text-nowrap ">
+            <thead class="th-purple">
                 <tr class="text-center">
                     <th colspan="3" id="top-players" data-sort="top-players" class="align-middle round-border-top" >↑ Top Five Players</th>
                     <th colspan="14" data-sort="team-data" class="bg-team round-border-top">Stats for {{ manager.team_name }}</th>
-                    <th colspan="9" data-sort="overall-data" class="round-border-top d-none d-xl-table-cell">Player Totals</th>
+                    <th colspan="9" data-sort="overall-data" class="round-border-top  d-xl-table-cell">Player Totals</th>
                 </tr>
                 <tr class="text-center">
                     <th id="entries" data-sort="entries" colspan="3"></th>
                     <th id="goals_scored" data-sort="goals_scored_team" onclick="sortTable('goals_scored_team')" class="sort-team bg-team {% if request.args.get('sort_by') == 'goals_scored_team' %}sorted{% endif %}">
                         G
                     </th>
-                    <th id="expected_goals_team" data-sort="expected_goals_team" onclick="sortTable('expected_goals_team')" class="d-none d-sm-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'expected_goals_team' %}sorted{% endif %}">
+                    <th id="expected_goals_team" data-sort="expected_goals_team" onclick="sortTable('expected_goals_team')" class=" d-sm-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'expected_goals_team' %}sorted{% endif %}">
                         xG
                     </th>
-                    <th id="goals_performance_team" data-sort="goals_performance_team" onclick="sortTable('goals_performance_team')" class="d-none d-sm-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'goals_performance_team' %}sorted{% endif %}">
+                    <th id="goals_performance_team" data-sort="goals_performance_team" onclick="sortTable('goals_performance_team')" class=" d-sm-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'goals_performance_team' %}sorted{% endif %}">
                         +/-
                     </th>
                     <th id="goals_benched_team" data-sort="goals_benched_team" onclick="sortTable('goals_benched_team')" class="sort-team bg-team {% if request.args.get('sort_by') == 'goals_benched_team' %}sorted{% endif %}">
@@ -30,59 +30,59 @@
                     <th id="goals_captained_team" data-sort="goals_captained_team" onclick="sortTable('goals_captained_team')" class="sort-team bg-team {% if request.args.get('sort_by') == 'goals_captained_team' %}sorted{% endif %}">
                         cG
                     </th>
-                    <th id="assists_team" data-sort="assists_team" onclick="sortTable('assists_team')" class="d-none d-md-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'assists_team' %}sorted{% endif %}">
+                    <th id="assists_team" data-sort="assists_team" onclick="sortTable('assists_team')" class=" d-md-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'assists_team' %}sorted{% endif %}">
                         A
                     </th>
-                    <th id="expected_assists_team" data-sort="expected_assists_team" onclick="sortTable('expected_assists_team')" class="d-none d-md-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'expected_assists_team' %}sorted{% endif %}">
+                    <th id="expected_assists_team" data-sort="expected_assists_team" onclick="sortTable('expected_assists_team')" class=" d-md-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'expected_assists_team' %}sorted{% endif %}">
                         xA
                     </th>
-                    <th id="assists_performance_team" data-sort="assists_performance_team" onclick="sortTable('assists_performance_team')" class="d-none d-md-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'assists_performance_team' %}sorted{% endif %}">
+                    <th id="assists_performance_team" data-sort="assists_performance_team" onclick="sortTable('assists_performance_team')" class=" d-md-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'assists_performance_team' %}sorted{% endif %}">
                         +/-
                     </th>
-                    <th id="assists_benched_team" data-sort="assists_benched_team" onclick="sortTable('assists_benched_team')" class="d-none d-md-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'assists_benched_team' %}sorted{% endif %}">
+                    <th id="assists_benched_team" data-sort="assists_benched_team" onclick="sortTable('assists_benched_team')" class=" d-md-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'assists_benched_team' %}sorted{% endif %}">
                         bA
                     </th>
-                    <th id="assists_captained_team" data-sort="assists_captained_team" onclick="sortTable('assists_captained_team')" class="d-none d-md-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'assists_captained_team' %}sorted{% endif %}">
+                    <th id="assists_captained_team" data-sort="assists_captained_team" onclick="sortTable('assists_captained_team')" class=" d-md-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'assists_captained_team' %}sorted{% endif %}">
                         cA
                     </th>
-                    <th id="goals_assists_team" data-sort="goals_assists_team" onclick="sortTable('goals_assists_team')" class="d-none d-lg-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'goals_assists_team' %}sorted{% endif %}">
+                    <th id="goals_assists_team" data-sort="goals_assists_team" onclick="sortTable('goals_assists_team')" class=" d-lg-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'goals_assists_team' %}sorted{% endif %}">
                         GA
                     </th>
-                    <th id="expected_goal_involvements_team" data-sort="expected_goal_involvements_team" onclick="sortTable('expected_goal_involvements_team')" class="d-none d-lg-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'expected_goal_involvements_team' %}sorted{% endif %}">
+                    <th id="expected_goal_involvements_team" data-sort="expected_goal_involvements_team" onclick="sortTable('expected_goal_involvements_team')" class=" d-lg-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'expected_goal_involvements_team' %}sorted{% endif %}">
                         xGA
                     </th>
-                    <th id="goals_assists_performance_team" data-sort="goals_assists_performance_team" onclick="sortTable('goals_assists_performance_team')" class="d-none d-lg-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'goals_assists_performance_team' %}sorted{% endif %}">
+                    <th id="goals_assists_performance_team" data-sort="goals_assists_performance_team" onclick="sortTable('goals_assists_performance_team')" class=" d-lg-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'goals_assists_performance_team' %}sorted{% endif %}">
                         +/-
                     </th>
-                    <th id="goals_assists_performance_team_vs_total" data-sort="goals_assists_performance_team_vs_total" onclick="sortTable('goals_assists_performance_team_vs_total')" class="d-none d-lg-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'goals_assists_performance_team_vs_total' %}sorted{% endif %}">
+                    <th id="goals_assists_performance_team_vs_total" data-sort="goals_assists_performance_team_vs_total" onclick="sortTable('goals_assists_performance_team_vs_total')" class=" d-lg-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'goals_assists_performance_team_vs_total' %}sorted{% endif %}">
                         +/-
                     </th>
                     <!-- Player Totals -->
-                    <th id="goals_scored" data-sort="goals_scored" onclick="sortTable('goals_scored')" class="sort d-none d-xl-table-cell {% if request.args.get('sort_by') == 'goals_scored' %}sorted{% endif %}">
+                    <th id="goals_scored" data-sort="goals_scored" onclick="sortTable('goals_scored')" class="sort  d-xl-table-cell {% if request.args.get('sort_by') == 'goals_scored' %}sorted{% endif %}">
                         G
                     </th>
-                    <th id="expected_goals" data-sort="expected_goals" onclick="sortTable('expected_goals')" class="sort d-none d-xl-table-cell {% if request.args.get('sort_by') == 'expected_goals' %}sorted{% endif %}">
+                    <th id="expected_goals" data-sort="expected_goals" onclick="sortTable('expected_goals')" class="sort  d-xl-table-cell {% if request.args.get('sort_by') == 'expected_goals' %}sorted{% endif %}">
                         xG
                     </th>
-                    <th id="goals_performance" data-sort="goals_performance" onclick="sortTable('goals_performance')" class="sort d-none d-xl-table-cell {% if request.args.get('sort_by') == 'goals_performance' %}sorted{% endif %}">
+                    <th id="goals_performance" data-sort="goals_performance" onclick="sortTable('goals_performance')" class="sort  d-xl-table-cell {% if request.args.get('sort_by') == 'goals_performance' %}sorted{% endif %}">
                         +/-
                     </th>
-                    <th id="assists" data-sort="assists" onclick="sortTable('assists')" class="sort d-none d-xxl-table-cell {% if request.args.get('sort_by') == 'assists' %}sorted{% endif %}">
+                    <th id="assists" data-sort="assists" onclick="sortTable('assists')" class="sort  d-xxl-table-cell {% if request.args.get('sort_by') == 'assists' %}sorted{% endif %}">
                         A
                     </th>
-                    <th id="expected_assists" data-sort="expected_assists" onclick="sortTable('expected_assists')" class="sort d-none d-xxl-table-cell {% if request.args.get('sort_by') == 'expected_assists' %}sorted{% endif %}">
+                    <th id="expected_assists" data-sort="expected_assists" onclick="sortTable('expected_assists')" class="sort  d-xxl-table-cell {% if request.args.get('sort_by') == 'expected_assists' %}sorted{% endif %}">
                         xA
                     </th>
-                    <th id="assists_performance" data-sort="assists_performance" onclick="sortTable('assists_performance')" class="sort d-none d-xxl-table-cell {% if request.args.get('sort_by') == 'assists_performance' %}sorted{% endif %}">
+                    <th id="assists_performance" data-sort="assists_performance" onclick="sortTable('assists_performance')" class="sort  d-xxl-table-cell {% if request.args.get('sort_by') == 'assists_performance' %}sorted{% endif %}">
                         +/-
                     </th>
-                    <th id="goals_assists" data-sort="goals_assists" onclick="sortTable('goals_assists')"  class="sort d-none d-xxl-table-cell {% if request.args.get('sort_by') == 'goals_assists' %}sorted{% endif %}">
+                    <th id="goals_assists" data-sort="goals_assists" onclick="sortTable('goals_assists')"  class="sort  d-xxl-table-cell {% if request.args.get('sort_by') == 'goals_assists' %}sorted{% endif %}">
                         GA
                     </th>
-                    <th id="expected_goal_involvements" data-sort="expected_goal_involvements" onclick="sortTable('expected_goal_involvements')" class="d-none d-xxl-table-cell sort {% if request.args.get('sort_by') == 'expected_goal_involvements' %}sorted{% endif %}">
+                    <th id="expected_goal_involvements" data-sort="expected_goal_involvements" onclick="sortTable('expected_goal_involvements')" class=" d-xxl-table-cell sort {% if request.args.get('sort_by') == 'expected_goal_involvements' %}sorted{% endif %}">
                         xGA
                     </th>
-                    <th id="goals_assists_performance" data-sort="goals_assists_performance" onclick="sortTable('goals_assists_performance')" class="d-none d-xxl-table-cell sort {% if request.args.get('sort_by') == 'goals_assists_performance' %}sorted{% endif %}">
+                    <th id="goals_assists_performance" data-sort="goals_assists_performance" onclick="sortTable('goals_assists_performance')" class=" d-xxl-table-cell sort {% if request.args.get('sort_by') == 'goals_assists_performance' %}sorted{% endif %}">
                         +/-
                     </th>
                 </tr>
@@ -96,7 +96,7 @@
                     <th colspan="14" class="bg-team round-border-btm align-middle">
                         <div id="loading" style="display: none;">Loading...</div>
                     </th>
-                    <th colspan="9" class="round-border-btm d-none d-xl-table-cell"></th>
+                    <th colspan="9" class="round-border-btm  d-xl-table-cell"></th>
                 </tr>
             </tfoot>
         </table>
@@ -400,29 +400,29 @@
                 <td class="text-start">${truncatedWebName}</td>
 
                 <td data-column="goals_scored" data-sort="primary">${player.goals_scored_team}</td>
-                <td data-column="expected_goals" data-sort="primary" class="d-none d-sm-table-cell">${(Math.round(player.expected_goals_team * 10) / 10).toFixed(1)}</td>
-                <td data-column="performance" data-sort="primary" class="d-none d-sm-table-cell ${player.goals_performance_team > 0 ? 'green-text' : player.goals_performance_team < 0 ? 'red-text' : ''}">${(Math.round(player.goals_performance_team * 10) / 10).toFixed(1)}</td>
+                <td data-column="expected_goals" data-sort="primary" class=" d-sm-table-cell">${(Math.round(player.expected_goals_team * 10) / 10).toFixed(1)}</td>
+                <td data-column="performance" data-sort="primary" class=" d-sm-table-cell ${player.goals_performance_team > 0 ? 'green-text' : player.goals_performance_team < 0 ? 'red-text' : ''}">${(Math.round(player.goals_performance_team * 10) / 10).toFixed(1)}</td>
                 <td data-column="benched_goals" data-sort="primary" >${player.goals_benched_team}</td>
                 <td data-column="goals_captained" data-sort="primary" class="vert-border-end">${player.goals_captained_team}</td>
-                <td data-column="assists" data-sort="primary" class="d-none d-md-table-cell">${player.assists_team}</td>
-                <td data-column="expected_assists" data-sort="primary" class="d-none d-md-table-cell">${(Math.round(player.expected_assists_team * 10) / 10).toFixed(1)}</td>
-                <td data-column="assists_performance" data-sort="primary" class="d-none d-md-table-cell ${player.assists_performance_team > 0 ? 'green-text' : player.assists_performance_team < 0 ? 'red-text' : ''}">${(Math.round(player.assists_performance_team * 10) / 10).toFixed(1)}</td>
-                <td data-column="benched_assists" data-sort="primary" class="d-none d-md-table-cell">${player.assists_benched_team}</td>
-                <td data-column="assists_captained" data-sort="primary" class="d-none d-md-table-cell vert-border-end">${player.assists_captained_team}</td>
-                <td data-column="goal_involvements" data-sort="primary" class="d-none d-lg-table-cell">${player.goals_assists_team}</td>
-                <td data-column="expected_goal_involvements" data-sort="primary" class="d-none d-lg-table-cell">${(Math.round(player.expected_goal_involvements_team * 10) / 10).toFixed(1)}</td>
-                <td data-column="goal_involvements_performance" data-sort="primary" class="d-none d-lg-table-cell ${player.goals_assists_performance_team > 0 ? 'green-text' : player.goals_assists_performance_team < 0 ? 'red-text' : ''}">${(Math.round(player.goals_assists_performance_team * 10) / 10).toFixed(1)}</td>
-                <td data-column="performance_performance" data-sort="primary" class="d-none d-lg-table-cell vert-border-end ${player.goals_assists_performance_team_vs_total > 0 ? 'green-text' : player.goals_assists_performance_team_vs_total < 0 ? 'red-text' : ''}">${(Math.round(player.goals_assists_performance_team_vs_total * 10) / 10).toFixed(1)}</td>
+                <td data-column="assists" data-sort="primary" class=" d-md-table-cell">${player.assists_team}</td>
+                <td data-column="expected_assists" data-sort="primary" class=" d-md-table-cell">${(Math.round(player.expected_assists_team * 10) / 10).toFixed(1)}</td>
+                <td data-column="assists_performance" data-sort="primary" class=" d-md-table-cell ${player.assists_performance_team > 0 ? 'green-text' : player.assists_performance_team < 0 ? 'red-text' : ''}">${(Math.round(player.assists_performance_team * 10) / 10).toFixed(1)}</td>
+                <td data-column="benched_assists" data-sort="primary" class=" d-md-table-cell">${player.assists_benched_team}</td>
+                <td data-column="assists_captained" data-sort="primary" class=" d-md-table-cell vert-border-end">${player.assists_captained_team}</td>
+                <td data-column="goal_involvements" data-sort="primary" class=" d-lg-table-cell">${player.goals_assists_team}</td>
+                <td data-column="expected_goal_involvements" data-sort="primary" class=" d-lg-table-cell">${(Math.round(player.expected_goal_involvements_team * 10) / 10).toFixed(1)}</td>
+                <td data-column="goal_involvements_performance" data-sort="primary" class=" d-lg-table-cell ${player.goals_assists_performance_team > 0 ? 'green-text' : player.goals_assists_performance_team < 0 ? 'red-text' : ''}">${(Math.round(player.goals_assists_performance_team * 10) / 10).toFixed(1)}</td>
+                <td data-column="performance_performance" data-sort="primary" class=" d-lg-table-cell vert-border-end ${player.goals_assists_performance_team_vs_total > 0 ? 'green-text' : player.goals_assists_performance_team_vs_total < 0 ? 'red-text' : ''}">${(Math.round(player.goals_assists_performance_team_vs_total * 10) / 10).toFixed(1)}</td>
 
-                <td data-column="goals_scored" data-sort="secondary" class="d-none d-xl-table-cell vert-border">${player.goals_scored}</td>
-                <td data-column="expected_goals" data-sort="secondary" class="d-none d-xl-table-cell">${(Math.round(player.expected_goals * 10) / 10).toFixed(1)}</td>
-                <td data-column="performance" data-sort="secondary" class="d-none d-xl-table-cell vert-border-end ${player.goals_performance > 0 ? 'green-text' : player.goals_performance < 0 ? 'red-text' : ''}">${(Math.round(player.goals_performance * 10) / 10).toFixed(1)}</td>
-                <td data-column="assists" data-sort="secondary" class="d-none d-xxl-table-cell assists" data-column="assists">${player.assists}</td>
-                <td data-column="expected_assists" data-sort="secondary" class="d-none d-xxl-table-cell">${(Math.round(player.expected_assists * 10) / 10).toFixed(1)}</td>
-                <td data-column="assists_performance" data-sort="secondary" class="d-none d-xxl-table-cell vert-border-end ${player.assists_performance > 0 ? 'green-text' : player.assists_performance < 0 ? 'red-text' : ''}">${(Math.round(player.assists_performance * 10) / 10).toFixed(1)}</td>
-                <td data-column="goal_involvements" data-sort="secondary" class="d-none d-xxl-table-cell">${player.goals_assists}</td>
-                <td data-column="expected_goal_involvements" data-sort="secondary" class="d-none d-xxl-table-cell">${(Math.round(player.expected_goal_involvements * 10) / 10).toFixed(1)}</td>
-                <td data-column="goal_involvements_performance" data-sort="secondary" class="d-none d-xxl-table-cell vert-border-end ${player.goals_assists_performance > 0 ? 'green-text' : player.goals_assists_performance < 0 ? 'red-text' : ''}">${(Math.round(player.goals_assists_performance * 10) / 10).toFixed(1)}</td>
+                <td data-column="goals_scored" data-sort="secondary" class=" d-xl-table-cell vert-border">${player.goals_scored}</td>
+                <td data-column="expected_goals" data-sort="secondary" class=" d-xl-table-cell">${(Math.round(player.expected_goals * 10) / 10).toFixed(1)}</td>
+                <td data-column="performance" data-sort="secondary" class=" d-xl-table-cell vert-border-end ${player.goals_performance > 0 ? 'green-text' : player.goals_performance < 0 ? 'red-text' : ''}">${(Math.round(player.goals_performance * 10) / 10).toFixed(1)}</td>
+                <td data-column="assists" data-sort="secondary" class=" d-xxl-table-cell assists" data-column="assists">${player.assists}</td>
+                <td data-column="expected_assists" data-sort="secondary" class=" d-xxl-table-cell">${(Math.round(player.expected_assists * 10) / 10).toFixed(1)}</td>
+                <td data-column="assists_performance" data-sort="secondary" class=" d-xxl-table-cell vert-border-end ${player.assists_performance > 0 ? 'green-text' : player.assists_performance < 0 ? 'red-text' : ''}">${(Math.round(player.assists_performance * 10) / 10).toFixed(1)}</td>
+                <td data-column="goal_involvements" data-sort="secondary" class=" d-xxl-table-cell">${player.goals_assists}</td>
+                <td data-column="expected_goal_involvements" data-sort="secondary" class=" d-xxl-table-cell">${(Math.round(player.expected_goal_involvements * 10) / 10).toFixed(1)}</td>
+                <td data-column="goal_involvements_performance" data-sort="secondary" class=" d-xxl-table-cell vert-border-end ${player.goals_assists_performance > 0 ? 'green-text' : player.goals_assists_performance < 0 ? 'red-text' : ''}">${(Math.round(player.goals_assists_performance * 10) / 10).toFixed(1)}</td>
             `;
                     tableBody.appendChild(row);
                 });
