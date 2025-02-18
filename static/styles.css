@@ -77,7 +77,8 @@ td.turqouise-text { color: var(--turqouise);}
 
 /* In order to overlap the player images */
 table {
-    z-index: 99;
+    position: relative;
+    z-index: 20;
 }
 
 
@@ -187,8 +188,6 @@ th.sorted {color: black !important;} /* link */
     animation: skeleton-animation 1.5s infinite ease-in-out;
 }
 
-
-
 /* Removed striped from col 1-3 */
 .custom-striped > tbody > tr:nth-of-type(odd) > *:nth-child(1),
 .custom-striped > tbody > tr:nth-of-type(odd) > *:nth-child(2),
@@ -196,7 +195,6 @@ th.sorted {color: black !important;} /* link */
     --bs-table-bg-type: inherit;
     --bs-table-color-type: inherit;
 }
-
 
 #header-logo-gw a {
     border-radius: 5px;
@@ -288,3 +286,6 @@ th.sorted {color: black !important;} /* link */
 }
 
 
+@media (max-width: 767px) {
+ 
+}

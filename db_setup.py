@@ -4,26 +4,6 @@ import sqlite3
 conn = sqlite3.connect("page_views.db", check_same_thread=False)
 cursor = conn.cursor()
 
-# Add the new columns to the page_views table
-cursor.execute(
-    """
-    CREATE TABLE IF NOT EXISTS page_views (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        session TEXT,
-        ip_address TEXT,
-        path TEXT,
-        team_id TEXT,
-        sort_by TEXT,
-        sort_order TEXT,
-        selected_positions TEXT,
-        method TEXT,
-        response_status_code INTEGER,
-        execution_time REAL
-    )
-    """
-)
-
 # Create the managers table if it doesn't exist
 cursor.execute(
     """
