@@ -5,7 +5,9 @@ FPL_API_BASE = "https://fantasy.premierleague.com/api"
 FPL_STATIC_URL = f"{FPL_API_BASE}/bootstrap-static/"
 
 headers = {
+    # This header identifies the client making the request. By setting it to a typical browser string, you're making your server-side request appear as though it's coming from a regular browser. Some APIs might behave differently or restrict requests that don't look like they're coming from a browser.
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:40.0) Gecko/20100101 Firefox/40.0",
+    # This tells the server that the client can handle gzip-compressed responses. If the server supports gzip, it can send compressed data back, which often results in faster transfers and lower bandwidth usage.
     "Accept-Encoding": "gzip"
 }
 

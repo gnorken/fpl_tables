@@ -52,6 +52,7 @@ def get_player_data_goals(static_data):
             "goals_assists_performance": round(float(player["goals_scored"]) + float(player["assists"]) - float(player["expected_goal_involvements"]), 2),
 
             "element_type": player["element_type"],
+            "now_cost": player["now_cost"],
         }
         for player in players
     }

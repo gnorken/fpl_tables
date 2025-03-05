@@ -1,41 +1,14 @@
 {% extends "layout.html" %}
 
 {% block body %}
-
-    <!-- This section will be injected into the layout's body block -->
-    <div class="row d-flex flex-row-reverse">
-        <div id="sort-info" class="col-12 col-lg-4 d-flex flex-column justify-content-center align-items-center align-items-lg-start ps-4">
-            <div>
-                <span style="white-space: pre-line">Current sort:
-                </span><span id="current-sort" class="fw-bold"></span>&nbsp;
-            </div>
-            <div>
-                <span id="current-order"></span>
-                <span id="current-hover">Click table headers to change sort</span>
-            </div>
-
-        </div> <!-- sort-info end -->
-        <div class="col-lg-1 d-lg-flex"> <!-- Checkbox -->
-            <form id="checkboxForm" class="d-flex flex-row flex-lg-column justify-content-center">
-                <div class="form-switch form-check">
-                    <input type="checkbox" id="checkbox1" class="form-check-input" value="1" checked>
-                    <label class="form-check-label" for="checkbox1">GK&nbsp;</label>
-                </div>
-                <div class="form-switch form-check">
-                    <input type="checkbox" id="checkbox2" class="form-check-input" value="2" checked>
-                    <label class="form-check-label" for="checkbox2">DEF&nbsp;</label>
-                </div>
-                <div class="form-switch form-check">
-                    <input type="checkbox" id="checkbox3" class="form-check-input" value="3" checked>
-                    <label class="form-check-label" for="checkbox3">MID&nbsp;</label>
-                </div>
-                <div class="form-switch form-check">
-                    <input type="checkbox" id="checkbox4" class="form-check-input" value="4" checked>
-                    <label class="form-check-label" for="checkbox4">FWD&nbsp;</label>
-                </div>
-            </form>
-        </div> <!-- checkboxes end -->
-        <div class="col-12 col-lg-7">
+    <div id="sort-info" class="d-flex bg-yellow p-2">Current Sort:&nbsp;<span id="current-sort" class="fw-bold"></span>&nbsp;
+        <span id="current-order"></span>
+        <div class="ms-auto">
+            <span id="current-hover">Click table headers to change sort</span>
+        </div>
+    </div> <!-- sort-info end -->
+    <div class="row mx-2"><!-- The whole info bar again-->
+        <div class="d-none d-lg-inline col-6"> <!-- Player images column -->
             <div id="player-images" class="player-image-container d-flex">
                 <!-- Skeleton Loader for entire container -->
                 <div class="skeleton-loader-container">
@@ -43,10 +16,43 @@
                 </div>
             </div>
         </div>
-    </div> <!-- row end -->
-     
-
-    {% block page_content %}
-    <!-- Child templates will fill this block -->
-    {% endblock %}
+        <div id="filter" class="col-12 col-lg-6 d-flex align-items-center py-2"> <!-- Filter div -->
+            <div class="col-3"></div> <!--  -->
+            <div class="col-3"> <!-- Checkbox column -->
+                <form id="checkboxForm" class="">
+                    <div class="form-switch form-check">
+                        <input type="checkbox" id="checkbox1" class="form-check-input" value="1" checked>
+                        <label class="form-check-label" for="checkbox1">GK&nbsp;</label>
+                    </div>
+                    <div class="form-switch form-check">
+                        <input type="checkbox" id="checkbox2" class="form-check-input" value="2" checked>
+                        <label class="form-check-label" for="checkbox2">DEF&nbsp;</label>
+                    </div>
+                    <div class="form-switch form-check">
+                        <input type="checkbox" id="checkbox3" class="form-check-input" value="3" checked>
+                        <label class="form-check-label" for="checkbox3">MID&nbsp;</label>
+                    </div>
+                    <div class="form-switch form-check">
+                        <input type="checkbox" id="checkbox4" class="form-check-input" value="4" checked>
+                        <label class="form-check-label" for="checkbox4">FWD&nbsp;</label>
+                    </div>
+                </form>
+            </div>
+            <div class="col-5"> <!-- Price slider column -->
+                <div id="price">
+                    <div id="price-slider-div" class="form-group">
+                        <div id="price-slider"></div>
+                        <label id="price-label" for="price-slider">Price</label>
+                    </div>                
+                </div>
+            </div>
+            <div class="col-1"> <!-- for spacing -->
+            </div>
+        </div> <!-- Filter end-->
+    </div> <!-- Row end -->
+    <div class="row mx-2">
+        {% block page_content %}
+        <!-- Child templates will fill this block -->
+        {% endblock %}
+    </div>
 {% endblock %}
