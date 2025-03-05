@@ -27,6 +27,7 @@ def get_player_data_starts(static_data):
             "team_code": player["team_code"],
             "team_name": next((team["short_name"] for team in teams if team["code"] == player["team_code"]), "N/A"),
             "web_name": player["web_name"],
+            "now_cost": player["now_cost"],
 
             "starts_team": 0,
             "minutes_team": 0,

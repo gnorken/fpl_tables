@@ -1,9 +1,8 @@
 from flask import g, Flask, flash, jsonify, redirect, render_template, session, request
 import json
 import sqlite3
-import time
 
-from modules.fetch_manager_data import get_manager_data
+from modules.fetch_manager_data import get_manager_data, get_manager_history
 from modules.fetch_goals_table import get_player_data_goals, get_live_data_goals
 from modules.fetch_starts_table import get_player_data_starts, get_live_data_starts
 from modules.fetch_points_table import get_player_data_points, get_live_data_points
@@ -62,6 +61,33 @@ def index():
 def about():
     CURRENT_GW = session['current_gw']
     return render_template("about.html", current_gw=CURRENT_GW)
+
+# team_page
+
+
+@app.route("/<int:team_id>/team/chips")
+def chips(team_id):
+    CURRENT_GW = session['current_gw']
+    try:
+        # Get manager and player data
+        manager = get_manager_data(team_id)
+        history = get_manager_history(team_id)
+        print(f"history: {history}")
+        print("Manager data:", manager)
+        return render_template("chips.html",
+                               team_id=team_id,
+                               current_gw=CURRENT_GW,
+                               manager=manager,
+                               history=history,
+                               current_page='chips'
+                               )
+
+    except ValueError:
+        flash("Team ID must be a valid number", "error")
+    except requests.exceptions.RequestException as e:
+        flash(f"Error fetching data: {e}", "error")
+
+    return redirect("/")
 
 # TOP_SCORERS
 # Dynamic team route for top_scorers
@@ -413,3 +439,8 @@ app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+# In the terminal:
+# export FLASK_ENV=development
+# export FLASK_DEBUG=1
+# flask run
