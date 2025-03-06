@@ -10,22 +10,22 @@
         <table class="my-3 table table-sm">
           <thead>
             <tr>
-              <th>Wildcard 1</th>
-              <th>Wildcard 2</th>
+              <th class="text-nowrap align-top">WC 1</th>
+              <th class="text-nowrap align-top">WC 2</th>
               <th>Free Hit</th>
-              <th>Assistant Mananager</th>
+              <th>Ass Man</th>
               <th>3x Cap</th>
               <th>Bench Boost</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>{% if history.wildcard_1.used %} GW {{ history.wildcard_1.gw }} {% else %} Not used {% endif %}</td>
-              <td>{% if history.wildcard_2.used %} GW {{ history.wildcard_2.gw }} {% else %} Not used {% endif %}</td>
-              <td>{% if history.freehit.used %} GW {{ history.freehit.gw }} {% else %} Not used {% endif %}</td>
-              <td>{% if history.am.used %} GW {{ history.am.gw }} {% else %} Not used {% endif %}</td>
-              <td>{% if history['3xc'].used %} GW {{ history['3xc'].gw }} {% else %} Not used {% endif %}</td>
-              <td>{% if history.bboost.used %} GW {{ history.bboost.gw }} {% else %} Not used {% endif %}</td>
+            <tr class="text-nowrap">
+              <td>{% if history.wildcard_1.used %} GW {{ history.wildcard_1.gw }} {% else %} {% endif %}</td>
+              <td>{% if history.wildcard_2.used %} GW {{ history.wildcard_2.gw }} {% else %} {% endif %}</td>
+              <td>{% if history.freehit.used %} GW {{ history.freehit.gw }} {% else %} {% endif %}</td>
+              <td>{% if history.am.used %} GW {{ history.am.gw }} {% else %} {% endif %}</td>
+              <td>{% if history['3xc'].used %} GW {{ history['3xc'].gw }} {% else %}{% endif %}</td>
+              <td>{% if history.bboost.used %} GW {{ history.bboost.gw }} {% else %}  {% endif %}</td>
             </tr>
           </tbody>
         </table>
