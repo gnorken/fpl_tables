@@ -19,7 +19,7 @@
     <body class="d-flex flex-column min-vh-100">
         <header class="py-3 bg-purple text-light">
             <div class="d-flex mx-3">
-                <div id="header-logo-gw">
+                <div id="header-logo-gw" class="d-none d-lg-inline">
                     <a href="/" class="d-flex align-items-end text-light text-decoration-none btn-turqouise">
                         <h1 id="header-logo" class="m-0">FPL Tables</h1>
                         <span id="header-gw" class="d-none d-sm-block px-2 text-center fst-italic fw-lighter">GW{{ current_gw }}</span>
@@ -57,7 +57,7 @@
             </div>
         </header> 
 
-        <main class=" flex-fill">
+        <main class="flex-fill">
             {% if get_flashed_messages() %}
                 <div class="alert alert-primary my-3 text-center" role="alert">
                     {{ get_flashed_messages() | join(" ") }}
