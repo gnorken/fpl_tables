@@ -16,10 +16,10 @@
                 </div>
             </div>
         </div>
-        <div id="filter" class="col-12 col-lg-6 d-flex align-items-center py-2"> <!-- Filter div -->
-            <div class="col-3"></div> <!--  -->
-            <div class="col-3"> <!-- Checkbox column -->
-                <form id="checkboxForm" class="">
+        <div id="filter" class="col-12 col-lg-6 d-flex flex-column flex-lg-row align-items-center py-2">
+            <div class="d-none d-lg-inline col-lg-3"></div> <!-- Optional spacer for large screens -->
+            <div class="col-12 col-lg-3"> <!-- Checkbox column -->
+                <form id="checkboxForm" class="d-flex d-lg-block">
                     <div class="form-switch form-check">
                         <input type="checkbox" id="checkbox1" class="form-check-input" value="1" checked>
                         <label class="form-check-label" for="checkbox1">GK&nbsp;</label>
@@ -38,7 +38,7 @@
                     </div>
                 </form>
             </div>
-            <div class="col-5"> <!-- Price slider column -->
+            <div class="col-12 col-lg-5 py-5"> <!-- Price slider column -->
                 <div id="price">
                     <div id="price-slider-div" class="form-group">
                         <div id="price-slider"></div>
@@ -46,9 +46,9 @@
                     </div>                
                 </div>
             </div>
-            <div class="col-1"> <!-- for spacing -->
-            </div>
-        </div> <!-- Filter end-->
+            <div class="col-1"><!-- Optional spacing --></div>
+        </div>
+         <!-- Filter end-->
     </div> <!-- Row end -->
     <div class="row mx-lg-2">
         {% block page_content %}

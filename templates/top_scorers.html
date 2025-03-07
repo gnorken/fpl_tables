@@ -9,16 +9,12 @@
          <table id="goals-table" class="table table-borderless table-striped custom-striped text-nowrap">
              <thead class="th-purple">
                  <tr class="text-center">
-                    <th colspan="1" class="d-sm-table-cell d-md-none round-border-top"></th>
-                    <th colspan="2" class="d-none d-md-table-cell d-lg-none round-border-top"></th>
-                    <th colspan="3" id="top-players" data-sort="top-players" class="d-none d-lg-table-cell round-border-top" >↑ Top Five Players</th>
+                    <th colspan="1" id="top-players" data-sort="top-players" class= "sticky-col first-col round-border-top" >↑ Top Five Players</th>
                     <th colspan="14" data-sort="team-data" class="bg-team round-border-top">Stats for {{ manager.team_name }}</th>
                     <th colspan="9" data-sort="overall-data" class="round-border-top  d-xl-table-cell">Player Totals</th>
                  </tr>
                  <tr class="text-center">
-                    <th colspan="1" class="d-sm-table-cell d-md-none">Players</th>
-                    <th colspan="2" class="d-none d-md-table-cell d-lg-none">Players</th>
-                     <th id="entries" data-sort="entries" colspan="3" class="d-none d-lg-table-cell"></th>
+                     <th colspan="1" id="entries" data-sort="entries" class="sticky-col first-col">Players  </th>
                      <th id="goals_scored" data-sort="goals_scored_team" onclick="sortTable('goals_scored_team')" class="sort-team bg-team {% if request.args.get('sort_by') == 'goals_scored_team' %}sorted{% endif %}">
                          G
                      </th>
@@ -187,7 +183,6 @@
                   const row = document.createElement('tr');
                   row.classList.add(
                     'vert-border',
-                    'text-center',
                     'align-middle',
                     `team-${player.team_code}`,
                     `element-type-${player.element_type}`
@@ -197,9 +192,11 @@
                       ? player.web_name.slice(0, 11) + '...'
                       : player.web_name;
                   row.innerHTML = `
-                    <td class="d-none d-lg-table-cell">${index + 1}</td>
-                    <td class="d-none d-md-table-cell">${player.team_name}</td>
-                    <td class="text-start">${truncatedWebName}</td>
+                    <td class="d-non d-lg-table-cell sticky-col first-col"><div class="d-flex">
+                        <div class="d-none d-sm-table-cell" style="width: 3ch;">${index + 1}</div>
+                        <div class="d-none d-sm-table-cell style="width: 5ch;">${player.team_name}</div>
+                        <div>${truncatedWebName}</div></div>
+                    </td>
                     <td data-column="goals_scored" data-sort="primary">${player.goals_scored_team}</td>
                     <td data-column="expected_goals" data-sort="primary" class="d-sm-table-cell">${(Math.round(player.expected_goals_team * 10) / 10).toFixed(1)}</td>
                     <td data-column="performance" data-sort="primary" class="d-sm-table-cell ${player.goals_performance_team > 0 ? 'green-text' : player.goals_performance_team < 0 ? 'red-text' : ''}">${(Math.round(player.goals_performance_team * 10) / 10).toFixed(1)}</td>
