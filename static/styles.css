@@ -37,80 +37,80 @@ a:active {
 
 
 /* Team colors */
-.team-1 td:nth-child(-n + 3), .team-1 {
+.team-1 td:first-child, .team-1 {
   background-color: #ef0107 !important;
   color: white !important;
 } /* Manchester United */
-.team-3 td:nth-child(-n + 3), .team-3 {
+.team-3 td:first-child, .team-3 {
   background-color: #ef0107 !important;
   color: white !important;
 } /* Arsenal */
-.team-4 td:nth-child(-n + 3), .team-4 {
+.team-4 td:first-child, .team-4 {
   background-color: #241f20 !important;
   color: white !important;
 } /* Newcastle */
-.team-6 td:nth-child(-n + 3), .team-6 {
+.team-6 td:first-child, .team-6 {
   background-color: #ffffff !important;
 } /* Tottenham */
-.team-7 td:nth-child(-n + 3), .team-7 {
+.team-7 td:first-child, .team-7 {
   background-color: #7a263a !important;
   color: white !important;
 } /* Aston Villa */
-.team-8 td:nth-child(-n + 3), .team-8 {
+.team-8 td:first-child, .team-8 {
   background-color: #034694 !important;
   color: white !important;
 } /* Chelsea */
-.team-9 td:nth-child(-n + 3), .team-9 {
+.team-9 td:first-child, .team-9 {
   background-color: #1b458f !important;
 } /* Leicester City */
-.team-11 td:nth-child(-n + 3), .team-11 {
+.team-11 td:first-child, .team-11 {
   background-color: #274488 !important;
   color: white !important;
 } /* Everton */
-.team-13 td:nth-child(-n + 3), .team-13 {
+.team-13 td:first-child, .team-13 {
   background-color: #0101e8 !important;
   color: white !important;
 } /* Leicester */
-.team-14 td:nth-child(-n + 3), .team-14 {
+.team-14 td:first-child, .team-14 {
   background-color: #dd0000 !important;
   color: white !important;
 } /* Liverpool */
-.team-17 td:nth-child(-n + 3), .team-17 {
+.team-17 td:first-child, .team-17 {
   background-color: #e53233 !important;
 } /* Nottingham Forest */
-.team-20 td:nth-child(-n + 3), .team-20 {
+.team-20 td:first-child, .team-20 {
   background-color: #ff0000 !important;
 } /* Southampton */
-.team-31 td:nth-child(-n + 3), .team-31 {
+.team-31 td:first-child, .team-31 {
   background-color: #0a4af5 !important;
   color: white !important;
 } /* Crystal Palace */
-.team-39 td:nth-child(-n + 3), .team-39 {
+.team-39 td:first-child, .team-39 {
   background-color: #fdb913 !important;
 } /* Wolves */
-.team-36 td:nth-child(-n + 3), .team-36 {
+.team-36 td:first-child, .team-36 {
   background-color: #0057b8 !important;
   color: white !important;
 } /* Brighton */
-.team-40 td:nth-child(-n + 3), .team-43 {
+.team-40 td:first-child, .team-43 {
   background-color: #3a64a3 !important;
   color: white !important;
 } /* Ipswich */
-.team-43 td:nth-child(-n + 3), .team-43 {
+.team-43 td:first-child, .team-43 {
   background-color: #6cabdd !important;
 } /* Manchester City */
-.team-54 td:nth-child(-n + 3), .team-54 {
+.team-54 td:first-child, .team-54 {
   background-color: #ffffff !important;
 } /* Fulham */
-.team-91 td:nth-child(-n + 3), .team-91 {
+.team-91 td:first-child, .team-91 {
   background-color: #da291c !important;
   color: white !important;
 } /* Bournemouth */
-.team-94 td:nth-child(-n + 3), .team-94 {
+.team-94 td:first-child, .team-94 {
   background-color: #d20000 !important;
   color: white !important;
 } /* Brentford */
-.default-team td:nth-child(-n + 3), .default-team {
+.default-team td:first-child, .default-team {
   background-color: #eeeeee !important;
 } /* Fallback */
 
@@ -553,3 +553,28 @@ th.sorted {
   font-size: clamp(1rem, 2vw, 111rem);
 }
 
+
+
+/* Sticky cols */
+/* General style for sticky columns */
+.sticky-col {
+  position: -webkit-sticky; /* For Safari */
+  position: sticky;
+  background: #fff; /* Ensure the background covers underlying content */
+  z-index: 2;
+}
+
+/* Specific offsets for the first three columns */
+/* Adjust these left values based on the actual widths of your columns */
+.first-col {
+  left: 0;
+  z-index: 3; /* Higher z-index so it overlaps the second column if needed */
+}
+
+.second-col {
+  left: 20px; /* e.g., width of the first column */
+}
+
+.third-col {
+  left: 100px; /* e.g., width of first + second columns */
+}
