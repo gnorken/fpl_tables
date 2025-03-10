@@ -9,12 +9,12 @@
          <table id="goals-table" class="table table-borderless table-striped custom-striped text-nowrap">
              <thead class="th-purple">
                  <tr class="text-center">
-                    <th colspan="1" id="top-players" data-sort="top-players" class= "sticky-col first-col round-border-top" >↑ Top Five Players</th>
-                    <th colspan="14" data-sort="team-data" class="bg-team round-border-top">Stats for {{ manager.team_name }}</th>
-                    <th colspan="9" data-sort="overall-data" class="round-border-top  d-xl-table-cell">Player Totals</th>
+                    <th colspan="1" id="top-players" data-sort="top-players" class= "sticky-col" >↑ Top Five Players</th>
+                    <th colspan="14" data-sort="team-data" class="bg-team">Stats for {{ manager.team_name }}</th>
+                    <th colspan="9" data-sort="overall-data" class=" d-xl-table-cell">Player Totals</th>
                  </tr>
                  <tr class="text-center">
-                     <th colspan="1" id="entries" data-sort="entries" class="sticky-col first-col">Players  </th>
+                     <th colspan="1" id="entries" data-sort="entries" class="sticky-col">Players  </th>
                      <th id="goals_scored" data-sort="goals_scored_team" onclick="sortTable('goals_scored_team')" class="sort-team bg-team {% if request.args.get('sort_by') == 'goals_scored_team' %}sorted{% endif %}">
                          G
                      </th>
@@ -92,13 +92,11 @@
              </tbody>
              <tfoot>
                  <tr class="th-purple text-center">
-                    <th colspan="1" style="color: var(--purple);" class="d-sm-table-cell d-md-none round-border-btm">.</th>
-                    <th colspan="2" style="color: var(--purple);" class="d-none d-md-table-cell d-lg-none round-border-btm">.</th>
-                    <th id="top-players" class="d-none d-lg-table-cell round-border-btm" colspan="3" style="color: var(--purple);">.</th>
-                    <th colspan="14" class="bg-team round-border-btm align-middle">
+                    <th colspan="1" style="color: var(--purple);" class="sticky-col">.</th>
+                    <th colspan="14" class="bg-team align-middle">
                         <div id="loading" style="display: none;">Loading...</div>
                     </th>
-                    <th colspan="9" class="round-border-btm  d-xl-table-cell"></th>
+                    <th colspan="9" class=" d-xl-table-cell"></th>
                  </tr>
              </tfoot>
          </table>
@@ -192,10 +190,12 @@
                       ? player.web_name.slice(0, 11) + '...'
                       : player.web_name;
                   row.innerHTML = `
-                    <td class="d-non d-lg-table-cell sticky-col first-col"><div class="d-flex">
-                        <div class="d-none d-sm-table-cell" style="width: 3ch;">${index + 1}</div>
-                        <div class="d-none d-sm-table-cell style="width: 5ch;">${player.team_name}</div>
-                        <div>${truncatedWebName}</div></div>
+                    <td class="sticky-col vert-border-end vert-border">
+                        <div class="d-flex">
+                            <div class="" style="width: 3ch;">${index + 1}</div>
+                            <div class="d-none d-sm-table-cell" style="width: 5ch;">${player.team_name} </div>
+                            <div>${truncatedWebName}</div>
+                        </div>
                     </td>
                     <td data-column="goals_scored" data-sort="primary">${player.goals_scored_team}</td>
                     <td data-column="expected_goals" data-sort="primary" class="d-sm-table-cell">${(Math.round(player.expected_goals_team * 10) / 10).toFixed(1)}</td>

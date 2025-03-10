@@ -297,40 +297,46 @@ th.sorted {
   border-radius: 0 0 20px 0;
 }
 
-/* Player images */
-.player-image-container div {
+.player-image-container {
   position: relative;
+  overflow: hidden;  /* Prevent images from spilling outside */
+  height: 180px;      /* You might need to set an explicit height depending on your layout */
+}
+
+/* All child wrappers should be absolute */
+.player-image-container div {
+  position: absolute;
   top: 20px;
 }
-/* .player-images { background-color: #00ef77; position: absolute  ;} */
 
+/* Overlap effect with different left offsets and stacking orders */
 .player-image-1 {
+  left: 0;
   z-index: 10;
 }
 .player-image-2 {
-  position: absolute;
-  left: -5%;
+  left: 15%;  /* Adjust this value for desired overlap */
   z-index: 9;
 }
 .player-image-3 {
-  left: -10%;
+  left: 30%;
   z-index: 8;
 }
 .player-image-4 {
-  left: -15%;
+  left: 45%;
   z-index: 7;
 }
 .player-image-5 {
-  left: -20%;
+  left: 60%;
   z-index: 6;
 }
 
-/* Adjust image size and layering */
-.player-image-container div img {
-  max-width: 150px;
-  /* background-color: #00ef77; */
-  z-index: 11; /* Above skeleton loader */
+/* Responsive image sizing */
+.overlap-img {
+  max-width: 150px; /* or use a percentage */
+  width: auto;
 }
+
 
 
 .skeleton-loader-container {
@@ -341,10 +347,8 @@ th.sorted {
   animation: skeleton-animation 1.5s infinite ease-in-out;
 }
 
-/* Removed striped from col 1-3 */
-.custom-striped > tbody > tr:nth-of-type(odd) > *:nth-child(1),
-.custom-striped > tbody > tr:nth-of-type(odd) > *:nth-child(2),
-.custom-striped > tbody > tr:nth-of-type(odd) > *:nth-child(3) {
+/* Removed striped from col 1 */
+.custom-striped > tbody > tr:nth-of-type(odd) > *:nth-child(1) {
   --bs-table-bg-type: inherit;
   --bs-table-color-type: inherit;
 }
@@ -367,9 +371,7 @@ th.sorted {
 #flag img {
   border-radius: 5px;
 }
-#header-team-name {
-  flex-direction: column;
-}
+
 #header-team-name h1 {
   font-size: 1rem;
 }
@@ -405,88 +407,7 @@ th.sorted {
   width: 40px;
 }
 
-/* Small screens (≥576px) */
-@media (min-width: 576px) and (max-width: 767.98px) {
-  #header-team-name {
-    font-size: 1rem;
-  }
-}
 
-/* Medium screens (≥768px) */
-@media (min-width: 768px) and (max-width: 991.98px) {
-  #header-logo-gw a {
-    padding: 0.5rem;
-  }
-  #header-logo {
-    font-size: 1.1rem;
-  }
-  #header-gw {
-    font-size: 0.7rem;
-  }
-
-  #header-team-name {
-    flex-direction: row;
-  }
-  #header-team-name h1 {
-    font-size: 1.5rem;
-  }
-}
-
-/* Large screens (≥992px) */
-@media (min-width: 992px) and (max-width: 1199.98px) {
-  #header-logo-gw a {
-    padding: 0.6rem;
-  }
-  #header-logo {
-    font-size: 1.2rem;
-  }
-  #header-gw {
-    font-size: 1rem;
-  }
-  #flag img{
-    width: 50px;
-  }
-
-  #header-team-name {
-    flex-direction: row;
-  }
-  #header-team-name h1 {
-    font-size: 1.7rem;
-  }
-}
-
-/* Extra large screens (≥1200px) */
-@media (min-width: 1200px) {
-  #header-logo-gw a {
-    padding: 0.7rem;
-  }
-  #header-logo {
-    font-size: 1.5rem;
-  }
-  #flag img{
-    width: 60px;
-  }
-  #header-gw {
-    font-size: 1.1rem;
-  }
-  #header-team-name {
-    flex-direction: row;
-  }
-  #header-team-name h1 {
-    font-size: 1.9rem;
-  }
-}
-
-/* Extra large screens (≥1400px) */
-@media (min-width: 1400px) {
-  #points-table td,
-  #points-table th {
-    padding: 0.3rem;
-  }
-}
-
-@media (max-width: 767px) {
-}
 
 #price-slider-div {
   position: relative;
@@ -561,20 +482,6 @@ th.sorted {
   position: -webkit-sticky; /* For Safari */
   position: sticky;
   background: #fff; /* Ensure the background covers underlying content */
-  z-index: 2;
-}
-
-/* Specific offsets for the first three columns */
-/* Adjust these left values based on the actual widths of your columns */
-.first-col {
   left: 0;
   z-index: 3; /* Higher z-index so it overlaps the second column if needed */
-}
-
-.second-col {
-  left: 20px; /* e.g., width of the first column */
-}
-
-.third-col {
-  left: 100px; /* e.g., width of first + second columns */
 }
