@@ -45,7 +45,7 @@ window.updatePlayerImages = function (data) {
       const imageDiv = document.createElement("div");
       imageDiv.className = `player-image-${index + 1}`;
       const img = document.createElement("img");
-      img.classList.add("img-fluid");
+      img.classList.add("img-fluid", "overlap-img");
       // Set the image source.
       img.src = `https://resources.premierleague.com/premierleague/photos/players/110x140/p${playerImage.photo}`;
       img.setAttribute("loading", "lazy");

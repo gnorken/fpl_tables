@@ -17,21 +17,21 @@
     </head>
 
     <body class="d-flex flex-column min-vh-100">
-        <header class="py-3 bg-purple text-light">
-            <div class="d-flex mx-3">
-                <div id="header-logo-gw" class="d-none d-lg-inline">
+        <header class="bg-purple text-light p-2">
+            <div class="d-flex align-items-center">
+                <div id="header-logo-gw" class="">
                     <a href="/" class="d-flex align-items-end text-light text-decoration-none btn-turqouise">
                         <h1 id="header-logo" class="m-0">FPL Tables</h1>
                         <span id="header-gw" class="d-none d-sm-block px-2 text-center fst-italic fw-lighter">GW{{ current_gw }}</span>
                     </a>
                 </div>
                 {% if manager %}
-                <div id="header-team" class="d-flex align-items-center px-2">
+                <div id="header-team" class="d-flex align-items-center p-1">
                     <div id="flag" class="d-none d-md-block mx-2">
                         <img class="" src="https://countryflagsapi.netlify.app/flag/{{ manager.country_code }}.svg" alt="{{ manager.country_code }}" class="me-2">
                     </div>
                     <a href="{{ url_for('chips', team_id=team_id) }}">                    
-                        <div id="header-team-name" class="d-flex">
+                        <div id="header-team-name" class="d-flex flex-column">
                             <div>
                                 <h1 class="mb-0">{{ manager.first_name }} {{ manager.last_name }}'s&nbsp;</h1>
                             </div>
