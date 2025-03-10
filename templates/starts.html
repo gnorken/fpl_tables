@@ -8,13 +8,13 @@
                 <table id="starts-table" class="table table-borderless table-striped custom-striped text-nowrap">
                     <thead class="th-purple">
                         <tr class="text-center">
-                            <th id="top-players" data-sort="top-players" class="align-middle round-border-top" colspan="3" rowspan="1">↑ Top Five Players</th>
+                            <th id="top-players" data-sort="top-players" class="sticky-col align-middle round-border-top" colspan="1" rowspan="1">↑ Top Five Players</th>
                             <th colspan="14" class="bg-team round-border-top" data-sort="team-data" title="Players that are or have been in {{ manager.team_name }} this season">Stats for {{ manager.team_name }}</th>
                             <th colspan="11" class="round-border-top  d-xxl-table-cell" data-sort="overall-data">Player Totals</th>
                         </tr>
 
                         <tr class="text-center">
-                            <th id="entries" colspan="3" data-sort="entries"></th>
+                            <th id="entries" colspan="1" data-sort="entries" class="sticky-col"></th>
                             <th id="starts_team" data-sort="starts_team" onclick="sortTable('starts_team')" class="sort-team bg-team {% if request.args.get('sort_by') == 'starts_team' %}sorted{% endif %}">
                                 S
                             </th>
@@ -97,7 +97,7 @@
                     </tbody>
                     <tfoot>
                         <tr class="th-purple text-center">
-                            <th id="top-players" class="round-border-btm" colspan="3" style="color: var(--purple);">.</th>
+                            <th id="top-players" class="sticky-col round-border-btm" colspan="1" style="color: var(--purple);">.</th>
                             <th colspan="14" class="bg-team round-border-btm align-middle">
                                 <div id="loading" style="display: none;">Loading...</div>
                             </th>
@@ -202,9 +202,13 @@
                     ? player.web_name.slice(0, 11) + '...'
                     : player.web_name;
                 row.innerHTML = `
-                   <td>${index + 1}</td>
-                    <td>${player.team_name}</td>
-                    <td class="text-start">${truncatedWebName}</td>
+                    <td class="sticky-col vert-border-end vert-border">
+                        <div class="d-flex">
+                            <div class="" style="width: 3ch;">${index + 1}</div>
+                            <div class="d-none d-sm-table-cell" style="width: 5ch;">${player.team_name} </div>
+                            <div>${truncatedWebName}</div>
+                        </div>
+                    </td>
                     <td data-column="starts" data-sort="primary" class="">${player.starts_team}</td>
                     <td data-column="minutes" data-sort="primary">${player.minutes_team}</td>
                     <td data-column="CS" data-sort="primary">${player.clean_sheets_team}</td>

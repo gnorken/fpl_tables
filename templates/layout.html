@@ -50,6 +50,7 @@
                             <li><a class="dropdown-item {% if current_page == 'starts' %}active{% endif %}" href="{{ url_for('starts', team_id=team_id) }}">More Categories</a></li>
                             <li><a class="dropdown-item {% if current_page == 'points' %}active{% endif %}" href="{{ url_for('points', team_id=team_id) }}">By Points</a></li>
                             <li><a class="dropdown-item {% if current_page == 'chips' %}active{% endif %}" href="{{ url_for('chips', team_id=team_id) }}">Chips</a></li>
+                            <li><a class="dropdown-item {% if current_page == 'am' %}active{% endif %}" href="{{ url_for('am', team_id=team_id) }}">Assistant Manager</a></li>
                         </ul>
                     </div>
                 </div>
