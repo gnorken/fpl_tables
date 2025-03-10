@@ -50,6 +50,16 @@ cursor.execute(
     )
     """
 )
+# Create table for player info dictionary for assistant managers table
+cursor.execute(
+    """
+    CREATE TABLE IF NOT EXISTS player_info_am (
+        team_id INTEGER PRIMARY KEY,
+        data TEXT,
+        gameweek INTEGER
+    )
+    """
+)
 
 # Commit the changes and close the connection
 conn.commit()

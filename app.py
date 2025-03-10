@@ -2,6 +2,7 @@ from flask import g, Flask, flash, jsonify, redirect, render_template, session, 
 import json
 import sqlite3
 
+from modules.fetch_am_data import get_player_data_am
 from modules.fetch_manager_data import get_manager_data, get_manager_history
 from modules.fetch_goals_table import get_player_data_goals, get_live_data_goals
 from modules.fetch_starts_table import get_player_data_starts, get_live_data_starts
@@ -410,6 +411,122 @@ def get_sorted_players_points():
             player_info_json = json.dumps(player_info)
             cursor.execute("""
                 INSERT INTO player_info_points (team_id, data, gameweek)
+                VALUES (?, ?, ?)
+            """, (team_id, player_info_json, current_gameweek))
+            conn.commit()
+
+        conn.close()
+
+        # Filter and sort players
+        top_scorers, top_scorers_images = filter_and_sort_players(
+            player_info, request.args)
+
+        if not top_scorers:
+            return jsonify({'error': 'No players to display', 'players': []}), 200
+
+        # Prepare data to send back to the client
+        response_data = {
+            'players': top_scorers,
+            'players_images': top_scorers_images
+        }
+
+        return jsonify(response_data)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ASSISTANT MANAGERS
+# Dynamic team route for points
+
+
+@app.route("/<int:team_id>/team/am")
+def am(team_id):
+    try:
+        # Default to 'N/A' if not set
+        current_gw = session.get('current_gw', '__')
+
+        print("hallo!!!")
+
+        # Set default values for sort_by and order
+        default_sort_by = 'total_points_team'  # hmmm
+        default_order = 'asc'  # Reverse so the toggle works
+
+        # Get query parameters, using default values if not provided
+        sort_by = request.args.get('sort_by', default_sort_by)
+        order = request.args.get('order', default_order)
+
+        # Get manager and player data
+        manager = get_manager_data(team_id)
+
+        return render_template("assistant_managers.html",
+                               team_id=team_id,
+                               current_gw=current_gw,
+                               manager=manager,
+                               sort_by=sort_by,
+                               order=order,
+                               current_page='am'
+                               )
+
+    except ValueError:
+        flash("Team ID must be a valid number", "error")
+    except requests.exceptions.RequestException as e:
+        flash(f"Error fetching data: {e}", "error")
+
+    return redirect("/")
+
+# AJAX for am table
+
+
+@app.route("/get-sorted-players-am")
+def get_sorted_players_am():
+    try:
+        print("hellO!")
+        print("Query Parameters:", request.args)
+        # Get team_id and sort_by from the query parameters
+        team_id = request.args.get('team_id', type=int)
+
+        if not team_id:
+            return jsonify({'error': 'Missing team_id parameter'}), 400
+
+        # Get data for goal_scorers table from JSON or API
+        # Connect to the database
+        conn = sqlite3.connect("page_views.db", check_same_thread=False)
+        cursor = conn.cursor()
+
+        # Check if the gameweek has changed
+        # Get the current gameweek from the session
+        current_gameweek = session.get('current_gw')
+        cursor.execute("SELECT DISTINCT gameweek FROM player_info_am")
+        stored_gameweek = cursor.fetchone()
+
+        if not stored_gameweek or stored_gameweek[0] != current_gameweek:
+            # Clear the database entirely if the gameweek has changed
+            cursor.execute("DELETE FROM player_info_am")
+            # Insert new gameweek value in the 'player_info' table
+            cursor.execute("""
+                INSERT INTO player_info_am (team_id, data, gameweek)
+                VALUES (?, ?, ?)
+            """, (-1, "{}", current_gameweek))  # Placeholder entry to track the gameweek
+            conn.commit()
+
+        # Try to fetch existing player_info from the database
+        cursor.execute(
+            "SELECT data FROM player_info_am WHERE team_id = ?", (team_id,))
+        row = cursor.fetchone()
+
+        if row:
+            # Deserialize JSON string back into a dictionary
+            player_info = json.loads(row[0])
+        else:
+            # If no data exists, generate player_info
+            static_data = get_static_data()
+            # Get player data for 'starts table'
+            player_info = get_player_data_am(static_data)
+
+            # Save the new player_info to the database
+            player_info_json = json.dumps(player_info)
+            cursor.execute("""
+                INSERT INTO player_info_am (team_id, data, gameweek)
                 VALUES (?, ?, ?)
             """, (team_id, player_info_json, current_gameweek))
             conn.commit()
