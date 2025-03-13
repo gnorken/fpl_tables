@@ -10,7 +10,6 @@ def filter_and_sort_players(player_info, request_args):
         "goals_scorers": "goals_scored_team",
         "starts": "starts_team",
         "points": "minutes_points_team",
-        "am": "total_points",
     }.get(table, "goals_scored_team")
 
     # Sort by query parameters
@@ -42,8 +41,8 @@ def filter_and_sort_players(player_info, request_args):
     # Filter players based on position, cost, and selected column
     players = [
         p for p in player_info.values()
-        if (min_cost <= p["now_cost"] <= max_cost)
-        and (not selected_positions or str(p['element_type']) in selected_positions)
+        if (min_cost <= p["now_cost"] <= max_cost)  # Cost filter
+        and str(p['element_type']) in selected_positions  # Position filter
     ]
 
     # Additional filtering based on the selected column

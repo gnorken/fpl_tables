@@ -19,7 +19,8 @@ def get_player_data_goals(static_data):
     player_info = {
         player["id"]: {
             # team-id stats
-            "photo": player["photo"].replace(".jpg", ".png"),
+            "photo": "p" + player["photo"].replace(".jpg", ".png"),
+
             "team_code": player["team_code"],
             "team_name": next((team["short_name"] for team in teams if team["code"] == player["team_code"]), "N/A"),
             "web_name": player["web_name"],
@@ -54,6 +55,7 @@ def get_player_data_goals(static_data):
             "element_type": player["element_type"],
             "now_cost": player["now_cost"],
         }
+
         for player in players
     }
     return player_info
