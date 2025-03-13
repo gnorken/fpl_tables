@@ -173,6 +173,8 @@ def get_sorted_players_goals():
             static_data = get_static_data()
             # Get player data for 'goals table'
             player_info = get_player_data_goals(static_data)
+            print(player_info)
+            print("HORE!§")
             # Get team-specific player data for 'goals table'
             player_info = get_live_data_goals(
                 team_id, player_info, static_data)
@@ -448,7 +450,7 @@ def am(team_id):
         print("hallo!!!")
 
         # Set default values for sort_by and order
-        default_sort_by = 'total_points_team'  # hmmm
+        default_sort_by = 'total_points'  # hmmm
         default_order = 'asc'  # Reverse so the toggle works
 
         # Get query parameters, using default values if not provided
@@ -520,7 +522,7 @@ def get_sorted_players_am():
         else:
             # If no data exists, generate player_info
             static_data = get_static_data()
-            # Get player data for 'starts table'
+            # Get player data for 'am table'
             player_info = get_player_data_am(static_data)
 
             # Save the new player_info to the database
