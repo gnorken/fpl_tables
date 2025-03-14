@@ -8,6 +8,15 @@ def days_since_joined(date_str):
     return (today - date_joined).days
 
 
+def age_in_years(birthday_str):
+    birth_date = datetime.strptime(birthday_str, "%Y-%m-%d").date()
+    today = datetime.today().date()
+    # Calculate age, subtracting 1 if the birthday hasn't occurred yet this year
+    age = today.year - birth_date.year - \
+        ((today.month, today.day) < (birth_date.month, birth_date.day))
+    return age
+
+
 FPL_API_BASE = "https://fantasy.premierleague.com/api"
 
 headers = {
@@ -55,7 +64,7 @@ def get_player_data_am(static_data):
             "transfers_out_event": player["transfers_out_event"],
             "value_form": player["value_form"],
             "team_join_date": days_since_joined(player["team_join_date"]),
-            "birth_date": player["birth_date"],
+            "birth_date": age_in_years(player["birth_date"]),
             "opta_code": player["opta_code"],
         }
         for player in players if player["element_type"] == 5

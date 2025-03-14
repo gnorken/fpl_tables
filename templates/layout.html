@@ -42,18 +42,64 @@
                     </a>
                     </div>
                     <div class="dropdown ms-auto d-flex align-items-center">
-                        <button id="tables-btn" class="btn dropdown-toggle" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
-                            Tables
+                        <button id="tables-btn" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                          Tables
                         </button>
-                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-                            <li><a class="dropdown-item {% if current_page == 'top_scorers' %}active{% endif %}" href="{{ url_for('top_scorers', team_id=team_id) }}">Goals and Assists</a></li>
-                            <li><a class="dropdown-item {% if current_page == 'starts' %}active{% endif %}" href="{{ url_for('starts', team_id=team_id) }}">More Categories</a></li>
-                            <li><a class="dropdown-item {% if current_page == 'points' %}active{% endif %}" href="{{ url_for('points', team_id=team_id) }}">By Points</a></li>
-                            <li><a class="dropdown-item {% if current_page == 'chips' %}active{% endif %}" href="{{ url_for('chips', team_id=team_id) }}">Chips</a></li>
-                            <li><a class="dropdown-item {% if current_page == 'am' %}active{% endif %}" href="{{ url_for('am', team_id=team_id) }}">Assistant Manager</a></li>
+                        <ul class="dropdown-menu" aria-labelledby="tables-btn">
+                          <!-- Group header for "Your Team" items -->
+                          <li><h6 class="dropdown-header">{{ manager.team_name }}</h6></li>
+                          <li>
+                            <a class="dropdown-item {% if current_page == 'top_scorers' %}active{% endif %}" href="{{ url_for('top_scorers', team_id=team_id) }}">
+                              Goals and Assists
+                            </a>
+                          </li>
+                          <li>
+                            <a class="dropdown-item {% if current_page == 'starts' %}active{% endif %}" href="{{ url_for('starts', team_id=team_id) }}">
+                              More Categories
+                            </a>
+                          </li>
+                          <li>
+                            <a class="dropdown-item {% if current_page == 'points' %}active{% endif %}" href="{{ url_for('points', team_id=team_id) }}">
+                              By Points
+                            </a>
+                          </li>
+                          <li>
+                            <a class="disabled dropdown-item {% if current_page == 'teams' %}active{% endif %}" href="{{ url_for('points', team_id=team_id) }}">
+                              By Teams
+                            </a>
+                          </li>
+                          <li>
+                            <a class="dropdown-item {% if current_page == 'chips' %}active{% endif %}" href="{{ url_for('chips', team_id=team_id) }}">
+                              Chips
+                            </a>
+                          </li>
+                          <!-- Divider between groups -->
+                          <li><hr class="dropdown-divider"></li>
+                          <li>
+                            <a class="dropdown-item {% if current_page == 'am' %}active{% endif %}" href="{{ url_for('am', team_id=team_id) }}">
+                                Managers
+                            </a>
+                          </li>
+                          <li>
+                            <a class="disabled dropdown-item {% if current_page == 'fixtures' %}active{% endif %}" href="">
+                                Fixtures
+                            </a>
+                          </li>
+                          <!-- Another divider -->
+                          <li><hr class="dropdown-divider"></li>
+                          <li>
+                            <a class="dropdown-item" href="/">
+                              Enter New ID
+                            </a>
+                          </li>
+                          <li>
+                            <a class="dropdown-item" href="{{ url_for('about') }}">
+                              About
+                            </a>
+                          </li>
                         </ul>
-                    </div>
-                </div>
+                      </div>
+                      
                 {% endif %}
             </div>
         </header> 
