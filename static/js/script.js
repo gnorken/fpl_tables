@@ -74,6 +74,72 @@ window.updatePlayerImages = function (data) {
   }
 };
 
+// Global function to update badges.
+window.updateBadges = function (data) {
+  // Update player images.
+  const imagesContainer = document.getElementById("player-images");
+
+  // Clear any existing content.
+  imagesContainer.innerHTML = "";
+
+  // Try to get an existing skeleton container (if it exists in your HTML markup).
+  let skeletonContainer = imagesContainer.querySelector(
+    ".skeleton-loader-container"
+  );
+  // If none exists, create one.
+  if (!skeletonContainer) {
+    skeletonContainer = document.createElement("div");
+    skeletonContainer.className = "skeleton-loader-container";
+    // Optionally, add some placeholder content or styling.
+    skeletonContainer.innerHTML = "";
+    imagesContainer.appendChild(skeletonContainer);
+  }
+
+  const playersImages = data.players_images || [];
+  const totalImages = playersImages.length;
+
+  if (totalImages === 0) {
+    // No images: update the loading text to "0 entries"
+    document.getElementById("loading").textContent = "0 entries";
+    // Do not clear the imagesContainer; leave the skeleton in place.
+  } else {
+    // There are images: clear the skeleton and load images.
+    imagesContainer.innerHTML = ""; // Remove skeleton and any previous images.
+    let imagesLoaded = 0;
+    playersImages.forEach((playerImage, index) => {
+      const imageDiv = document.createElement("div");
+      imageDiv.className = `badge-image-${index + 1}`;
+      const img = document.createElement("img");
+      img.classList.add("img-fluid", "overlap-badge");
+      // Set the image source.
+      img.src = `https://resources.premierleague.com/premierleague/badges/100/t${playerImage.team_code}@x2.png`;
+      // img.src = `https://resources.premierleague.com/premierleague/photos/players/110x140/${playerImage.photo}`;
+      img.setAttribute("loading", "lazy");
+      img.setAttribute("alt", "Club Badge");
+
+      // When the image loads successfully.
+      img.onload = function () {
+        imagesLoaded++;
+        if (imagesLoaded === totalImages) {
+          // Optionally, handle when all images have loaded.
+        }
+      };
+
+      // If the image fails to load, use a fallback.
+      img.onerror = function () {
+        // Prevent infinite loop in case the fallback image fails.
+        this.onerror = null;
+        this.src =
+          "https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png";
+        // "https://resources.premierleague.com/premierleague/photos/players/250x250/Photo-Missing.png";
+      };
+
+      imageDiv.appendChild(img);
+      imagesContainer.appendChild(imageDiv);
+    });
+  }
+};
+
 // Define updateSortIndicator globally.
 window.updateSortIndicator = function (sortBy) {
   const headers = document.querySelectorAll("th");

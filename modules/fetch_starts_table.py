@@ -32,6 +32,11 @@ def get_player_data_starts(static_data):
             "starts_team": 0,
             "minutes_team": 0,
             "clean_sheets_team": 0,
+            "assists_team": 0,
+            "expected_assists_team": 0,
+            "goals_scored_team": 0,
+            "expected_goals_team": 0,
+
             "captained_team": 0,
             "yellow_cards_team": 0,
             "red_cards_team": 0,
@@ -46,9 +51,14 @@ def get_player_data_starts(static_data):
             "penalties_saved_team": 0,
             "penalties_missed_team": 0,
 
+            # Player totals
             "starts": player["starts"],
             "minutes": player["minutes"],
             "clean_sheets": player["clean_sheets"],
+            "assists": player["assists"],
+            "expected_assists": player["expected_assists"],
+            "goals_scored": player["goals_scored"],
+            "expected_goals": round(float(player["expected_goals"]), 2),
             "yellow_cards": player["yellow_cards"],
             "red_cards": player["red_cards"],
             "dreamteam_count": player["dreamteam_count"],
@@ -100,6 +110,10 @@ def get_live_data_starts(team_id, player_info, static_data):
                     starts = element["stats"]["starts"]
                     minutes = element["stats"]["minutes"]
                     cs = element["stats"]["clean_sheets"]
+                    assists = element["stats"]["assists"]
+                    expected_assists = element["stats"]["expected_assists"]
+                    goals_scored = element["stats"]["goals_scored"]
+                    expected_goals = element["stats"]["expected_goals"]
                     yc = element["stats"]["yellow_cards"]
                     rc = element["stats"]["red_cards"]
                     dt = element["stats"]["in_dreamteam"]
@@ -119,6 +133,12 @@ def get_live_data_starts(team_id, player_info, static_data):
                         player_info[player_id]["starts_team"] += starts
                         player_info[player_id]["minutes_team"] += minutes
                         player_info[player_id]["clean_sheets_team"] += cs
+                        player_info[player_id]["assists_team"] += assists
+                        player_info[player_id]["expected_assists_team"] = round(
+                            player_info[player_id].get("expected_assists_team", 0) + float(expected_assists), 2)
+                        player_info[player_id]["expected_goals_team"] = round(
+                            player_info[player_id].get("expected_goals_team", 0) + float(expected_goals), 2)
+                        player_info[player_id]["goals_scored_team"] += goals_scored
                         player_info[player_id]["yellow_cards_team"] += yc
                         player_info[player_id]["red_cards_team"] += rc
                         player_info[player_id]["bps_team"] += bps

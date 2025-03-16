@@ -19,7 +19,7 @@
     <body class="d-flex flex-column min-vh-100">
         <header class="bg-purple text-light p-2">
             <div class="d-flex align-items-center">
-                <div id="header-logo-gw" class="">
+                <div id="header-logo-gw" class="d-none d-md-block">
                     <a href="/" class="d-flex align-items-end text-light text-decoration-none btn-turqouise">
                         <h1 id="header-logo" class="m-0">FPL Tables</h1>
                         <span id="header-gw" class="d-none d-sm-block px-2 text-center fst-italic fw-lighter">GW{{ current_gw }}</span>
@@ -55,7 +55,7 @@
                           </li>
                           <li>
                             <a class="dropdown-item {% if current_page == 'starts' %}active{% endif %}" href="{{ url_for('starts', team_id=team_id) }}">
-                              More Categories
+                              Most Categories
                             </a>
                           </li>
                           <li>
@@ -64,7 +64,7 @@
                             </a>
                           </li>
                           <li>
-                            <a class="disabled dropdown-item {% if current_page == 'teams' %}active{% endif %}" href="{{ url_for('points', team_id=team_id) }}">
+                            <a class="dropdown-item {% if current_page == 'teams' %}active{% endif %}" href="{{ url_for('teams', team_id=team_id) }}">
                               By Teams
                             </a>
                           </li>

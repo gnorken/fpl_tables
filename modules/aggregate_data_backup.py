@@ -1,3 +1,35 @@
+# calculate_totals
+def calculate_totals(player_info, top_scorers):
+    totals = {
+        # Sum totals regardless of being picked (goals_scored from static data)
+        "goals_total": sum(player["goals_scored"] for player in top_scorers),
+        "assists_total": sum(player["assists"] for player in top_scorers),
+        # "total_points": sum(player["total_points"] for player in top_points_contributers),
+
+        # Sum totals that contributed to the team (picked players in all gameweeks)
+        "goals_team_total": sum(player["goals_scored_team"] for player in player_info.values()),
+        "assists_team_total": sum(player["assists_team"] for player in player_info.values()),
+        # "points_team_total": sum(player["points_team"] for player in player_info.values()),
+
+        # Sum benched totals when players were benched
+        "goals_benched": sum(player["goals_benched"] for player in player_info.values()),
+        "assists_benched": sum(player["assists_benched"] for player in player_info.values()),
+        # "points_benched": sum(player["points_benched"] for player in player_info.values()),
+
+        # Sum totals doubled by being captains
+        "goals_captained": sum(player["goals_captained"] for player in player_info.values()),
+        "assists_captained": sum(player["assists_captained"] for player in player_info.values()),
+        # "points_captained": sum(player["points_captained"] for player in player_info.values()),
+
+        # Sum goalscorers and assisters
+        "goalscorers": sum(1 for player in player_info.values() if player["goals_scored_team"] > 0),
+        "assisters": sum(1 for player in player_info.values() if player["assists_team"] > 0),
+        # "points_contributers": sum(1 for player in player_info.values() if player["points_team"] > 0),
+    }
+    print("Calculated Totals:", totals)  # Debug print to confirm totals
+    return totals
+
+
 # Filter and sort top_scorers table
 def filter_and_sort_players(player_info, request_args):
     players_filtered = {}

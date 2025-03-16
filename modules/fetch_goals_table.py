@@ -111,12 +111,12 @@ def get_live_data_goals(team_id, player_info, static_data):
                         player_info[player_id]["expected_assists_team"] += float(
                             expected_assists)
                         player_info[player_id]["expected_assists_team"] = round(
-                            # Round to one decimals
+                            # Round to two decimals
                             player_info[player_id]["expected_assists_team"], 2)
                         player_info[player_id]["expected_goals_team"] += float(
                             expected_goals)
                         player_info[player_id]["expected_goals_team"] = round(
-                            # Round to one decimals
+                            # Round to two decimals
                             player_info[player_id]["expected_goals_team"], 2)
                         player_info[player_id]["goals_scored_team"] += goals_scored
                         player_info[player_id]["goals_assists_team"] += goals_scored

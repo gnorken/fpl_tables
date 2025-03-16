@@ -39,10 +39,11 @@ def filter_and_sort_players(player_info, request_args):
         "starts_team", "total_points_team"
     }
 
-    # Filter players based on position, cost, and selected column
     players = [
         p for p in player_info.values()
-        if (min_cost <= p["now_cost"] <= max_cost)
+        # ✅ Ignores cost if not set
+        if (not min_cost or not max_cost or min_cost <= p["now_cost"] <= max_cost)
+        # ✅ Ignores positions if not set
         and (not selected_positions or str(p['element_type']) in selected_positions)
     ]
 
@@ -64,6 +65,7 @@ def filter_and_sort_players(player_info, request_args):
             x[sort_by]), reverse=reverse_order)
 
     # Get the top 5 images by slicing and extract only the 'photo' values
-    players_images = [{"photo": player["photo"]} for player in players[:5]]
+    players_images = [{"photo": player["photo"],
+                       "team_code": player["team_code"]} for player in players[:5]]
 
     return players, players_images
