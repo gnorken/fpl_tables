@@ -40,6 +40,17 @@ cursor.execute(
     """
 )
 
+# Create table for player info dictionary for teams table
+cursor.execute(
+    """
+    CREATE TABLE IF NOT EXISTS player_info_teams (
+        team_id INTEGER PRIMARY KEY,
+        data TEXT,
+        gameweek INTEGER
+    )
+    """
+)
+
 # Create table for player info dictionary for points table
 cursor.execute(
     """

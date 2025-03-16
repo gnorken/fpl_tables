@@ -1,14 +1,15 @@
-{% extends "info.html" %}
+{% extends "info_club.html" %}
+{% set hide_element = True %}
 
-{% block title %}Top Scorers{% endblock %}
+{% block title %}Teams{% endblock %}
 
 {% block page_content %}
         <!-- PLAYER TABLE -->
             <div class="table-responsive">
-                <table id="starts-table" class="table table-borderless table-striped custom-striped text-nowrap">
+                <table id="starts-table" class="table table-sm table-borderless table-striped custom-striped text-nowrap">
                     <thead class="th-purple">
                         <tr class="text-center">
-                            <th id="top-players" data-sort="top-players" class="sticky-col align-middle round-border-top" colspan="1" rowspan="1">↑ Top Five Players</th>
+                            <th id="top-players" data-sort="top-players" class="sticky-col align-middle round-border-top" colspan="1" rowspan="1"></th>
                             <th colspan="18" class="bg-team round-border-top" data-sort="team-data" title="Players that are or have been in {{ manager.team_name }} this season">Stats for {{ manager.team_name }}</th>
                             <th colspan="15" class="round-border-top  d-xxl-table-cell" data-sort="overall-data">Player Totals</th>
                         </tr>
@@ -49,7 +50,7 @@
                                 PS
                             </th>
                             <th id="starts_benched_team" data-sort="starts_benched_team" onclick="sortTable('starts_benched_team')" class="sort-team bg-team {% if request.args.get('sort_by') == 'starts_benched_team' %}sorted{% endif %}">
-                                S
+                                St
                             </th>
                             <th id="minutes_benched_team" data-sort="minutes_benched_team" onclick="sortTable('minutes_benched_team')" class="sort-team bg-team {% if request.args.get('sort_by') == 'minutes_benched_team' %}sorted{% endif %}">
                                 M
@@ -78,16 +79,16 @@
                             <th id="clean_sheets" data-sort="clean_sheets" onclick="sortTable('clean_sheets')" class="sort  d-xxl-table-cell {% if request.args.get('sort_by') == 'clean_sheets' %}sorted{% endif %}">
                                 CS
                             </th>
-                            <th id="assists" data-sort="assists" onclick="sortTable('assists')" class="sort  d-xxl-table-cell {% if request.args.get('sort_by') == 'assists' %}sorted{% endif %}">
+                            <th id="assists" data-sort="assists" onclick="sortTable('assists')" class="sort {% if request.args.get('sort_by') == 'assists' %}sorted{% endif %}">
                                 A
                             </th>
-                            <th id="expected_assists" data-sort="expected_assists" onclick="sortTable('expected_assists')" class="sort{% if request.args.get('sort_by') == 'expected_assists' %}sorted{% endif %}">
+                            <th id="expected_assists" data-sort="expected_assists" onclick="sortTable('expected_assists')" class="sort {% if request.args.get('sort_by') == 'expected_assists' %}sorted{% endif %}">
                                 xA
                             </th>
-                            <th id="goals_scored" data-sort="goals_scored" onclick="sortTable('goals_scored')" class="sort{% if request.args.get('sort_by') == 'goals_scored' %}sorted{% endif %}">
+                            <th id="goals_scored" data-sort="goals_scored" onclick="sortTable('goals_scored')" class="sort {% if request.args.get('sort_by') == 'goals_scored' %}sorted{% endif %}">
                                 G
                             </th>
-                            <th id="expected_goals" data-sort="expected_goals" onclick="sortTable('expected_goals')" class="sort{% if request.args.get('sort_by') == 'expected_goals' %}sorted{% endif %}">
+                            <th id="expected_goals" data-sort="expected_goals" onclick="sortTable('expected_goals')" class="sort {% if request.args.get('sort_by') == 'expected_goals' %}sorted{% endif %}">
                                 xG
                             </th>
                             <th id="dreamteam_count" data-sort="dreamteam_count" onclick="sortTable('dreamteam_count')" class="sort  d-xxl-table-cell {% if request.args.get('sort_by') == 'dreamteam_count' %}sorted{% endif %}">
@@ -125,7 +126,7 @@
                             <th colspan="18" class="bg-team round-border-btm align-middle">
                                 <div id="loading" style="display: none;">Loading...</div>
                             </th>
-                            <th colspan="15" class="round-border-btm  d-xxl-table-cell"></th>
+                            <th colspan="15" class="round-border-btm"></th>
                         </tr>
                     </tfoot>
                 </table>
@@ -151,15 +152,18 @@
             "minutes_team": `Minutes played for ${managerName}`,
             "clean_sheets_team": `Clean sheets for ${managerName}`,
             "assists_team": `Assists for ${managerName}`,
+            "expected_assists_team": `Expected assists for ${managerName}`,
+            "goals_scored_team": `Goals scored  for ${managerName}`,
+            "expected_goals_team": `Expected goals  for ${managerName}`,
             "captained_team": `Times captained for ${managerName}`,
             "yellow_cards_team": `Yellow cards for ${managerName}`,
             "red_cards_team": `Red cards for ${managerName}`,
-            "dreamteam_count_team": `Number of times in dreamteam while playing for ${managerName}`,
+            "dreamteam_count_team": `Times in dreamteam playing for ${managerName}`,
             "bps_team": `Underlying bonus points system points for ${managerName}`,
             "starts_benched_team": `Benched starts for ${managerName}`,
             "minutes_benched_team": `Benched minutes for ${managerName}`,
             "own_goals_team": `Own goals scored for ${managerName}`,
-            "goals_conceded_team": `Goals conceded while playing for ${managerName}`,
+            "goals_conceded_team": `Goals conceded for ${managerName}`,
             "penalties_saved_team": `Penalties saved for ${managerName}`,
             "penalties_missed_team": `Penalties misssed for ${managerName}`,
 
@@ -167,6 +171,9 @@
             "minutes": `Total minutes played`,
             "clean_sheets": `Total clean sheets`,
             "assists": `Total assists`,
+            "expected_assists": `Total expected assists`,
+            "goals_scored": `Total goals scored`,
+            "expected_goals": `Total expected goals`,
             "yellow_cards": `Total yellow cards`,
             "red_cards": `Total red cards`,
             "dreamteam_count": `Total times in dreamteam`,
@@ -200,7 +207,7 @@
             document.getElementById('current-order').innerHTML = categoriesSortText;
             
             // The AJAX call.
-            fetch(`/get-sorted-players-starts?team_id=${teamId}&sort_by=${sortBy}&order=${sortOrder}&selected_positions=${selectedPositions}&min_cost=${minCost}&max_cost=${maxCost}`)
+            fetch(`/get-sorted-players-teams?team_id=${teamId}&sort_by=${sortBy}&order=${sortOrder}`)
             .then(response => response.json())
             .then(data => {
                 // Update entry count.
@@ -221,54 +228,51 @@
                     'text-center',
                     'align-middle',
                     `team-${player.team_code}`,
-                    `element-type-${player.element_type}`
+                    `badge-${player.team_code}`,
                 );
-                const truncatedWebName =
-                    player.web_name.length > 11
-                    ? player.web_name.slice(0, 11) + '...'
-                    : player.web_name;
                 row.innerHTML = `
                     <td class="sticky-col vert-border-end vert-border">
                         <div class="d-flex">
                             <div class="" style="width: 3ch;">${index + 1}</div>
-                            <div class="d-none d-sm-table-cell" style="width: 5ch;">${player.team_name} </div>
-                            <div>${truncatedWebName}</div>
+                            <div class="" style="width: 5ch;">${player.team_name} </div>
                         </div>
                     </td>
                     <td data-column="starts" data-sort="primary" class="">${player.starts_team}</td>
                     <td data-column="minutes" data-sort="primary">${player.minutes_team}</td>
                     <td data-column="CS" data-sort="primary">${player.clean_sheets_team}</td>
                     <td data-column="assists_team" data-sort="primary">${player.assists_team}</td>
-                    <td data-column="expected_assists_team" data-sort="primary">${player.expected_assists_team}</td>
+                    <td data-column="expected_assists_team" data-sort="primary">${(Math.round(player.expected_assists_team * 10) / 10).toFixed(1)}</td>
                     <td data-column="goals_scored_team" data-sort="primary">${player.goals_scored_team}</td>
-                    <td data-column="expected_goals_team" data-sort="primary">${player.expected_goals_team}</td>
+                    <td data-column="expected_goals_team" data-sort="primary">${(Math.round(player.expected_goals_team * 10) / 10).toFixed(1)}</td>
                     <td data-column="captain" data-sort="primary">${player.captained_team}</td>
                     <td data-column="DT" data-sort="primary">${player.dreamteam_count_team}</td>
                     <td data-column="BPS" data-sort="primary">${player.bps_team}</td>
-                    <td data-column="PS" data-sort="primary" class="">${player.penalties_saved_team}</td>
-                    <td data-column="starts_benched" data-sort="primary" class="vert-border">${player.starts_benched_team}</td>
-                    <td data-column="minutes_benched" data-sort="primary" class="vert-border-end">${player.minutes_benched_team}</td>
-                    <td data-column="YC" data-sort="primary" class=" d-xl-table-cell red-text">${player.yellow_cards_team}</td>
-                    <td data-column="RC" data-sort="primary" class=" d-xl-table-cell red-text">${player.red_cards_team}</td>
-                    <td data-column="GC" data-sort="primary" class=" d-xl-table-cell red-text">${player.goals_conceded_team}</td>
-                    <td data-column="OG" data-sort="primary" class=" d-xl-table-cell red-text">${player.own_goals_team}</td>
-                    <td data-column="PM" data-sort="primary" class=" d-xl-table-cell red-text vert-border-end">${player.penalties_missed_team}</td>
 
-                    <td data-column="starts" data-sort="secondary" class=" d-xxl-table-cell vert-border">${player.starts}</td>
-                    <td data-column="minutes" data-sort="secondary"class=" d-xxl-table-cell">${player.minutes}</td>
-                    <td data-column="CS" data-sort="secondary" class=" d-xxl-table-cell">${player.clean_sheets}</td>
+                    <td>sB</td>
+                    <td>mB</td>
+
+                    <td data-column="PS" data-sort="primary" class="">${player.penalties_saved_team}</td>
+                    <td data-column="YC" data-sort="primary" class="red-text">${player.yellow_cards_team}</td>
+                    <td data-column="RC" data-sort="primary" class="red-text">${player.red_cards_team}</td>
+                    <td data-column="GC" data-sort="primary" class="red-text">${player.goals_conceded_team}</td>
+                    <td data-column="OG" data-sort="primary" class="red-text">${player.own_goals_team}</td>
+                    <td data-column="PM" data-sort="primary" class="red-text vert-border-end">${player.penalties_missed_team}</td>
+
+                    <td data-column="starts" data-sort="secondary" class="vert-border">${player.starts}</td>
+                    <td data-column="minutes" data-sort="secondary">${player.minutes}</td>
+                    <td data-column="CS" data-sort="secondary">${player.clean_sheets}</td>
                     <td data-column="assists" data-sort="secondary">${player.assists}</td>
-                    <td data-column="expected_assists" data-sort="secondary">${player.expected_assists}</td>
-                    <td data-column="goals_scored" data-sort="secondary">${player.goals_scored}</td>
-                    <td data-column="expected_goals" data-sort="secondary">${player.expected_goals}</td>
-                    <td data-column="DT" data-sort="secondary" class=" d-xxl-table-cell">${player.dreamteam_count}</td>
-                    <td data-column="BPS" data-sort="secondary" class=" d-xxl-table-cell">${player.bps}</td>
-                    <td data-column="PS" data-sort="secondary" class=" d-xxl-table-cell">${player.penalties_saved}</td>
-                    <td data-column="YC" data-sort="secondary" class=" d-xxl-table-cell red-text vert-border">${player.yellow_cards}</td>
-                    <td data-column="RC" data-sort="secondary" class=" d-xxl-table-cell red-text">${player.red_cards}</td>
-                    <td data-column="GC" data-sort="secondary" class=" d-xxl-table-cell red-text">${player.goals_conceded}</td>
-                    <td data-column="OG" data-sort="secondary" class=" d-xxl-table-cell red-text">${player.own_goals}</td>
-                    <td data-column="PM" data-sort="secondary" class=" d-xxl-table-cell red-text vert-border-end">${player.penalties_missed}</td>
+                    <td data-column="expected_assists_team" data-sort="secondary">${(Math.round(player.expected_assists * 10) / 10).toFixed(1)}</td>
+                    <td data-column="goals_scored_team" data-sort="secondary">${player.goals_scored}</td>
+                    <td data-column="expected_goals_team" data-sort="secondary">${(Math.round(player.expected_goals * 10) / 10).toFixed(1)}</td>
+                    <td data-column="DT" data-sort="secondary">${player.dreamteam_count}</td>
+                    <td data-column="BPS" data-sort="secondary">${player.bps}</td>
+                    <td data-column="PS" data-sort="secondary">${player.penalties_saved}</td>
+                    <td data-column="YC" data-sort="secondary" class="red-text vert-border">${player.yellow_cards}</td>
+                    <td data-column="RC" data-sort="secondary" class="red-text">${player.red_cards}</td>
+                    <td data-column="GC" data-sort="secondary" class="red-text">${player.goals_conceded}</td>
+                    <td data-column="OG" data-sort="secondary" class="red-text">${player.own_goals}</td>
+                    <td data-column="PM" data-sort="secondary" class"red-text vert-border-end">${player.penalties_missed}</td>
                 `;
                 tableBody.appendChild(row);
                 });
@@ -276,8 +280,8 @@
                 // Once the table rows are added, hide the loading indicator and show the table.
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('player-table-body').style.display = '';
-                
-                window.updatePlayerImages(data);
+                // console.log(data)
+                window.updateBadges(data);
             })
             .catch(error => console.error('Error fetching player images:', error));
         };
