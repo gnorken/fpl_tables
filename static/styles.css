@@ -179,7 +179,7 @@ td.turqouise-text {
 /* In order to overlap the player images */
 table {
   position: relative;
-  z-index: 20;
+  z-index: 2;
 }
 
 /* TABLE HEADERS */
@@ -193,6 +193,7 @@ th:hover.sort {
 /* Cursors */
 th {
   cursor: default;
+  background-color: blueviolet;
 }
 th.sort,
 th.sort-team {
@@ -300,14 +301,21 @@ th.sorted {
 
 .player-image-container {
   position: relative;
-  overflow: hidden;  /* Prevent images from spilling outside */
+  xoverflow: hidden;  /* Prevent images from spilling outside */
   height: 180px;      /* You might need to set an explicit height depending on your layout */
+  z-index: 3; /* Make sure this is higher than the table's z-index */
 }
 
 /* All child wrappers should be absolute */
 .player-image-container div {
   position: absolute;
   top: 20px;
+}
+
+.table-responsive {
+  position: relative; /* Ensure it creates a stacking context */
+  z-index: 20;         /* Higher than the player images */
+
 }
 
 /* Overlap effect with different left offsets and stacking orders */
@@ -336,7 +344,6 @@ th.sorted {
 .overlap-img {
   max-width: 150px; /* or use a percentage */
   width: auto;
-
 }
 
 
@@ -488,3 +495,5 @@ th.sorted {
   left: 0;
   z-index: 3; /* Higher z-index so it overlaps the second column if needed */
 }
+
+
