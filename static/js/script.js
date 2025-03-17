@@ -332,14 +332,14 @@ document.addEventListener("DOMContentLoaded", function () {
     const numberWords = { 2: "Two", 3: "Three", 4: "Four" };
 
     if (entryCount === 0) {
-      topPlayersText = "No players to display";
+      topPlayersText = "Nothing to display";
     } else if (entryCount === 1) {
-      topPlayersText = "↑ Top Player";
+      topPlayersText = "↑ Only";
     } else if (entryCount < 5) {
       const countWord = numberWords[entryCount];
-      topPlayersText = `↑ Top ${countWord} Players`;
+      topPlayersText = `↑ Top ${countWord}`;
     } else {
-      topPlayersText = "↑ Top Five Players";
+      topPlayersText = "↑ Top Five";
     }
 
     const topPlayersElement = document.getElementById("top-players");
