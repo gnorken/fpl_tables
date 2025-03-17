@@ -6,12 +6,12 @@
 {% block page_content %}
         <!-- PLAYER TABLE -->
             <div class="table-responsive">
-                <table id="starts-table" class="table table-sm table-borderless table-striped custom-striped text-nowrap">
+                <table id="starts-table" class="table table-borderless table-striped custom-striped text-nowrap">
                     <thead class="th-purple">
                         <tr class="text-center">
                             <th id="top-players" data-sort="top-players" class="sticky-col align-middle round-border-top" colspan="1" rowspan="1"></th>
                             <th colspan="18" class="bg-team round-border-top" data-sort="team-data" title="Players that are or have been in {{ manager.team_name }} this season">Stats for {{ manager.team_name }}</th>
-                            <th colspan="15" class="round-border-top  d-xxl-table-cell" data-sort="overall-data">Player Totals</th>
+                            <th colspan="13" class="round-border-top  d-xxl-table-cell" data-sort="overall-data">Player Totals</th>
                         </tr>
 
                         <tr class="text-center">
@@ -70,12 +70,6 @@
                             <th id="penalties_missed_team" data-sort="penalties_missed_team" onclick="sortTable('penalties_missed_team')" class=" d-xl-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'penalties_missed_team' %}sorted{% endif %}">
                                 PM
                             </th>
-                            <th id="starts" data-sort="starts" onclick="sortTable('starts')" class="sort  d-xxl-table-cell {% if request.args.get('sort_by') == 'starts' %}sorted{% endif %}">
-                                S
-                            </th>
-                            <th id="minutes" data-sort="minutes" onclick="sortTable('minutes')" class="sort  d-xxl-table-cell {% if request.args.get('sort_by') == 'minutes' %}sorted{% endif %}">
-                                M
-                            </th>
                             <th id="clean_sheets" data-sort="clean_sheets" onclick="sortTable('clean_sheets')" class="sort  d-xxl-table-cell {% if request.args.get('sort_by') == 'clean_sheets' %}sorted{% endif %}">
                                 CS
                             </th>
@@ -126,7 +120,7 @@
                             <th colspan="18" class="bg-team round-border-btm align-middle">
                                 <div id="loading" style="display: none;">Loading...</div>
                             </th>
-                            <th colspan="15" class="round-border-btm"></th>
+                            <th colspan="13" class="round-border-btm"></th>
                         </tr>
                     </tfoot>
                 </table>
@@ -167,8 +161,6 @@
             "penalties_saved_team": `Penalties saved for ${managerName}`,
             "penalties_missed_team": `Penalties misssed for ${managerName}`,
 
-            "starts": `Total starts`,
-            "minutes": `Total minutes played`,
             "clean_sheets": `Total clean sheets`,
             "assists": `Total assists`,
             "expected_assists": `Total expected assists`,
@@ -187,6 +179,28 @@
             "team-data": `Team stats`,
             "overall-data": `Overall stats`,
         });
+
+        const full_team_name = {
+            "ARS": "Arsenal",
+            "AVL": "Aston Villa",
+            "BRE": "Brentford",
+            "BHA": "Brighton",
+            "BOU": "Bournmouth",
+            "CHE": "Chelsea",
+            "CRY": "Crystal Palace",
+            "EVE": "Everton",
+            "FUL": "Fulham",
+            "IPS": "Ipswich",
+            "NFO": "Nott'm Forest",
+            "LIV": "Liverpool",
+            "MCI": "Man City",
+            "MUN": "Man Utd",
+            "NEW": "Newcastle",
+            "SOU": "Southampton",
+            "TOT": "Tottenham",
+            "WOL": "Wolves"
+            // and so
+        }
         
         // Make lookup globally available.
         window.lookup = col_definitions(managerName);
@@ -231,10 +245,10 @@
                     `badge-${player.team_code}`,
                 );
                 row.innerHTML = `
-                    <td class="sticky-col vert-border-end vert-border">
+                    <td class="sticky-col vert-border-end ">
                         <div class="d-flex">
                             <div class="" style="width: 3ch;">${index + 1}</div>
-                            <div class="" style="width: 5ch;">${player.team_name} </div>
+                            <div>${ full_team_name[player.team_name] || player.team_name } </div>
                         </div>
                     </td>
                     <td data-column="starts" data-sort="primary" class="">${player.starts_team}</td>
@@ -258,8 +272,6 @@
                     <td data-column="OG" data-sort="primary" class="red-text">${player.own_goals_team}</td>
                     <td data-column="PM" data-sort="primary" class="red-text vert-border-end">${player.penalties_missed_team}</td>
 
-                    <td data-column="starts" data-sort="secondary" class="vert-border">${player.starts}</td>
-                    <td data-column="minutes" data-sort="secondary">${player.minutes}</td>
                     <td data-column="CS" data-sort="secondary">${player.clean_sheets}</td>
                     <td data-column="assists" data-sort="secondary">${player.assists}</td>
                     <td data-column="expected_assists_team" data-sort="secondary">${(Math.round(player.expected_assists * 10) / 10).toFixed(1)}</td>
@@ -270,9 +282,9 @@
                     <td data-column="PS" data-sort="secondary">${player.penalties_saved}</td>
                     <td data-column="YC" data-sort="secondary" class="red-text vert-border">${player.yellow_cards}</td>
                     <td data-column="RC" data-sort="secondary" class="red-text">${player.red_cards}</td>
-                    <td data-column="GC" data-sort="secondary" class="red-text">${player.goals_conceded}</td>
+                    <td data-column="GC" data-sort="secondary" class="red-text">${player.goals_conceded}*</td>
                     <td data-column="OG" data-sort="secondary" class="red-text">${player.own_goals}</td>
-                    <td data-column="PM" data-sort="secondary" class"red-text vert-border-end">${player.penalties_missed}</td>
+                    <td data-column="PM" data-sort="secondary" class="red-text vert-border-end">${player.penalties_missed}</td>
                 `;
                 tableBody.appendChild(row);
                 });

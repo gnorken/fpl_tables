@@ -2,69 +2,69 @@
 
 {% set hide_element = True %}
 
-{% block title %}Top Scorers{% endblock %}
+{% block title %}Assistant Managers{% endblock %}
 
 {% block page_content %}
 
     
         <!-- PLAYER TABLE -->
             <div class="table-responsive">
-                <table id="points-table" class="table table-borderless table-striped custom-striped text-nowrap">
+                <table id="points-table" class="table table-borderless table-striped custom-striped text-nowrap"> <!-- wrong id -->
                     <thead class="th-purple sticky-th">
                         <tr class="text-center ">
                             <th colspan="1" id="top-players" class="sticky-col align-middle round-border-top" data-sort="top-players">↑ Top Five Players</th>
-                            <th colspan="20" class="bg-team round-border-top" data-sort="team-data" title="Players that are or have been in {{ manager.team_name }} this season">Stats for {{ manager.team_name }}</th>
+                            <th colspan="20" class="round-border-top" data-sort="team-data" title="Manager stats">Managers</th>
                         </tr>
                         <tr class="text-center">
                             <th colspan="1" id="entries" class="sticky-col"></th>
-                            <th id="now_cost" data-sort="now_cost" onclick="sortTable('now_cost')" class="sort-team bg-team {% if request.args.get('sort_by') == 'now_cost' %}sorted{% endif %}">
+                            <th id="now_cost" data-sort="now_cost" onclick="sortTable('now_cost')" class="sort  {% if request.args.get('sort_by') == 'now_cost' %}sorted{% endif %}">
                                 £
                             </th>
-                            <th id="selected_by_percent" data-sort="selected_by_percent" onclick="sortTable('selected_by_percent')" class="sort-team bg-team   {% if request.args.get('sort_by') == 'selected_by_percent' %}sorted{% endif %}">
+                            <th id="selected_by_percent" data-sort="selected_by_percent" onclick="sortTable('selected_by_percent')" class="sort    {% if request.args.get('sort_by') == 'selected_by_percent' %}sorted{% endif %}">
                                 %
                             </th>
-                            <th id="total_points" data-sort="total_points" onclick="sortTable('total_points')" class="sort-team bg-team {% if request.args.get('sort_by') == 'total_points' %}sorted{% endif %}">
+                            <th id="total_points" data-sort="total_points" onclick="sortTable('total_points')" class="sort  {% if request.args.get('sort_by') == 'total_points' %}sorted{% endif %}">
                                 Points
                             </th>
-                            <th id="form" data-sort="form" onclick="sortTable('form')" class="sort-team bg-team   {% if request.args.get('sort_by') == 'form' %}sorted{% endif %}">
+                            <th id="form" data-sort="form" onclick="sortTable('form')" class="sort    {% if request.args.get('sort_by') == 'form' %}sorted{% endif %}">
                                 Form
                             </th>
-                            <th id="mng_win" data-sort="mng_win" onclick="sortTable('mng_win')" class="sort-team bg-team {% if request.args.get('sort_by') == 'mng_win' %}sorted{% endif %}">
-                                Win
+                            <th id="mng_win" data-sort="mng_win" onclick="sortTable('mng_win')" class="sort  {% if request.args.get('sort_by') == 'mng_win' %}sorted{% endif %}">
+                                W
                             </th>
-                            <th id="mng_draw" data-sort="mng_draw" onclick="sortTable('mng_draw')" class="sort-team bg-team {% if request.args.get('sort_by') == 'mng_draw' %}sorted{% endif %}">
-                                Draw
+                            <th id="mng_draw" data-sort="mng_draw" onclick="sortTable('mng_draw')" class="sort  {% if request.args.get('sort_by') == 'mng_draw' %}sorted{% endif %}">
+                                D
                             </th>
-                            <th id="mng_loss" data-sort="mng_loss" onclick="sortTable('mng_loss')" class="sort-team bg-team {% if request.args.get('sort_by') == 'mng_loss' %}sorted{% endif %}">
-                                Loss
+                            <th id="mng_loss" data-sort="mng_loss" onclick="sortTable('mng_loss')" class="sort  {% if request.args.get('sort_by') == 'mng_loss' %}sorted{% endif %}">
+                                L
                             </th>
-                            <th id="mng_underdog_win" data-sort="mng_underdog_win" onclick="sortTable('mng_underdog_win')" class="sort-team bg-team   {% if request.args.get('sort_by') == 'mng_underdog_win' %}sorted{% endif %}">
-                                uWin
+                            <th id="mng_underdog_win" data-sort="mng_underdog_win" onclick="sortTable('mng_underdog_win')" class="sort    {% if request.args.get('sort_by') == 'mng_underdog_win' %}sorted{% endif %}">
+                                uW
                             </th>
-                            <th id="mng_underdog_draw" data-sort="mng_underdog_draw" onclick="sortTable('mng_underdog_draw')" class="sort-team bg-team   {% if request.args.get('sort_by') == 'mng_underdog_draw' %}sorted{% endif %}">
-                                uDraw
+                            <th id="mng_underdog_draw" data-sort="mng_underdog_draw" onclick="sortTable('mng_underdog_draw')" class="sort    {% if request.args.get('sort_by') == 'mng_underdog_draw' %}sorted{% endif %}">
+                                uD
                             </th>
-                            <th id="mng_goals_scored" data-sort="mng_goals_scored" onclick="sortTable('mng_goals_scored')" class="sort-team   bg-team {% if request.args.get('sort_by') == 'mng_goals_scored' %}sorted{% endif %}">
+                            <th id="mng_goals_scored" data-sort="mng_goals_scored" onclick="sortTable('mng_goals_scored')" class="sort    {% if request.args.get('sort_by') == 'mng_goals_scored' %}sorted{% endif %}">
                                 Goals
                             </th>
-                            <th id="mng_clean_sheets" data-sort="mng_clean_sheets" onclick="sortTable('mng_clean_sheets')" class="sort-team bg-team   {% if request.args.get('sort_by') == 'mng_clean_sheets' %}sorted{% endif %}">
+                            <th id="mng_clean_sheets" data-sort="mng_clean_sheets" onclick="sortTable('mng_clean_sheets')" class="sort    {% if request.args.get('sort_by') == 'mng_clean_sheets' %}sorted{% endif %}">
                                 CS
                             </th>
-                            <th id="transfers_in_event" data-sort="transfers_in_event" onclick="sortTable('transfers_in_event')" class="sort-team bg-team   {% if request.args.get('sort_by') == 'transfers_in_event' %}sorted{% endif %}">
-                                Transfer In
+                            <th id="transfers_in_event" data-sort="transfers_in_event" onclick="sortTable('transfers_in_event')" class="sort    {% if request.args.get('sort_by') == 'transfers_in_event' %}sorted{% endif %}">
+                                T. In
                             </th>
-                            <th id="transfers_out_event" data-sort="transfers_out_event" onclick="sortTable('transfers_out_event')" class="sort-team bg-team   {% if request.args.get('sort_by') == 'transfers_out_event' %}sorted{% endif %}">
-                                Transfer Out
+                            <th id="transfers_out_event" data-sort="transfers_out_event" onclick="sortTable('transfers_out_event')" class="sort    {% if request.args.get('sort_by') == 'transfers_out_event' %}sorted{% endif %}">
+                                T. Out
                             </th>
-                            <th id="team_join_date" data-sort="team_join_date" onclick="sortTable('team_join_date')" class="sort-team bg-team   {% if request.args.get('sort_by') == 'team_join_date' %}sorted{% endif %}">
+                            <th id="team_join_date" data-sort="team_join_date" onclick="sortTable('team_join_date')" class="sort    {% if request.args.get('sort_by') == 'team_join_date' %}sorted{% endif %}">
                                 Team Join
                             </th>
-                            <th id="birth_date" data-sort="birth_date" onclick="sortTable('birth_date')" class="sort-team bg-team {% if request.args.get('sort_by') == 'birth_date' %}sorted{% endif %}">
+                            <th id="birth_date" data-sort="birth_date" onclick="sortTable('birth_date')" class="sort  {% if request.args.get('sort_by') == 'birth_date' %}sorted{% endif %}">
                                 Age
                             </th>
                             {% for i in range(1,6) %}
                             {% set fixture = current_gw + i %}
-                            <th id="fixture{{ i }}" data-sort="fixture{{ i }}" onclick="sortTable('fixture{{ i }}')" class="sort-team bg-team {% if request.args.get('sort_by') == 'fixture' ~ i %}sorted{% endif %}">
+                            <th id="fixture{{ i }}" data-sort="fixture{{ i }}" onclick="sortTable('fixture{{ i }}')" class="sort  {% if request.args.get('sort_by') == 'fixture' ~ i %}sorted{% endif %}">
                               {% if fixture <= 38 %}
                                 GW{{ fixture }}
                               {% else %}
@@ -80,7 +80,7 @@
                     <tfoot>
                         <tr class="th-purple text-center">
                             <th id="top-players" class="sticky-col round-border-btm" colspan="1" style="color: var(--purple);">.</th>
-                            <th colspan="20" class="bg-team round-border-btm align-middle">
+                            <th colspan="20" class=" round-border-btm align-middle">
                                 <div id="loading" style="display: none;">Loading...</div>
                             </th>
                         </tr>
@@ -160,6 +160,7 @@
                   row.classList.add(
                     'vert-border',
                     'align-middle',
+                    'text-center',
                     `team-${player.team_code}`,
                     `element-type-${player.element_type}`
                   );
@@ -187,7 +188,7 @@
                     <td data-column="mng_goals_scored">${player.mng_goals_scored}</td>
                     <td data-column="mng_clean_sheets" class="vert-border-end">${player.mng_clean_sheets}</td>
                     <td data-column="transfers_in_event">${player.transfers_in_event}</td>
-                    <td data-column="transfers_out_event">${player.transfers_out_event}</td>
+                    <td data-column="transfers_out_event" class="vert-border-end">${player.transfers_out_event}</td>
                     <td data-column="team_join_date">${player.team_join_date}</td>
                     <td data-column="birth_date" class="vert-border-end"> ${player.birth_date}</td>
                   `;
