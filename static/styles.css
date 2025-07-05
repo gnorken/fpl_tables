@@ -1,3 +1,4 @@
+
 a,
 a:visited,
 a:hover,
@@ -34,6 +35,10 @@ a:active {
   background-color: var(--yellow);
   color: var(--text-dark);
 }
+
+/* for dropdown leagues */
+.red-text a {color:var(--red);}
+.green-text a {color:green;}
 
 
 /* Team colors */
@@ -203,65 +208,6 @@ td {
   cursor: default;
 }
 
-/* Table header row */
-th.sorted {
-  position: relative;
-  z-index: 1; /* Ensure text stays above the pseudo-element */
-}
-
-/* Curved background for the sorted team header */
-th.sorted.sort-team::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: var(--red); /* Match the table header */
-  z-index: -2; /* Ensure the pseudo-element stays behind the text */
-}
-
-th.sorted.sort-team::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: white; /* Your desired header background color */
-  border-radius: 10px 10px 0 0; /* Match the header cell's rounded corners */
-  z-index: -1; /* Ensure the pseudo-element stays behind the text */
-}
-
-/* Curved background for the sorted header (totals) */
-th.sorted::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: var(--purple); /* Match the table header */
-  z-index: -2; /* Ensure the pseudo-element stays behind the text */
-}
-
-/* Curved background for the sorted header (totals) */
-th.sorted::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: white; /* Your desired header background color */
-  border-radius: 10px 10px 0 0; /* Match the header cell's rounded corners */
-  z-index: -1; /* Ensure the pseudo-element stays behind the text */
-}
-
-th.sorted {
-  color: black !important;
-} /* link */
-
 /* BORDERS */
 
 /* custom borders for the table */
@@ -273,6 +219,12 @@ th.sorted {
 }
 .vert-border-end {
   border-right: 1px solid rgb(222, 226, 230);
+}
+.vert-border-white {
+  border-left: 1px solid whitesmoke;
+}
+.vert-border-end-white {
+  border-right: 1px solid whitesmoke;
 }
 
 /* Rounded borders */
@@ -363,6 +315,7 @@ th.sorted {
   --bs-table-color-type: inherit;
 }
 
+/* header */
 #header-logo-gw a {
   border-radius: 5px;
   padding: 0.5rem;
@@ -378,7 +331,8 @@ th.sorted {
   font-size: 0.7rem;
 }
 
-#flag img {
+#flag span {
+  font-size: 2.1em;
   border-radius: 5px;
 }
 
@@ -411,10 +365,6 @@ th.sorted {
 .active {
   background-color: var(--yellow) !important;
   color: black !important;
-}
-
-#flag img{
-  width: 40px;
 }
 
 
@@ -496,4 +446,97 @@ th.sorted {
   z-index: 3; /* Higher z-index so it overlaps the second column if needed */
 }
 
+/* 1) Outer coloured background */
+th.sorted.sort-team::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--red);
+  z-index: -2;
+}
+
+th.sorted:not(.sort-team)::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--purple);
+  z-index: -2;
+}
+
+/* 2) Inner white curved shape */
+th.sorted.sort-team::after,
+th.sorted:not(.sort-team)::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: white;
+  border-radius: 10px 10px 0 0;
+  z-index: -1;
+}
+
+/* 3) Make sure th can hold those pseudos */
+th.sorted {
+  position: relative;
+  z-index: 1;
+  color: black !important;
+}
+
+/* position that little <span> over to the right, vertically centered */
+.sort-arrow {
+  /* position: absolute;
+  /* right: 0.5rem; */
+  /* top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.75em;
+  z-index: 2;
+  pointer-events: none; */ 
+  /* so clicks go through to the TH */
+}
+
+
+/* mini league current team highlighter */
+/* .highlight-current>td:nth-child(-n+4) { */
+.highlight-current {
+  xbackground-color: var(--red);
+  zcolor: whitesmoke;
+  border: 2px solid var(--red) !important;
+}
+
+/* mini league cell highlighter */
+.highlight {
+  background-color: #fff3b0 !important;
+}
+
+/* Loading... */
+@keyframes dots {
+  0% {
+    content: '.';
+  }
+
+  10% {
+    content: '..';
+  }
+
+  20% {
+    content: '...';
+  }
+
+  100% {
+    content: '....';
+  }
+}
+
+#loading::after {
+  content: '';
+  animation: dots 1s steps(1, end) infinite;
+}
 

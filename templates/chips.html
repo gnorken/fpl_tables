@@ -13,7 +13,7 @@
               <th class="text-nowrap align-top"><span class="d-sm-none">WC 1</span><span class="d-none d-sm-inline">Wildcard 1</span></th>
               <th class="text-nowrap align-top"><span class="d-sm-none">WC 2</span><span class="d-none d-sm-inline">Wildcard 2</span></th>
               <th>Free Hit</th>
-              <th><span class="d-sm-none">Ass. Man.</span><span class="d-none d-sm-inline">Assistant Manager</span></th>
+              <th><span class="d-sm-none">Ass. Man</span><span class="d-none d-sm-inline">Assistant Manager</span></th>
               <th><span class="d-sm-none">3x Cap</span><span class="d-none d-sm-inline">Triple Captain</span></th>
               <th>Bench Boost</th>
             </tr>
@@ -74,7 +74,7 @@
                      alt="Manager 2">
                 <div class="position-absolute text-overlay chips-text">
                   {% if history.am.used %} {{ history.am.managers[1].web_name }} {% endif %}
-                </div>
+                </div>  
                 <div class="position-absolute text-overlay chips-text-points">
                   {% if history.am.used %} {{ history.am.managers[1].total_points }} points {% endif %}
                 </div>
@@ -162,7 +162,7 @@
   </div>
   
 
-  <!-- Debug/Info Section -->
+  <!-- 
   <div class="row">
     <div class="col">
       <p>{{ history.wildcard_1 }}</p>
@@ -174,5 +174,5 @@
     </div>
   </div>
 </div>
-
+-->
 {% endblock %}

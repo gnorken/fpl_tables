@@ -1,56 +1,27 @@
+from flask import session, request, render_template, flash, redirect, url_for
 import os
 import json
-import copy
-import logging
 import sqlite3
 import requests
-
 from flask import (
-    Flask,
-    g,
-    flash,
-    jsonify,
-    redirect,
-    render_template,
-    request,
-    session,
-    url_for,
-    current_app as app,
+    Flask, g, flash, jsonify,
+    redirect, render_template, session,
+    request, url_for
 )
-
 from modules.fetch_am_data import get_player_data_am
 from modules.fetch_manager_data import get_manager_data, get_manager_history
-from modules.fetch_all_tables import (
-    build_player_info,
-    populate_player_info_all_with_live_data,
-)
+from modules.fetch_all_tables import build_player_info, populate_player_info_all_with_live_data
 from modules.fetch_teams_table import aggregate_team_stats
-from modules.fetch_mini_leagues import (
-    get_league_name,
-    get_team_ids_from_league,
-    get_team_mini_league_summary,
-    append_current_manager,
-)
+from modules.fetch_mini_leagues import get_team_ids_from_league, aggregate_player_info_per_team
 from modules.aggregate_data import filter_and_sort_players
 from modules.utils import (
-    validate_team_id,
-    get_max_users,
-    get_static_data,
-    get_current_gw,
-    ordinalformat,
-    thousands,
-    territory_icon,
-    get_overall_league_leader_total,
+    validate_team_id, get_max_users,
+    get_static_data, get_current_gw,
+    ordinalformat, thousands, territory_icon
 )
 
-FPL_API = "https://fantasy.premierleague.com/api"
-HEADERS = {"User-Agent": "Mozilla/5.0"}
-
 app = Flask(__name__)
-app.logger.setLevel(logging.DEBUG)
-# app.secret_key = os.urandom(24) # For deployment
-app.secret_key = os.environ.get(
-    "FLASK_SECRET", "dev-secret-for-local")  # Development only
+app.secret_key = os.urandom(24)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 # Jinja filters
@@ -60,35 +31,16 @@ app.jinja_env.filters["territory_icon"] = territory_icon
 
 DATABASE = "page_views.db"
 
-
-@app.before_request
-def load_manager_into_g():
-    # 1) try path param
-    tid = (request.view_args or {}).get("team_id")
-    # 2) else fall back to whatever’s in session
-    if tid is None:
-        tid = session.get("team_id")
-
-    if tid:
-        m = get_manager_data(tid)
-        m["id"] = tid
-        g.manager = m
-    else:
-        g.manager = None
+# Inject current manager into every template
 
 
 @app.context_processor
-def inject_manager():
-    tid = (request.view_args or {}).get('team_id')
+def inject_current_manager():
+    tid = session.get("team_id")
     if not tid:
-        # on “/” or “/about” etc. we inject nothing
         return {}
-    m = get_manager_data(tid)
-    return {
-        "team_id": tid,
-        "manager": m
-    }
-
+    mgr = get_manager_data(tid)
+    return {"team_id": tid, "manager": mgr}
 
 # Ensure current_gw in session
 
@@ -192,7 +144,7 @@ def teams(team_id):
 
         # default sort key + order
         default_sort_by = 'starts_team'
-        default_order = 'desc'
+        default_order = 'asc'
 
         # allow user to override via query-string
         sort_by = request.args.get('sort_by', default_sort_by)
@@ -225,9 +177,8 @@ def am(team_id):
     return render_template("assistant_managers.html",
                            team_id=team_id,
                            current_gw=session.get('current_gw'),
-                           sort_by=request.args.get(
-                               'sort_by', 'total_points'),
-                           order=request.args.get('order', 'asc'),
+                           sort_by=request.args.get('sort_by', 'total_points'),
+                           order=request.args.get('order', 'desc'),
                            current_page='am')
 
 # --- MINI LEAGUES PAGE ---
@@ -235,167 +186,175 @@ def am(team_id):
 
 @app.route("/<int:league_id>/leagues/mini_leagues")
 def mini_leagues(league_id):
-    # 1️⃣ ensure we know the current GW
-    current_gw = session.get("current_gw") or get_current_gw()
-    session["current_gw"] = current_gw
+    # 1️⃣ get the mini-league standings
+    managers = get_team_ids_from_league(league_id, max_managers=10)
 
-    # 2️⃣ pull sort params out of the query (for JS to re‐use)
-    sort_by = request.args.get("sort_by", "rank")
-    order = request.args.get("order",   "asc")
-
-    league_name = get_league_name(league_id)
-
-    # set your default rows-per-page here
-    default_page_size = 10
-
-    # 3️⃣ just render the template—no DB or API calls here
-    return render_template(
-        "mini_leagues.html",
-        team_id=session.get("team_id"),
-        league_id=league_id,
-        current_gw=current_gw,
-        sort_by=sort_by,
-        order=order,
-        league_name=league_name,
-        current_page="mini_leagues",
-        maxShow=default_page_size,
-    )
-
-
-@app.route("/get-sorted-players")
-def get_sorted_players():
-    # 1️⃣ Parse query params
-    table = request.args.get("table",      default="goals")
-    team_id = request.args.get("team_id",    type=int)
-    league_id = request.args.get("league_id",  type=int)
-    sort_by = request.args.get("sort_by",    default=None)
-    order = request.args.get("order",      default="desc")
+    # 2️⃣ pull in your cached static_blob
     current_gw = session.get("current_gw")
-    max_show = request.args.get("max_show",   2, type=int)
-
-    # 2️⃣ Validate required params
-    if table == "mini_league":
-        if league_id is None or current_gw is None:
-            return jsonify({"error": "Missing league_id or current_gw"}), 400
-    else:
-        if team_id is None or current_gw is None:
-            return jsonify({"error": "Missing team_id or current_gw"}), 400
-
-    # 3️⃣ Load or build static blob for this GW
     conn = sqlite3.connect(DATABASE, check_same_thread=False)
     cur = conn.cursor()
+
+    # ensure your cache tables exist...
+    # (same DDL as in get_sorted_players)
+
+    # static_blob
     cur.execute(
-        "SELECT data FROM static_player_info WHERE gameweek = ?", (current_gw,)
-    )
+        "SELECT data FROM static_player_info WHERE gameweek = ?", (current_gw,))
     row = cur.fetchone()
     if row:
-        static_blob = {int(pid): blob for pid,
-                       blob in json.loads(row[0]).items()}
+        static_blob = {int(k): v for k, v in json.loads(row[0]).items()}
     else:
         static_blob = build_player_info(get_static_data())
         cur.execute(
             "INSERT OR REPLACE INTO static_player_info (gameweek,data) VALUES (?,?)",
+            (current_gw, json.dumps(static_blob)),
+        )
+        conn.commit()
+
+    # 3️⃣ for each manager, load or build their team_blob
+    all_team_player_info = []
+    for mgr in managers:
+        entry_id = mgr["entry"]
+        # try cache
+        cur.execute(
+            "SELECT data FROM team_player_info WHERE team_id = ? AND gameweek = ?",
+            (entry_id, current_gw),
+        )
+        row = cur.fetchone()
+        if row:
+            team_blob = {int(k): v for k, v in json.loads(row[0]).items()}
+        else:
+            team_blob = populate_player_info_all_with_live_data(
+                entry_id, static_blob, get_static_data()
+            )
+            cur.execute(
+                "INSERT OR REPLACE INTO team_player_info (team_id,gameweek,data) VALUES (?,?,?)",
+                (entry_id, current_gw, json.dumps(team_blob)),
+            )
+            conn.commit()
+
+        # convert blob dict→list of player-dicts
+        player_list = list(team_blob.values())
+        all_team_player_info.append((entry_id, player_list, mgr))
+
+    conn.close()
+
+    # 4️⃣ aggregate across each manager's squad
+    aggregated = aggregate_player_info_per_team(all_team_player_info)
+
+    # 5️⃣ apply sorting and slicing as before
+    sort_by = request.args.get("sort_by", "goals_scored_team")
+    order = request.args.get("order", "desc")
+    aggregated.sort(
+        key=lambda o: o.get(sort_by, 0),
+        reverse=(order == "desc"),
+    )
+
+    # top 5 badges
+    top5 = [{"team_id": o["team_id"], "team_name": o["team_name"]}
+            for o in aggregated[:5]]
+
+    # 6️⃣ finally render
+    return render_template(
+        "mini_leagues.html",
+        league_id=league_id,
+        current_gw=current_gw,
+        sort_by=sort_by,
+        order=order,
+        players=aggregated,
+        players_images=top5,
+        current_page="mini_leagues",
+    )
+
+
+# --- GET SORTED PLAYERS (unified AJAX) ---
+
+
+@app.route("/get-sorted-players")
+def get_sorted_players():
+    team_id = request.args.get("team_id",    type=int)
+    table = request.args.get("table",      default="goals")
+    sort_by = request.args.get("sort_by",    default=None)
+    order = request.args.get("order",      default="desc")
+    current_gw = session.get("current_gw")
+
+    print(
+        f"\n🔍 [REQUEST] team_id={team_id!r} table={table!r} sort_by={sort_by!r} order={order!r} current_gw={current_gw!r}")
+
+    if not team_id or not current_gw:
+        print("⚠️ Missing team_id or current_gw — bailing.")
+        return jsonify({"error": "Missing team_id or current_gw"}), 400
+
+    conn = sqlite3.connect(DATABASE, check_same_thread=False)
+    cur = conn.cursor()
+
+    # ensure cache tables exist
+    cur.execute("""
+      CREATE TABLE IF NOT EXISTS static_player_info (
+        gameweek INTEGER PRIMARY KEY,
+        data     TEXT    NOT NULL
+      )
+    """)
+    cur.execute("""
+      CREATE TABLE IF NOT EXISTS team_player_info (
+        team_id  INTEGER,
+        gameweek INTEGER,
+        data     TEXT    NOT NULL,
+        PRIMARY KEY(team_id,gameweek)
+      )
+    """)
+
+    # ——— static skeleton ———
+    cur.execute(
+        "SELECT data FROM static_player_info WHERE gameweek = ?",
+        (current_gw,)
+    )
+    row = cur.fetchone()
+    print("📦 static cache hit? ", bool(row))
+    if row:
+        raw = json.loads(row[0])
+        # JSON keys come back as strings; convert to ints
+        static_blob = {int(pid): blob for pid, blob in raw.items()}
+    else:
+        static_blob = build_player_info(get_static_data())
+        print("⚙️ built new static_blob with", len(static_blob), "entries")
+        cur.execute(
+            "INSERT OR REPLACE INTO static_player_info (gameweek,data) VALUES(?,?)",
             (current_gw, json.dumps(static_blob))
         )
         conn.commit()
 
-    # 4️⃣ Handle mini-league table
-    if table == "mini_league":
-        static_data = get_static_data()
-
-        # a) Try cache
-        cur.execute(
-            "SELECT data FROM mini_league_cache WHERE league_id=? AND gameweek=? AND team_id=? AND max_show=?",
-            (league_id, current_gw, team_id, max_show)
-        )
-        row = cur.fetchone()
-        if row:
-            players = json.loads(row[0])
-            rev = (order.lower() == "desc")
-            players.sort(key=lambda o: o.get(sort_by, 0), reverse=rev)
-            conn.close()
-            return jsonify(players=players)
-
-        # b) Cache miss → fetch managers
-        managers = get_team_ids_from_league(league_id, max_show)
-        append_current_manager(managers, team_id, league_id, logger=app.logger)
-
-        # c) Build summaries and merge metadata
-        players = []
-        for m in managers:
-            summary = get_team_mini_league_summary(m["entry"], static_data)
-
-            # instead of popping, just read the entry and leave `m` intact:
-            entry_id = m["entry"]
-            meta = {**m, "team_id": entry_id}
-
-            summary.update(meta)
-            players.append(summary)
-
-            values = [p.get(sort_by) for p in players]
-            print(f"Sorting by `{sort_by}`, got values: {values}")
-
-            # find all the indices where it’s None
-            bad_idxs = [i for i, v in enumerate(values) if v is None]
-            if bad_idxs:
-                print("→ None at positions:", bad_idxs)
-                for i in bad_idxs:
-                    print(f"  player[{i}] = {players[i]}")
-
-            # d) Final sort & annotate
-            rev = (order.lower() == "desc")
-            players.sort(key=lambda o: o.get(sort_by, 0), reverse=rev)
-
-            # overall‐season leader (same as your existing call)
-            leader_pts = get_overall_league_leader_total()
-
-            # mini‐league leader = max total_points among this mini‐league’s players
-            league_leader_pts = max((p.get("total_points", 0)
-                                    for p in players), default=0)
-
-            print(f"league_leader_pts: {league_leader_pts}")
-
-            for p in players:
-                # points behind the mini‐league’s top scorer
-                p["pts_behind_league_leader"] = p.get(
-                    "total_points", 0) - league_leader_pts
-                print(
-                    f"pts_behind_league_leader: {p["pts_behind_league_leader"]}")
-                # points behind the overall league leader
-                p["pts_behind_overall"] = p.get("total_points", 0) - leader_pts
-
-                # your ordinal‐formatted season label
-                p["years_active_label"] = ordinalformat(
-                    p.get("years_active", 0))
-
-        # e) Cache and return
-        cur.execute(
-            "INSERT OR REPLACE INTO mini_league_cache (league_id, gameweek, team_id, max_show, data) VALUES (?,?,?,?,?)",
-            (league_id, current_gw, team_id, max_show, json.dumps(players))
-        )
-        conn.commit()
-        conn.close()
-        return jsonify(players=players, manager=g.manager)
-
-    # ─── 5️⃣ Non-mini-league branches ─────────────────────────
+    # ——— team overlay ———
     cur.execute(
-        "SELECT data FROM team_player_info WHERE team_id=? AND gameweek=?",
+        "SELECT data FROM team_player_info WHERE team_id = ? AND gameweek = ?",
         (team_id, current_gw)
     )
     row = cur.fetchone()
+    print("📦 team cache hit?   ", bool(row))
     if row:
-        team_blob = {int(pid): blob for pid,
-                     blob in json.loads(row[0]).items()}
+        raw = json.loads(row[0])
+        team_blob = {int(pid): blob for pid, blob in raw.items()}
     else:
         team_blob = populate_player_info_all_with_live_data(
-            team_id, static_blob, get_static_data())
+            team_id, static_blob, get_static_data()
+        )
+        print("⚙️ built new team_blob with", len(team_blob), "entries")
         cur.execute(
-            "INSERT OR REPLACE INTO team_player_info (team_id,gameweek,data) VALUES (?,?,?)",
+            "INSERT OR REPLACE INTO team_player_info (team_id,gameweek,data) VALUES(?,?,?)",
             (team_id, current_gw, json.dumps(team_blob))
         )
         conn.commit()
 
+    # debug: sample entries
+    sample = list(team_blob.items())[:5]
+    for pid, p in sample:
+        print(
+            f"   🔎 pid={pid} | cost={p.get('cost')} | starts_team={p.get('starts_team')} | goals_scored_team={p.get('goals_scored_team')}")
+
     conn.close()
+
+    # dispatch by table type
+    # … earlier in get_sorted_players …
 
     if table == "teams":
         # 1️⃣ Aggregate all players into one object per club
@@ -428,24 +387,18 @@ def get_sorted_players():
         # 4️⃣ Respond with exactly one object per club
         return jsonify(
             players=sorted_stats,      # <= list of (up to) 20 club stats
-            players_images=top5,        # <= your badges
-            manager=g.manager
+            players_images=top5        # <= your badges
         )
+
     if table == "am":
         print("🚀 AM branch")
         am_blob = get_player_data_am(get_static_data())
         players, images = filter_and_sort_players(am_blob, request.args)
         print(f"📝 AM returned {len(players)} players")
-        return jsonify(players=players, players_images=images, manager=g.manager)
-    else:  # This is for top_scorers, starts and points table
-        players, images = filter_and_sort_players(team_blob, request.args)
-        return jsonify(players=players, players_images=images, manager=g.manager)
+        return jsonify(players=players, players_images=images)
 
-
-if __name__ == "__main__":
-    app.run(debug=True)
-
-# In the terminal:
-# export FLASK_ENV=development
-# export FLASK_DEBUG=1
-# flask run
+    # default: goals / starts / points / top_scorers etc.
+    print("🚀 DEFAULT branch, filtering team_blob")
+    players, images = filter_and_sort_players(team_blob, request.args)
+    print(f"📝 DEFAULT returned {len(players)} players, {len(images)} images\n")
+    return jsonify(players=players, players_images=images)

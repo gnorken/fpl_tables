@@ -4,63 +4,57 @@ import sqlite3
 conn = sqlite3.connect("page_views.db", check_same_thread=False)
 cursor = conn.cursor()
 
+# Create the static data table if it doesn't exist
+cursor.execute(
+    """
+    CREATE TABLE IF NOT EXISTS static_data (
+        key TEXT PRIMARY KEY,
+        data TEXT,
+        timestamp TEXT
+    )
+    """
+)
+
+cursor.execute("""
+    CREATE TABLE IF NOT EXISTS static_player_info(
+        gameweek   INTEGER PRIMARY KEY,
+        data       TEXT    NOT NULL
+    )
+    """)
+
+cursor.execute("""
+    CREATE TABLE IF NOT EXISTS team_player_info(
+        team_id    INTEGER,
+        gameweek   INTEGER,
+        data       TEXT    NOT NULL,
+        PRIMARY KEY(team_id, gameweek)
+    )
+    """)
+
+
+cursor.execute("""
+    CREATE TABLE mini_league_cache (
+        league_id   INTEGER NOT NULL,
+        gameweek    INTEGER NOT NULL,
+        team_id     INTEGER,
+        max_show     INTEGER NOT NULL,
+        data        TEXT    NOT NULL,
+        PRIMARY KEY (league_id, gameweek, team_id, max_show)
+    );
+    """)
+
 # Create the managers table if it doesn't exist
 cursor.execute(
     """
     CREATE TABLE IF NOT EXISTS managers (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        first_name TEXT,
-        last_name TEXT,
-        team_name TEXT,
-        team_id TEXT,
-        country_code TEXT
+        team_id      INTEGER PRIMARY KEY,
+        data         TEXT NOT NULL,
+        fetched_gw   INTEGER
     )
     """
 )
 
-# Create table for player info dictionary for goals table
-cursor.execute(
-    """
-    CREATE TABLE IF NOT EXISTS player_info_goals (
-        team_id INTEGER PRIMARY KEY,
-        data TEXT,
-        gameweek INTEGER
-    )
-    """
-)
 
-# Create table for player info dictionary for starts table
-cursor.execute(
-    """
-    CREATE TABLE IF NOT EXISTS player_info_starts (
-        team_id INTEGER PRIMARY KEY,
-        data TEXT,
-        gameweek INTEGER
-    )
-    """
-)
-
-# Create table for player info dictionary for teams table
-cursor.execute(
-    """
-    CREATE TABLE IF NOT EXISTS player_info_teams (
-        team_id INTEGER PRIMARY KEY,
-        data TEXT,
-        gameweek INTEGER
-    )
-    """
-)
-
-# Create table for player info dictionary for points table
-cursor.execute(
-    """
-    CREATE TABLE IF NOT EXISTS player_info_points (
-        team_id INTEGER PRIMARY KEY,
-        data TEXT,
-        gameweek INTEGER
-    )
-    """
-)
 # Create table for player info dictionary for assistant managers table
 cursor.execute(
     """

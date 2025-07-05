@@ -1,5 +1,13 @@
-import requests
+from datetime import datetime, timedelta
 from flask import flash, request
+import json
+import pycountry
+from markupsafe import Markup
+import requests
+import sqlite3
+
+DB_PATH = "page_views.db"
+
 
 FPL_API_BASE = "https://fantasy.premierleague.com/api"
 FPL_STATIC_URL = f"{FPL_API_BASE}/bootstrap-static/"
@@ -62,11 +70,38 @@ def get_current_gw():
 # Fetch static player data
 
 
-def get_static_data():
+def get_static_data(force_refresh=False, max_age_hours=6):
     static_url = FPL_STATIC_URL
+
+    # Connect to the database
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    cursor = conn.cursor()
+
+    # Try to fetch cached static data
+    cursor.execute(
+        "SELECT data, timestamp FROM static_data WHERE key = 'bootstrap'")
+    row = cursor.fetchone()
+
+    if row:
+        data_str, timestamp = row
+        cached_time = datetime.fromisoformat(timestamp)
+        if not force_refresh and datetime.now() - cached_time < timedelta(hours=max_age_hours):
+            conn.close()
+            return json.loads(data_str)
+
+    # Fetch new data from FPL
     response = requests.get(static_url, headers=headers)
     response.raise_for_status()
     static_data = response.json()
+
+    # Store the new data in the database
+    cursor.execute(
+        "REPLACE INTO static_data (key, data, timestamp) VALUES (?, ?, ?)",
+        ("bootstrap", json.dumps(static_data), datetime.now().isoformat())
+    )
+    conn.commit()
+    conn.close()
+
     return static_data
 
 # Fetch static Player’s Detailed Data
@@ -78,3 +113,163 @@ def get_player_detail_data():
     response.raise_for_status()
     player_detail_data = response.json()
     return player_detail_data
+
+# formatting for mini league drop down menu
+
+
+def ordinalformat(n):
+    """
+    Convert an integer to a string with:
+      • apostrophe thousands separators (e.g. 1'234)
+      • appropriate English ordinal suffix (st, nd, rd, th)
+    """
+    n = int(n)
+    # thousands separator
+    formatted = "{:,}".format(n).replace(",", "'")
+    # ordinal suffix
+    if 10 <= (n % 100) <= 20:
+        suffix = "th"
+    else:
+        suffix = {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+    return f"{formatted}{suffix}"
+
+
+# Formatting numbers in dropdown menu
+def thousands(n):
+    """
+    Convert an integer to a string with apostrophe thousands separators.
+    """
+    return "{:,}".format(int(n)).replace(",", "'")
+
+
+# Creative mapping of club names or codes to a pair of color emojis + team symbol
+TEAM_EMOJIS = {
+    "arsenal":                  "🔴⚪️🏹",    # Red & White, cannon
+    "aston villa":              "🟣🔵🦁",    # Claret & Blue, lion
+    "bournemouth":              "🟥⚫️🍒",   # Red & Black, cherry
+    "brentford":                "⚪️🟥🐝",    # White & Red, bee
+    "brighton":                 "🔵⚪️🕊️",  # Blue & White, dove
+    "chelsea":                  "🔵⚪️👑",    # Blue & White, crown
+    "crystal palace":           "🔴🔵🦅",    # Red & Blue, eagle
+    "everton":                  "🔵⚪️⚓",    # Blue & White, anchor
+    "fulham":                   "⚪️⚫️🐏",   # White & Black, ram
+    "ipswich":                  "🔵⚪️🚜",    # Blue & White, tractor
+    "leicester":                "🔵⚪️🦊",    # Blue & White, fox
+    "liverpool":                "🔴⚪️🐔",    # Red & White, liver bird
+    "manc city":                "🔵⚪️☁️",    # Sky Blue & White, cloud
+    "man utd":                  "🔴⚫️😈",    # Red & Black, devil
+    "newcastle":                "⚫️⬜️🦅",    # Black & White, eagle
+    "nott'm forest":            "🔴⚪️🌳",    # Red & White, tree
+    "southampton":              "🔴⚪️🛥️",  # Red & White, ship
+    "spurs":                    "⚪️🔵🐓",    # White & Navy, cockerel
+    "west ham":                 "🟣🟫🛠️",   # Claret & Blue, crossed hammers
+    "wolves":                   "🟨⚫️🐺",   # Gold & Black, wolf
+    # Next season promotions (2025-2026)
+    "burnley":               "🟣🔵🏰",    # Claret & Blue, castle
+    "leeds united":          "⚪️🟨🦁",    # White & Yellow, lion
+    "sunderland":            "🔴⚪️🐈"     # Red & White, cat
+}
+
+LEAGUE_EMOJIS = {
+    ".com": "🧑‍💻",
+    "AI": "🤖",
+    "algorithm": "🤖",
+    "analytics": "📊",
+    "astro sport league": "📺",
+    "betting": "🤑",
+    "bein sports league": "📺",
+    "blackbox": "✈🟧",
+    "broadcast": "📺",
+    "cash": "🤑",
+    # "fpl": "⚽️",
+    "gameweek 1": "🐣",
+    "gameweek 2": "🐥",
+    "general": "⭐️⭐️⭐️⭐️",
+    "global": "🌍",
+    "korea": "🇰🇷",
+    "invite": "✉️",
+    "invitational": "✉️",
+    "money": "🤑",
+    "nbc sports league": "📺",
+    "overall": "🌍",
+    "patreon": "🧡",
+    "planet": "🌍",
+    "podcast": "🎧",
+    "second chance": "🤞",
+    "sky sports league": "📺",
+    "trophy": "🏆",
+    "viaplay league": "🔴▶️",
+    "world": "🌍",
+    "youtube": "📺"
+}
+
+# Flags
+
+SPECIAL_FLAGS = {
+    "en": "gb-eng",         # England
+    "england": "gb-eng",
+    "s1": "gb-sct",         # Scotland
+    "scotland": "gb-sct",
+    "wa": "gb-wls",         # Wales
+    "wales": "gb-wls",
+    "nn": "gb-nir",         # Northern Ireland
+    "northern ireland": "gb-nir"
+}
+
+
+def territory_icon(key: str) -> Markup:
+    k = key.strip().lower()
+    # Custom team emojis
+    league_emojis = ''
+    for substr, emoji in LEAGUE_EMOJIS.items():
+        if substr in k:
+            league_emojis += emoji
+    if league_emojis:
+        return Markup(league_emojis)
+
+    # League emojis
+    if k in TEAM_EMOJIS:
+        return Markup(TEAM_EMOJIS[k])
+    # Home-nation overrides
+    if k in SPECIAL_FLAGS:
+        code = SPECIAL_FLAGS[k]
+    # ISO alpha-2
+    elif len(k) == 2 and k.isalpha():
+        code = k
+    # Full name lookup
+    else:
+        try:
+            country = pycountry.countries.lookup(key)
+            code = country.alpha_2.lower()
+        except LookupError:
+            return Markup("")
+
+    # Emit the Lipis v7.3.2 classes
+    return Markup(f"<span class='fi fi-{code}' aria-hidden='true'></span>")
+
+# Get OR leader
+
+
+def get_overall_league_leader_total():
+    """
+    Fetch the classic‐league standings for `league_id` and return
+    the `total` points held by the manager in 1st place.
+
+    Returns None if there’s no data or no rank==1 entry.
+    """
+    url = f"{FPL_API_BASE}/leagues-classic/314/standings/"
+    resp = requests.get(url, headers=headers)
+    resp.raise_for_status()
+    data = resp.json()
+
+    results = data.get("standings", {}).get("results", [])
+    if not results:
+        return None
+
+    # Try to find the entry whose 'rank' is 1
+    leader = next((r for r in results if r.get("rank") == 1), None)
+    if leader is None:
+        # Fallback to the first element in case the API guarantees sorted order
+        leader = results[0]
+
+    return leader.get("total")
