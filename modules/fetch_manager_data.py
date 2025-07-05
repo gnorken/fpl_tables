@@ -1,61 +1,69 @@
 import requests
 import sqlite3
+import json
+from flask import session
 
 FPL_API_BASE = "https://fantasy.premierleague.com/api"
-
-headers = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:40.0) Gecko/20100101 Firefox/40.0",
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:40.0) "
+                  "Gecko/20100101 Firefox/40.0",
     "Accept-Encoding": "gzip"
 }
+DB_PATH = "page_views.db"
 
 
 def get_manager_data(team_id):
-    # Fetch FPL Manager data
-    manager_url = f"{FPL_API_BASE}/entry/{team_id}/"
-    manager_response = requests.get(manager_url, headers=headers)
-    manager_data = manager_response.json()
+    """
+    Fetch manager data and cache it as a single JSON blob in SQLite.
+    Returns the cached data if it's already up-to-date for the current GW.
+    """
+    current_gw = session.get("current_gw")
 
-    # Extract manager details
+    # Ensure the table exists
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS managers (
+            team_id    INTEGER PRIMARY KEY,
+            data       TEXT    NOT NULL,
+            fetched_gw INTEGER
+        )
+    """)
+    conn.commit()
+
+    # 1) Try to load from cache
+    cursor.execute("SELECT data, fetched_gw FROM managers WHERE team_id = ?",
+                   (team_id,))
+    row = cursor.fetchone()
+    if row and row[1] == current_gw:
+        # Cache hit
+        manager = json.loads(row[0])
+        conn.close()
+        return manager
+
+    # 2) Cache miss → fetch from API
+    response = requests.get(
+        f"{FPL_API_BASE}/entry/{team_id}/", headers=HEADERS)
+    api_data = response.json()
+
     manager = {
-        "first_name": manager_data["player_first_name"],
-        "last_name": manager_data["player_last_name"],
-        "team_name": manager_data["name"],
-        "country_code": manager_data["player_region_iso_code_short"]
+        "first_name":      api_data.get("player_first_name"),
+        "last_name":       api_data.get("player_last_name"),
+        "team_name":       api_data.get("name"),
+        "country_code":    api_data.get("player_region_iso_code_short", "").lower(),
+        "classic_leagues": api_data.get("leagues", {}).get("classic", [])
     }
 
-    # The flagCDN didn't support Scotland, Northern Ireland and Wales....
-    if manager["country_code"] in ["S1", "EN", "WA", "NN"]:
-        manager["country_code"] = "GB"
-
-    # Connect to the database
-    conn = sqlite3.connect("page_views.db")
-    cursor = conn.cursor()
-
-    # Check if the manager already exists in the table
-    cursor.execute(
-        """
-        SELECT id FROM managers WHERE first_name = ? AND last_name = ? AND team_name = ?
-        """,
-        (manager["first_name"], manager["last_name"], manager["team_name"])
-    )
-
-    # If the manager doesn't exist, insert the data
-    if not cursor.fetchone():
-        cursor.execute(
-            """
-            INSERT INTO managers (first_name, last_name, team_name, team_id, country_code)
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            (
-                manager["first_name"],
-                manager["last_name"],
-                manager["team_name"],
-                team_id,
-                manager["country_code"]
-            )
-        )
-        conn.commit()
-
+    # 3) Upsert the JSON blob
+    data_json = json.dumps(manager)
+    cursor.execute("""
+        INSERT INTO managers (team_id, data, fetched_gw)
+        VALUES (?, ?, ?)
+        ON CONFLICT(team_id) DO UPDATE SET
+          data       = excluded.data,
+          fetched_gw = excluded.fetched_gw
+    """, (team_id, data_json, current_gw))
+    conn.commit()
     conn.close()
 
     return manager
@@ -66,7 +74,7 @@ DEFAULT_PHOTO = "Photo-Missing"
 
 def get_manager_history(team_id):
     history_url = f"{FPL_API_BASE}/entry/{team_id}/history/"
-    history_response = requests.get(history_url, headers=headers)
+    history_response = requests.get(history_url, headers=HEADERS)
     history_data = history_response.json()
 
     # Expanded chip usage state with the simplified assistant manager ("am")
@@ -123,6 +131,9 @@ def get_manager_history(team_id):
         elif chip_name == "bboost":
             chips_state["bboost"]["used"] = True
             chips_state["bboost"]["gw"] = event
+        elif chip_name == "freehit":
+            chips_state["freehit"]["used"] = True
+            chips_state["freehit"]["gw"] = event
         # This chip now corresponds to the assistant manager ("am")
         elif chip_name == "manager":
             chips_state["am"]["used"] = True
@@ -130,7 +141,7 @@ def get_manager_history(team_id):
 
     # Fetch bootstrap static data once for use in all lookups.
     bootstrap_url = "https://fantasy.premierleague.com/api/bootstrap-static/"
-    bootstrap_response = requests.get(bootstrap_url, headers=headers)
+    bootstrap_response = requests.get(bootstrap_url, headers=HEADERS)
     bootstrap_data = bootstrap_response.json()
 
     # -----------------------------
@@ -141,7 +152,7 @@ def get_manager_history(team_id):
 
         # Fetch picks for the event.
         picks_url = f"{FPL_API_BASE}/entry/{team_id}/event/{event_number}/picks/"
-        picks_response = requests.get(picks_url, headers=headers)
+        picks_response = requests.get(picks_url, headers=HEADERS)
         picks_data = picks_response.json()
 
         # Find the captain's pick.
@@ -154,7 +165,7 @@ def get_manager_history(team_id):
         if captain_element is not None:
             # Fetch live data for the event.
             live_url = f"{FPL_API_BASE}/event/{event_number}/live/"
-            live_response = requests.get(live_url, headers=headers)
+            live_response = requests.get(live_url, headers=HEADERS)
             live_data = live_response.json()
 
             for element in live_data.get("elements", []):
@@ -189,7 +200,7 @@ def get_manager_history(team_id):
 
         # Fetch picks for the bench boost event.
         picks_url = f"{FPL_API_BASE}/entry/{team_id}/event/{event_number}/picks/"
-        picks_response = requests.get(picks_url, headers=headers)
+        picks_response = requests.get(picks_url, headers=HEADERS)
         picks_data = picks_response.json()
 
         # Get the four bench players based on their positions (12, 13, 14, 15).
@@ -199,7 +210,7 @@ def get_manager_history(team_id):
 
         # Fetch live data for the event.
         live_url = f"{FPL_API_BASE}/event/{event_number}/live/"
-        live_response = requests.get(live_url, headers=headers)
+        live_response = requests.get(live_url, headers=HEADERS)
         live_data = live_response.json()
 
         # Create a mapping of element IDs to their total points.
@@ -245,7 +256,7 @@ def get_manager_history(team_id):
         # Process three consecutive gameweeks.
         for event_number in range(start_event, start_event + 3):
             picks_url = f"{FPL_API_BASE}/entry/{team_id}/event/{event_number}/picks/"
-            picks_response = requests.get(picks_url, headers=headers)
+            picks_response = requests.get(picks_url, headers=HEADERS)
             picks_data = picks_response.json()
 
             assistant_element = None
@@ -263,7 +274,7 @@ def get_manager_history(team_id):
             if assistant_element is not None:
                 # Fetch live data for this event.
                 live_url = f"{FPL_API_BASE}/event/{event_number}/live/"
-                live_response = requests.get(live_url, headers=headers)
+                live_response = requests.get(live_url, headers=HEADERS)
                 live_data = live_response.json()
 
                 for element in live_data.get("elements", []):

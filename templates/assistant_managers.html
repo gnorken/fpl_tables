@@ -140,7 +140,7 @@
             document.getElementById('current-order').innerHTML = categoriesSortText;
             
             // The AJAX call.
-            fetch(`/get-sorted-players-am?team_id=${teamId}&sort_by=${sortBy}&order=${sortOrder}`)
+            fetch(`/get-sorted-players?team_id=${teamId}&table=am&sort_by=${sortBy}&order=${sortOrder}`)
               .then(response => response.json())
               .then(data => {
                 console.log(data);
