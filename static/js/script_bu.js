@@ -218,26 +218,32 @@ window.fetchData = async (sortBy, sortOrder) => {
   // Teams / AM / default logic
   const teamId = window.teamId;
   const table = window.tableType;
-  const { minCost, maxCost } = window.getSelectedPriceRange();
-  const selectedPositions = window.getSelectedPositions();
+
+  // Base params
+  const params = {
+    team_id: teamId,
+    table: table,
+    sort_by: sortBy,
+    order: sortOrder,
+    max_show: window.tableConfig.maxShow,
+  };
+
+  if (table !== "am") {
+    const { minCost, maxCost } = window.getSelectedPriceRange();
+    const selectedPositions = window.getSelectedPositions();
+    params.selected_positions = selectedPositions;
+    params.min_cost = minCost;
+    params.max_cost = maxCost;
+  }
 
   document.getElementById("loading").style.display = "block";
   document.getElementById("player-table-body").style.display = "none";
 
-  const qs = new URLSearchParams({
-    team_id: teamId,
-    table,
-    sort_by: sortBy,
-    order: sortOrder,
-    selected_positions: selectedPositions,
-    min_cost: minCost,
-    max_cost: maxCost,
-    // Pass your JS maxShow value here:
-    max_show: window.tableConfig.maxShow,
-  });
+  const qs = new URLSearchParams(params);
+  const url = `/get-sorted-players?${qs}`;
 
   try {
-    const res = await fetch(`/get-sorted-players?${qs.toString()}`);
+    const res = await fetch(url);
     const payload = await res.json();
 
     // ←―――――――― Capture the full payload so handleUrlChange can see it

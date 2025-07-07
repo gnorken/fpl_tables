@@ -1,7 +1,9 @@
-// ---- script.js ----
-
 // ─────────────── 1) Header update ──────────────────
 function updateHeader(mgr) {
+  console.groupCollapsed("🔔 updateHeader called");
+  console.trace();
+  console.groupEnd();
+
   const flagEl = document.querySelector("#flag");
   if (flagEl)
     flagEl.innerHTML = `<span class="fi fi-${mgr.country_code}"></span>`;
@@ -183,6 +185,7 @@ async function fetchMiniLeague(sortBy, sortOrder) {
     tbody.appendChild(tr);
   });
 
+  updateSortIndicator(cfg.sortBy, cfg.sortOrder);
   // 7) Hide spinner, show table
   if (loading) loading.style.display = "none";
   tbody.style.display = "";
@@ -204,23 +207,36 @@ async function fetchData(sortBy, sortOrder) {
   const cfg = window.tableConfig;
   const tbody = document.querySelector(cfg.tbodySelector);
   const loading = document.querySelector(cfg.loadingSelector);
-  const { minCost, maxCost } = getSelectedPriceRange();
-  const selectedPositions = getSelectedPositions();
 
-  if (loading) loading.style.display = "block";
-  tbody.style.display = "none";
-
-  const qs = new URLSearchParams({
+  // 1) Always include sort & order
+  const params = {
     sort_by: sortBy,
     order: sortOrder,
-    selected_positions: selectedPositions,
-    min_cost: minCost,
-    max_cost: maxCost,
-  });
+  };
+
+  // 2) Only add filters if we're NOT on the Assistant Managers page
+  if (cfg.table !== "am") {
+    const { minCost, maxCost } = getSelectedPriceRange();
+    const selectedPositions = getSelectedPositions();
+    params.selected_positions = selectedPositions;
+    params.min_cost = minCost;
+    params.max_cost = maxCost;
+  }
+
+  // 3) Build the query string and fetch
+  const qs = new URLSearchParams(params);
   const resp = await fetch(`${cfg.url}&${qs}`);
+
   const { players, players_images, manager } = await resp.json();
 
-  if (manager) updateHeader(manager);
+  console.log("AJAX manager:", manager);
+  console.log("currentManagerId:", window.currentManagerId);
+  // only redraw header if manager really changed
+  // if (manager && manager.id !== window.currentManagerId) {
+  //   updateHeader(manager);
+  //   window.currentManagerId = manager.id;
+  // }
+
   document.getElementById("entries").textContent =
     players.length === 1 ? "1 entry" : `${players.length} entries`;
   updateTopPlayersText(players.length);
@@ -291,6 +307,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (params.has("order")) tableConfig.sortOrder = params.get("order");
   }
 
+  // 8.1.1) Immediately reflect that in the headers
+  updateSortIndicator(window.tableConfig.sortBy, window.tableConfig.sortOrder);
+
   // 8.2) Header-hover descriptions
   const hoverEl = document.getElementById("current-hover");
   if (hoverEl) {
@@ -309,10 +328,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // 8.3) Cell-hover highlighting
   document.querySelectorAll("table.interactive-table").forEach((table) => {
     table.addEventListener("mouseover", (e) => {
-      console.log("🐭 hover event on", e.target);
+      //console.log("🐭 hover event on", e.target);
       const td = e.target.closest("td[data-column][data-sort-level]");
       if (!td) return;
-      console.log("→ matched a td:", td);
+      //console.log("→ matched a td:", td);
       const col = td.dataset.column;
       const sortLevel = td.dataset.sortLevel;
       const row = td.closest("tr");

@@ -20,12 +20,12 @@
           </thead>
           <tbody>
             <tr class="text-nowrap">
-              <td>{% if history.wildcard_1.used %} GW {{ history.wildcard_1.gw }} {% else %} {% endif %}</td>
+              <td>{% if history.wildcard_1.used %} GW {{ history.wildcard_1.gw }}  {% else %} {% endif %}</td>
               <td>{% if history.wildcard_2.used %} GW {{ history.wildcard_2.gw }} {% else %} {% endif %}</td>
               <td>{% if history.freehit.used %} GW {{ history.freehit.gw }} {% else %} {% endif %}</td>
               <td>{% if history.am.used %} GW {{ history.am.gw }} {% else %} {% endif %}</td>
-              <td>{% if history['3xc'].used %} GW {{ history['3xc'].gw }} {% else %}{% endif %}</td>
-              <td>{% if history.bboost.used %} GW {{ history.bboost.gw }} {% else %}  {% endif %}</td>
+              <td>{% if history['3xc'].used %} GW {{ history['3xc'].gw }}  {% else %}{% endif %}</td>
+              <td>{% if history.bboost.used %} GW {{ history.bboost.gw }}  {% else %}  {% endif %}</td>
             </tr>
           </tbody>
         </table>
@@ -161,7 +161,14 @@
     </div>
   </div>
   
-
+<script>
+  // You can log variables passed from Flask as follows:
+  console.log('team_id:', {{ team_id }});
+  console.log('current_gw:', '{{ current_gw }}');
+  console.log('manager:', {{ manager | tojson }});
+  console.log('history:', {{ history | tojson }});
+  console.log('current_page:', '{{ current_page }}');
+</script>
   <!-- 
   <div class="row">
     <div class="col">

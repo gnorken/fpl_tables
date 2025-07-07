@@ -7,9 +7,16 @@ FPL_API = "https://fantasy.premierleague.com/api"
 SESSION = requests.Session()
 SESSION.headers.update({"User-Agent": "Mozilla/5.0"})
 
-# fetch and return just the event‐IDs for any played chips
+
+SPECIAL_FLAGS = {
+    "en": "gb-eng",         # England
+    "s1": "gb-sct",         # Scotland
+    "wa": "gb-wls",         # Wales
+    "nn": "gb-nir",         # Northern Ireland
+}
 
 
+# Get the current team, why is the benched points are not implementet yet
 def get_entry_history(entry_id: int) -> list[dict]:
     url = f"{FPL_API}/entry/{entry_id}/history/"
     resp = SESSION.get(url)
@@ -35,13 +42,7 @@ def get_entry_history(entry_id: int) -> list[dict]:
         "transfer_cost":   transfer_cost,
     }
 
-
-SPECIAL_FLAGS = {
-    "en": "gb-eng",         # England
-    "s1": "gb-sct",         # Scotland
-    "wa": "gb-wls",         # Wales
-    "nn": "gb-nir",         # Northern Ireland
-}
+# Create the dict which will be sent as JSON to frontend
 
 
 def build_manager(me: dict, league_entry: dict | None = None) -> dict:
@@ -79,7 +80,26 @@ def build_manager(me: dict, league_entry: dict | None = None) -> dict:
     base["chips"] = history["chips"]
     base["bench_points"] = history["bench_points"]
     base["transfer_cost"] = history["transfer_cost"]
+
+    # ─── Flatten the chips array into individual GW fields ───
+    # collect all events for each chip type
+    chip_events: dict[str, list[int]] = {}
+    for c in base["chips"]:
+        chip_events.setdefault(c["name"], []).append(c["event"])
+
+    # wildcard1_gw and wildcard2_gw
+    wcs = chip_events.get("wildcard", [])
+    base["wildcard1_gw"] = wcs[0] if len(wcs) > 0 else 0
+    base["wildcard2_gw"] = wcs[1] if len(wcs) > 1 else 0
+
+    # for the single‐use chips, just take the first (or None)
+    for chip_name in ("3xc", "bboost", "freehit", "manager"):
+        events = chip_events.get(chip_name, [])
+        base[f"{chip_name}_gw"] = events[0] if events else 0
+
     return base
+
+# Get the league name. (Suprised I needed a separate call for this)
 
 
 def get_league_name(league_id: int) -> str:
@@ -88,6 +108,8 @@ def get_league_name(league_id: int) -> str:
     resp.raise_for_status()
     data = resp.json()
     return data.get("league", {}).get("name", f"League {league_id}")
+
+# Get all the team ids and uses build_manager() to create dicts
 
 
 def get_team_ids_from_league(league_id: int, max_show: int) -> list[dict]:
@@ -113,6 +135,8 @@ def get_team_ids_from_league(league_id: int, max_show: int) -> list[dict]:
 
     return managers
 
+# If the current manager is not wihtin maxShow, go get it and append to list of managers
+
 
 def append_current_manager(managers: list[dict], team_id: int, league_id: int, logger=None) -> None:
     """
@@ -130,6 +154,8 @@ def append_current_manager(managers: list[dict], team_id: int, league_id: int, l
                     logger.debug(
                         f"[mini] appended manager {team_id} (rank {cl.get('entry_rank')})")
                 break
+
+# Go thru all the gameweeks with all the teams
 
 
 def get_team_mini_league_summary(team_id: int, static_data: dict) -> dict:
@@ -150,8 +176,7 @@ def get_team_mini_league_summary(team_id: int, static_data: dict) -> dict:
     }
     picks_map = {}
     with ThreadPoolExecutor(max_workers=8) as ex:
-        future_to_gw = {ex.submit(SESSION.get, url)
-                                  : gw for gw, url in pick_urls.items()}
+        future_to_gw = {ex.submit(SESSION.get, url)                        : gw for gw, url in pick_urls.items()}
         for fut in as_completed(future_to_gw):
             gw = future_to_gw[fut]
             try:
@@ -184,8 +209,7 @@ def get_team_mini_league_summary(team_id: int, static_data: dict) -> dict:
     live_urls = {
         gw: f"{FPL_API}/event/{gw}/live/" for gw in picks_map if picks_map[gw]}
     with ThreadPoolExecutor(max_workers=8) as ex:
-        future_to_gw = {ex.submit(SESSION.get, url)
-                                  : gw for gw, url in live_urls.items()}
+        future_to_gw = {ex.submit(SESSION.get, url)                        : gw for gw, url in live_urls.items()}
         for fut in as_completed(future_to_gw):
             gw = future_to_gw[fut]
             try:

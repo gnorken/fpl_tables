@@ -2,6 +2,7 @@ import requests
 import sqlite3
 import json
 from flask import session
+from modules.utils import (territory_icon)
 
 FPL_API_BASE = "https://fantasy.premierleague.com/api"
 HEADERS = {
@@ -51,7 +52,8 @@ def get_manager_data(team_id):
         "last_name":       api_data.get("player_last_name"),
         "team_name":       api_data.get("name"),
         "country_code":    api_data.get("player_region_iso_code_short", "").lower(),
-        "classic_leagues": api_data.get("leagues", {}).get("classic", [])
+        "classic_leagues": api_data.get("leagues", {}).get("classic", []),
+        "flag_html":       territory_icon(api_data.get("player_region_iso_code_short", "")),
     }
 
     # 3) Upsert the JSON blob

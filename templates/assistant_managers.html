@@ -6,214 +6,140 @@
 
 {% block page_content %}
 
-    
-        <!-- PLAYER TABLE -->
-            <div class="table-responsive">
-                <table id="points-table" class="table table-borderless table-striped custom-striped text-nowrap"> <!-- wrong id -->
-                    <thead class="th-purple sticky-th">
-                        <tr class="text-center ">
-                            <th colspan="1" id="top-players" class="sticky-col align-middle" data-sort="top-players">↑ Top Five</th>
-                            <th colspan="20" class="" data-sort="team-data" title="Manager stats">Manager stats</th>
-                        </tr>
-                        <tr class="text-center">
-                            <th colspan="1" id="entries" class="sticky-col"></th>
-                            <th id="now_cost" data-sort="now_cost" onclick="sortTable('now_cost')" class="sort  {% if request.args.get('sort_by') == 'now_cost' %}sorted{% endif %}">
-                                £
-                            </th>
-                            <th id="selected_by_percent" data-sort="selected_by_percent" onclick="sortTable('selected_by_percent')" class="sort    {% if request.args.get('sort_by') == 'selected_by_percent' %}sorted{% endif %}">
-                                %
-                            </th>
-                            <th id="total_points" data-sort="total_points" onclick="sortTable('total_points')" class="sort  {% if request.args.get('sort_by') == 'total_points' %}sorted{% endif %}">
-                                Points
-                            </th>
-                            <th id="form" data-sort="form" onclick="sortTable('form')" class="sort    {% if request.args.get('sort_by') == 'form' %}sorted{% endif %}">
-                                Form
-                            </th>
-                            <th id="mng_win" data-sort="mng_win" onclick="sortTable('mng_win')" class="sort  {% if request.args.get('sort_by') == 'mng_win' %}sorted{% endif %}">
-                                W
-                            </th>
-                            <th id="mng_draw" data-sort="mng_draw" onclick="sortTable('mng_draw')" class="sort  {% if request.args.get('sort_by') == 'mng_draw' %}sorted{% endif %}">
-                                D
-                            </th>
-                            <th id="mng_loss" data-sort="mng_loss" onclick="sortTable('mng_loss')" class="sort  {% if request.args.get('sort_by') == 'mng_loss' %}sorted{% endif %}">
-                                L
-                            </th>
-                            <th id="mng_underdog_win" data-sort="mng_underdog_win" onclick="sortTable('mng_underdog_win')" class="sort    {% if request.args.get('sort_by') == 'mng_underdog_win' %}sorted{% endif %}">
-                                uW
-                            </th>
-                            <th id="mng_underdog_draw" data-sort="mng_underdog_draw" onclick="sortTable('mng_underdog_draw')" class="sort    {% if request.args.get('sort_by') == 'mng_underdog_draw' %}sorted{% endif %}">
-                                uD
-                            </th>
-                            <th id="mng_goals_scored" data-sort="mng_goals_scored" onclick="sortTable('mng_goals_scored')" class="sort    {% if request.args.get('sort_by') == 'mng_goals_scored' %}sorted{% endif %}">
-                                Goals
-                            </th>
-                            <th id="mng_clean_sheets" data-sort="mng_clean_sheets" onclick="sortTable('mng_clean_sheets')" class="sort    {% if request.args.get('sort_by') == 'mng_clean_sheets' %}sorted{% endif %}">
-                                CS
-                            </th>
-                            <th id="transfers_in_event" data-sort="transfers_in_event" onclick="sortTable('transfers_in_event')" class="sort    {% if request.args.get('sort_by') == 'transfers_in_event' %}sorted{% endif %}">
-                                T. In
-                            </th>
-                            <th id="transfers_out_event" data-sort="transfers_out_event" onclick="sortTable('transfers_out_event')" class="sort    {% if request.args.get('sort_by') == 'transfers_out_event' %}sorted{% endif %}">
-                                T. Out
-                            </th>
-                            <th id="team_join_date" data-sort="team_join_date" onclick="sortTable('team_join_date')" class="sort    {% if request.args.get('sort_by') == 'team_join_date' %}sorted{% endif %}">
-                                Team Join
-                            </th>
-                            <th id="birth_date" data-sort="birth_date" onclick="sortTable('birth_date')" class="sort  {% if request.args.get('sort_by') == 'birth_date' %}sorted{% endif %}">
-                                Age
-                            </th>
-                            {% for i in range(1,6) %}
-                            {% set fixture = current_gw + i %}
-                            <th id="fixture{{ i }}" data-sort="fixture{{ i }}" onclick="sortTable('fixture{{ i }}')" class="sort  {% if request.args.get('sort_by') == 'fixture' ~ i %}sorted{% endif %}">
-                              {% if fixture <= 38 %}
-                                GW{{ fixture }}
-                              {% else %}
-                                N/A
-                              {% endif %}
-                            </th>
-                          {% endfor %}                          
-                        </tr>
-                    </thead>
-                    <tbody id="player-table-body">
-                    <!-- Player rows will be inserted here dynamically by JavaScript -->
-                    </tbody>
-                    <tfoot>
-                        <tr class="th-purple text-center">
-                            <th id="top-players" class="sticky-col " colspan="1" style="color: var(--purple);">.</th>
-                            <th colspan="20" class="align-middle">
-                                <div id="loading" style="display: none;">Loading...</div>
-                            </th>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-        </div> <!-- Close the row div here -->
-        <div class="row">
-        </div>
-    </div> <!-- Close the container div here -->
+<div class="table-responsive">
+    <table id="am-table" class="interactive-table table table-borderless table-striped custom-striped text-nowrap">
+        <thead class="th-purple sticky-th text-center">
+            <tr>
+                <th colspan="1" id="top-players" class="sticky-col align-middle" data-sort="top-players">↑ Top Five</th>
+                <th colspan="20" data-sort="team-data" title="Manager stats">Manager stats</th>
+            </tr>
+            <tr>
+                <th colspan="1" id="entries" class="sticky-col"></th>
 
-    <!-- Include the external script BEFORE the inline script -->
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+                {# primary (team‐specific) metrics #}
+                {% for col in [
+                ('now_cost','£'),
+                ('selected_by_percent','%'),
+                ('total_points','Points'),
+                ('form','Form'),
+                ('mng_win','W'),
+                ('mng_draw','D'),
+                ('mng_loss','L'),
+                ('mng_underdog_win','uW'),
+                ('mng_underdog_draw','uD'),
+                ('mng_goals_scored','Goals'),
+                ('mng_clean_sheets','CS'),
+                ('transfers_in_event','T. In'),
+                ('transfers_out_event','T. Out'),
+                ('team_join_date','Team Join'),
+                ('birth_date','Age')
+                ] %}
+                <th data-sort="{{ col[0] }}" class="sort{% if request.args.get('sort_by')==col[0] %} sorted{% endif %}">
+                    {{ col[1] }}</th>
+                {% endfor %}
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-          // Set global variables from your template.
-          window.currentSortColumn = {{ sort_by | tojson }};
-          window.currentSortOrder = {{ order | tojson }};
-          const managerName = {{ manager.team_name | tojson }};
-          
-          // Page-specific column definitions.
-          const col_definitions = {
-            "now_cost": `Current price`,
-            "selected_by_percent": `Selected by %`,
-            "total_points": `Total points`,
-            "form": `Form`,
-            "mng_win": `Manager wins`,
-            "mng_draw": `Manager draws`,
-            "mng_loss": `Manager losses`,
-            "mng_underdog_win": `Underdog wins`,
-            "mng_underdog_draw": `Underdog draws`,
-            "mng_goals_scored": `Manager goals`,
-            "mng_clean_sheets": `Manager clean sheets`,
-            "transfers_in_event": `Transfer in round`,
-            "transfers_out_event": `Transfer out round`,
-            "team_join_date": `How many days the manager has been at club`,
-            "birth_date": `Manager age`,
-          };
-          
-          // Make lookup globally available.
-          // window.lookup = col_definitions(managerName); don't need it because I'm not passing thru manager name?
-          
-          // Make fetchData global so that script.js can call it.
-          window.fetchData = function(sortBy, sortOrder) {
-            const teamId = {{ team_id | tojson }};
-            const { minCost, maxCost } = getSelectedPriceRange();
-            const selectedPositions = getSelectedPositions();
-            const lookup = col_definitions;
-            const categoriesColText = lookup[window.currentSortColumn] || "Unknown category";
-            const categoriesSortText = sortOrder === "desc" ? "" : "(ascending)";
-            
-            // Show loading indicators.
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('player-table-body').style.display = 'none';
-            document.getElementById('current-sort').innerHTML = categoriesColText;
-            document.getElementById('current-order').innerHTML = categoriesSortText;
-            
-            // The AJAX call.
-            fetch(`/get-sorted-players?team_id=${teamId}&table=am&sort_by=${sortBy}&order=${sortOrder}`)
-              .then(response => response.json())
-              .then(data => {
-                console.log(data);
-                // Update entry count.
-                const players = data.players || [];
-                const entryCount = players.length;
-                document.getElementById('entries').textContent =
-                  entryCount === 1 ? "1 entry" : `${entryCount} entries`;
-                
-                window.updateTopPlayersText(entryCount); // Update top players text.
-                
-                // Update table rows.
-                const tableBody = document.getElementById('player-table-body');
-                tableBody.innerHTML = ''; // Clear existing rows.
-                data.players.forEach((player, index) => {
-                  const row = document.createElement('tr');
-                  row.classList.add(
-                    'vert-border',
-                    'align-middle',
-                    'text-center',
-                    `team-${player.team_code}`,
-                    `element-type-${player.element_type}`
-                  );
-                  const truncatedWebName =
-                    player.web_name.length > 11
-                      ? player.web_name.slice(0, 11) + '...'
-                      : player.web_name;
-                  row.innerHTML = `
-                    <td class="sticky-col vert-border-end vert-border">
-                        <div class="d-flex">
-                            <div class="" style="width: 3ch;">${index + 1}</div>
-                            <div class="d-none d-sm-table-cell" style="width: 5ch;">${player.team_name} </div>
-                            <div>${truncatedWebName}</div>
-                        </div>
-                    </td>
-                    <td data-column="now_cost" data-sort="primary">${(Math.round(player.now_cost) / 10).toFixed(1)}</td>
-                    <td data-column="selected_by_percent">${player.selected_by_percent}</td>
-                    <td data-column="total_points">${player.total_points}</td>
-                    <td data-column="form" class="vert-border-end">${player.form}</td>
-                    <td data-column="mng_win">${player.mng_win}</td>
-                    <td data-column="mng_draw">${player.mng_draw}</td>
-                    <td data-column="mng_loss" class="vert-border-end">${player.mng_loss}</td>
-                    <td data-column="mng_underdog_win">${player.mng_underdog_win}</td>
-                    <td data-column="mng_underdog_draw" class="vert-border-end">${player.mng_underdog_draw}</td>
-                    <td data-column="mng_goals_scored">${player.mng_goals_scored}</td>
-                    <td data-column="mng_clean_sheets" class="vert-border-end">${player.mng_clean_sheets}</td>
-                    <td data-column="transfers_in_event">${player.transfers_in_event}</td>
-                    <td data-column="transfers_out_event" class="vert-border-end">${player.transfers_out_event}</td>
-                    <td data-column="team_join_date">${player.team_join_date}</td>
-                    <td data-column="birth_date" class="vert-border-end"> ${player.birth_date}</td>
-                  `;
-                  tableBody.appendChild(row);
-                });
-                
-                // Once the table rows are added, hide the loading indicator and show the table.
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('player-table-body').style.display = '';
-                
-                window.updatePlayerImages(data);
-              })
-              .catch(error => console.error('Error fetching player images:', error));
-          };
-          
-          const { minCost, maxCost } = getSelectedPriceRange();
+                {# next 5 fixtures #}
+                {% for i in range(1,6) %}
+                {% set gw = current_gw + i %}
+                <th data-sort="fixture{{ i }}"
+                    class="sort{% if request.args.get('sort_by')=='fixture'~i %} sorted{% endif %}">
+                    {% if gw <= 38 %}GW{{ gw }}{% else %}N/A{% endif %} </th>
+                        {% endfor %}
+            </tr>
+        </thead>
 
-          
-          // Now call sortTable (which is defined in script.js).
-          sortTable(window.currentSortColumn);
-        });
-    </script>
-       
-         
- 
- 
- {% endblock %}
+        <tbody id="player-table-body">
+            {# rows injected by script.js #}
+        </tbody>
 
+        <tfoot>
+            <tr class="th-purple text-center">
+                <th class="sticky-col">.</th>
+                <th colspan="20" class="align-middle">
+                    <div id="loading" style="display:none">Loading…</div>
+                </th>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+    // 1) tableConfig for script.js
+    window.tableConfig = {
+        table: "am",
+        url: `/get-sorted-players?team_id={{ team_id }}&table=am`,
+        tbodySelector: "#player-table-body",
+        loadingSelector: "#loading",
+        sortBy: "{{ sort_by }}",
+        sortOrder: "{{ order }}",
+        // render primary columns + secondary columns
+        columns: [
+            // rank + name
+            {
+                render: (p, i) => `
+            <td class="sticky-col vert-border-end vert-border">
+              <div class="d-flex">
+                <div style="width:3ch">${i + 1}</div>
+                <div class="d-none d-sm-table-cell" style="width:5ch">${p.team_name}</div>
+                <div>${p.web_name}</div>
+              </div>
+            </td>`
+            },
+            // primary metrics
+            { key: "now_cost",formatter: v => (v / 10).toFixed(1) },
+            { key: "selected_by_percent"},
+            { key: "total_points"},
+            { key: "form"},
+            { key: "mng_win"},
+            { key: "mng_draw"},
+            { key: "mng_loss"},
+            { key: "mng_underdog_win"},
+            { key: "mng_underdog_draw"},
+            { key: "mng_goals_scored"},
+            { key: "mng_clean_sheets"},
+            { key: "transfers_in_event"},
+            { key: "transfers_out_event"},
+            { key: "team_join_date"},
+            { key: "birth_date"},
+            // fixtures 1–5
+            {% for i in range(1, 6) %}
+    { key: "fixture{{i}}",},
+    {% endfor %}
+        // no secondary on this page…
+      ]
+    };
+
+    // 2) lookup for sort‐info tooltip bar
+    window.lookup = {
+        "now_cost": "Current price",
+        "selected_by_percent": "Selected by %",
+        "total_points": "Total points",
+        "form": "Form",
+        "mng_win": "Manager wins",
+        "mng_draw": "Manager draws",
+        "mng_loss": "Manager losses",
+        "mng_underdog_win": "Underdog wins",
+        "mng_underdog_draw": "Underdog draws",
+        "mng_goals_scored": "Manager goals scored",
+        "mng_clean_sheets": "Manager clean sheets",
+        "transfers_in_event": "Transfers in this GW",
+        "transfers_out_event": "Transfers out this GW",
+        "team_join_date": "Days at club",
+        "birth_date": "Age",
+      {% for i in range(1, 6) %}
+    "fixture{{ i }}": "Fixture GW{{ current_gw+i }}",
+        {% endfor %}
+    "top-players": "Pictures of the top five",
+        "entries": "Number of entries",
+            "team-data": "Manager stats"
+    };
+</script>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+{% endblock %}
