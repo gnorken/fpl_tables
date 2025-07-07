@@ -79,11 +79,15 @@ def load_manager_into_g():
 
 @app.context_processor
 def inject_manager():
-    tid = (request.view_args or {}).get('team_id')
+    # 1) Try URL param
+    tid = (request.view_args or {}).get("team_id")
+    # 2) Otherwise fall back to session
     if not tid:
-        # on “/” or “/about” etc. we inject nothing
+        tid = session.get("team_id")
+    if not tid:
         return {}
     m = get_manager_data(tid)
+    m["id"] = tid
     return {
         "team_id": tid,
         "manager": m
@@ -106,6 +110,8 @@ def index():
     MAX_USERS = get_max_users()
     current_gw = session.get('current_gw', '__')
     if request.method == "GET":
+        if request.method == "GET":
+            session.pop("team_id", None)
         return render_template("index.html",
                                max_users=MAX_USERS,
                                current_gw=current_gw)
@@ -136,7 +142,7 @@ def chips(team_id):
         return render_template("chips.html",
                                team_id=team_id,
                                current_gw=session.get('current_gw'),
-                               manager=get_manager_data(team_id),
+                               manager=g.manager,
                                history=get_manager_history(team_id),
                                current_page='chips')
     except Exception as e:
@@ -151,6 +157,7 @@ def top_scorers(team_id):
     return render_template("top_scorers.html",
                            team_id=team_id,
                            current_gw=session.get('current_gw'),
+                           manager=g.manager,
                            sort_by=request.args.get(
                                'sort_by', 'goals_scored_team'),
                            order=request.args.get('order', 'desc'),
@@ -164,6 +171,7 @@ def starts(team_id):
     return render_template("starts.html",
                            team_id=team_id,
                            current_gw=session.get('current_gw'),
+                           manager=g.manager,
                            sort_by=request.args.get('sort_by', 'starts_team'),
                            order=request.args.get('order', 'desc'),
                            current_page='starts')
@@ -176,6 +184,7 @@ def points(team_id):
     return render_template("points.html",
                            team_id=team_id,
                            current_gw=session.get('current_gw'),
+                           manager=g.manager,
                            sort_by=request.args.get(
                                'sort_by', 'total_points_team'),
                            order=request.args.get('order', 'desc'),
@@ -204,6 +213,7 @@ def teams(team_id):
             "teams.html",
             team_id=team_id,
             current_gw=current_gw,
+            manager=g.manager,
             sort_by=sort_by,
             order=order,
             current_page='teams'
@@ -227,7 +237,7 @@ def am(team_id):
                            current_gw=session.get('current_gw'),
                            sort_by=request.args.get(
                                'sort_by', 'total_points'),
-                           order=request.args.get('order', 'asc'),
+                           order=request.args.get('order', 'desc'),
                            current_page='am')
 
 # --- MINI LEAGUES PAGE ---
@@ -299,7 +309,7 @@ def get_sorted_players():
         )
         conn.commit()
 
-    # 4️⃣ Handle mini-league table
+    # 4️⃣ Handle mini-league table ////////////////////////////////////////////////////////////////
     if table == "mini_league":
         static_data = get_static_data()
 
@@ -314,7 +324,7 @@ def get_sorted_players():
             rev = (order.lower() == "desc")
             players.sort(key=lambda o: o.get(sort_by, 0), reverse=rev)
             conn.close()
-            return jsonify(players=players)
+            return jsonify(players=players, manager=g.manager)
 
         # b) Cache miss → fetch managers
         managers = get_team_ids_from_league(league_id, max_show)
@@ -400,7 +410,6 @@ def get_sorted_players():
     if table == "teams":
         # 1️⃣ Aggregate all players into one object per club
         stats = aggregate_team_stats(team_blob)
-        # stats: { team_code: { ..., "team_code":code, "team_name": name, … }, … }
 
         # 2️⃣ Turn into a list and sort by the chosen metric
         sorted_stats = sorted(
@@ -431,13 +440,13 @@ def get_sorted_players():
             players_images=top5,        # <= your badges
             manager=g.manager
         )
-    if table == "am":
+    if table == "am":  # Assistant manager ///////////////////////////////////////////////////////////////////
         print("🚀 AM branch")
         am_blob = get_player_data_am(get_static_data())
         players, images = filter_and_sort_players(am_blob, request.args)
         print(f"📝 AM returned {len(players)} players")
         return jsonify(players=players, players_images=images, manager=g.manager)
-    else:  # This is for top_scorers, starts and points table
+    else:  # This is for top_scorers, starts and points table ///////////////////////////////////////////////
         players, images = filter_and_sort_players(team_blob, request.args)
         return jsonify(players=players, players_images=images, manager=g.manager)
 

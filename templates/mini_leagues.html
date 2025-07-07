@@ -8,14 +8,14 @@
   <div class="mb-1 ms-1 d-flex align-items-center">
     <label for="rows-per-page" class="me-2">Show:</label>
     <select id="rows-per-page" class="form-select w-auto">
-      {% for n in [10,20,50] %}
+      {% for n in [5,10,20, 50] %}
       <option value="{{ n }}" {% if n==maxShow %} selected {% endif %}>{{ n }}</option>
       {% endfor %}
     </select>
   </div>
 
 <div class="table-responsive">
-  <table id="mini-league-table" class="table table-borderless table-striped text-nowrap">
+  <table id="mini-league-table" class="table interactive-table table-borderless table-striped text-nowrap">
     <thead class="th-purple">
       <tr class="text-center">
         <th colspan="3" class="vert-border-white round-border-top">Manager</th>
@@ -24,97 +24,72 @@
         <th colspan="6" class="vert-border-white round-border-top">Chips</th>
         <th colspan="2" class="vert-border-white round-border-top">Transfers</th>
         <th colspan="3" class="vert-border-white round-border-top">Goals</th>
-        <th colspan="2" class="vert-border-white round-border-top">Assists</th>
+        <!-- <th colspan="2" class="vert-border-white round-border-top">Assists</th>
         <th colspan="4" class="vert-border-white round-border-top">Div</th>
-        <th colspan="4" class="vert-border-white round-border-top">Negatives</th>
+        <th colspan="4" class="vert-border-white round-border-top">Negatives</th> -->
       </tr>
       <tr class="text-center">
-        <th id="last_deadline_value" data-sort="last_deadline_value" onclick="sortTable('last_deadline_value')"
-          class=" vert-border-white {% if request.args.get('sort_by') == 'last_deadline_value' %}sorted{% endif %} text-start">Value</th>
-      
-        <th colspan="1" id="flag" data-sort="flag" onclick="sortTable('flag')"
-          class="text-start {% if request.args.get('sort_by') == 'flag' %}sorted{% endif %}">Flag</th>
-        <th colspan="1" id="manager" data-sort="manager" onclick="sortTable('manager')"
-          class="sticky-col {% if request.args.get('sort_by') == 'manager' %}sorted{% endif %}">Name</th>
+        <!-- Manager info-->
+        <th id="last_deadline_value" data-sort="last_deadline_value" class="sort vert-border-white text-start">Team Value</th>
+        <th id="player_name" data-sort="player_name" class="sort sticky-col">Name</th>
+        <th id="years_active" data-sort="years_active" class="sort text-start">Season</th>
 
-        <th id="rank" data-sort="rank" onclick="sortTable('rank')"
-          class="vert-border-white{% if request.args.get('sort_by') == 'rank' %}sorted{% endif %}">Rank</th>
-        <th id="overall_rank" data-sort="overall_rank" onclick="sortTable('overall_rank')"
-          class="{% if request.args.get('sort_by') == 'OR' %}sorted{% endif %}">OR</th>
+        <!-- Rank -->
+        <th id="rank" data-sort="rank" class="sort vert-border-white">Rank</th>
+        <th id="overall_rank" data-sort="overall_rank" class="sort">OR</th>
 
-        <th id="total_points" data-sort="total_points" onclick="sortTable('total_points')"
-        class="vert-border-white {% if request.args.get('sort_by') == 'total_points' %}sorted{% endif %}">Total</th>
-        <th id="points_behind" data-sort="points_behind" onclick="sortTable('points_behind')"
-        class="{% if request.args.get('sort_by') == 'points_behind' %}sorted{% endif %}">B</th>
-        <th id="pts_behind_overall" data-sort="pts_behind_overall" onclick="sortTable('pts_behind_overall')"
-        class="{% if request.args.get('sort_by') == 'pts_behind_overall' %}sorted{% endif %}">B OR</th>
+        <!-- Points -->
+        <th id="total_points" data-sort="total_points" class="sort vert-border-white">Tot</th>
+        <th id="pts_behind_league_leader" data-sort="pts_behind_league_leader" class="sort">T</th>
+        <th id="pts_behind_overall" data-sort="pts_behind_overall" class="sort">T OR</th>
     
+        <!-- Chips -->
+        <th id="wildcard1_gw" data-sort="wildcard1_gw" class="sort vert-border-white">WC1</th>
+        <th id="wildcard2_gw" data-sort="wildcard2_gw" class="sort">WC2</th>
+        <th id="3xc_gw" data-sort="3xc_gw" class="sort text-center">3x C</th>
+        <th id="bboost_gw" data-sort="bboost_gw" class="sort">BB</th>
+        <th id="freehit_gw" data-sort="freehit_gw" class="sort">FH</th>
+        <th id="manager_gw" data-sort="manager_gw" class="sort">AM</th>
 
-        <th id="wc1" data-sort="wc1" onclick="sortTable('wc1')"
-          class="vert-border-white text-center{% if request.args.get('sort_by') == 'wc1' %}sorted{% endif %} text-start">WC1</th>
-        <th id="wc2" data-sort="wc2" onclick="sortTable('wc2')"
-          class="{% if request.args.get('sort_by') == 'wc2' %}sorted{% endif %} text-start">WC2</th>
-        <th id="3xc" data-sort="3xc" onclick="sortTable('3xc')"
-          class="text-center{% if request.args.get('sort_by') == '3xc' %}sorted{% endif %} text-start">3xc</th>
-        <th id="bboost" data-sort="bboost" onclick="sortTable('bboost')"
-          class="{% if request.args.get('sort_by') == 'bboost' %}sorted{% endif %} text-start">BB</th>
-        <th id="freehit" data-sort="freehit" onclick="sortTable('freehit')"
-          class="{% if request.args.get('sort_by') == 'freehit' %}sorted{% endif %} text-start">FH</th>
-        <th id="am" data-sort="am" onclick="sortTable('am')"
-          class="{% if request.args.get('sort_by') == 'am' %}sorted{% endif %} text-start">AM</th>
+        <!-- Transfers -->
+        <th id="last_deadline_total_transfers" data-sort="last_deadline_total_transfers" class="sort vert-border-white text-start">Total</th>
+        <th id="transfer_cost" data-sort="transfer_cost" class="sort">Hits</th>
 
-        <th colspan="1" id="last_deadline_total_transfers" data-sort="last_deadline_total_transfers" onclick="sortTable('last_deadline_total_transfers')"
-          class="vert-border-white{% if request.args.get('sort_by') == 'last_deadline_total_transfers' %}sorted{% endif %} text-start">Total</th>
-        <th colspan="1" id="transfer_cost" data-sort="transfer_cost" onclick="sortTable('transfer_cost')"
-          class="{% if request.args.get('sort_by') == 'transfer_cost' %}sorted{% endif %} text-start">Hits</th>
+        <!-- Goals -->
+        <th id="goals_scored_team" data-sort="goals_scored_team" class="sort vert-border-white">G</th>
+        <th id="expected_goals_team" data-sort="expected_goals_team" class="sort">xG</th>
+        <th id="goals_benched_team" data-sort="goals_benched_team" class="sort">bG</th>
 
-        <th id="goals_scored_team" data-sort="goals_scored_team" onclick="sortTable('goals_scored_team')"
-        class="vert-border-white{% if request.args.get('sort_by') == 'goals_scored_team' %}sorted{% endif %}">G</th>
-        <th id="expected_goals_team" data-sort="expected_goals_team" onclick="sortTable('expected_goals_team')"
-          class="{% if request.args.get('sort_by') == 'expected_goals_team' %}sorted{% endif %}">xG</th>
-        <th id="goals_benched_team" data-sort="goals_benched_team" onclick="sortTable('goals_benched_team')"
-          class="{% if request.args.get('sort_by') == 'goals_benched_team' %}sorted{% endif %}">bG</th>
+        <!-- Assists -->
+        <!-- <th id="assists_team" data-sort="assists_team" class="sort vert-border-white">A</th>
+        <th id="expected_assists_team" data-sort="expected_assists_team" class="sort">xA</th> -->
 
-        <th id="assists_team" data-sort="assists_team" onclick="sortTable('assists_team')"
-        class="vert-border-white{% if request.args.get('sort_by') == 'assists_team' %}sorted{% endif %}">A</th>
-        <th id="expected_assists_team" data-sort="expected_assists_team" onclick="sortTable('expected_assists_team')"
-          class="{% if request.args.get('sort_by') == 'expected_assists_team' %}sorted{% endif %}">xA</th>
-        <th id="minutes_team" data-sort="minutes_team" onclick="sortTable('minutes_team')"
+        <!-- Misc. -->
+        <!-- <th id="minutes_team" data-sort="minutes_team" class="sort vert-border-white">Minutes</th>
+        <th id="clean_sheets_team" data-sort="clean_sheets_team" class="sort">CS</th>
+        <th id="bps_team" data-sort="bps_team" class="sort">BPS</th>
+        <th id="dreamteam_count_team" data-sort="dreamteam_count_team" class="sort">DT</th> -->
 
-          class="vert-border-white{% if request.args.get('sort_by') == 'minutes_team' %}sorted{% endif %}">Minutes</th>
-        <th id="clean_sheets_team" data-sort="clean_sheets_team" onclick="sortTable('clean_sheets_team')"
-          class="{% if request.args.get('sort_by') == 'clean_sheets_team' %}sorted{% endif %}">CS</th>
-        <th id="bps_team" data-sort="bps_team" onclick="sortTable('bps_team')"
-          class="{% if request.args.get('sort_by') == 'bps_team' %}sorted{% endif %}">BPS</th>
-        <th id="dreamteam_count_team" data-sort="dreamteam_count_team" onclick="sortTable('dreamteam_count_team')"
-          class="{% if request.args.get('sort_by') == 'dreamteam_count_team' %}sorted{% endif %}">DT</th>
-
-        <th id="yellow_cards_team" data-sort="yellow_cards_team" onclick="sortTable('yellow_cards_team')"
-          class="vert-border-white{% if request.args.get('sort_by') == 'yellow_cards_team' %}sorted{% endif %}">Y</th>
-        <th id="red_cards_team" data-sort="red_cards_team" onclick="sortTable('red_cards_team')"
-          class=" {% if request.args.get('sort_by') == 'red_cards_team' %}sorted{% endif %}">R</th>
-        <th id="own_goals_team" data-sort="own_goals_team" onclick="sortTable('own_goals_team')"
-          class="{% if request.args.get('sort_by') == 'own_goals_team' %}sorted{% endif %}">OGs</th>
-        <th id="penalties_missed_team" data-sort="penalties_missed_team" onclick="sortTable('penalties_missed_team')"
-          class="{% if request.args.get('sort_by') == 'penalties_missed_team' %}sorted{% endif %}">PM</th>
+        <!-- Negatives -->
+        <!-- <th id="yellow_cards_team" data-sort="yellow_cards_team" class="sort vert-border-white">Y</th>
+        <th id="red_cards_team" data-sort="red_cards_team" class="sort">R</th>
+        <th id="own_goals_team" data-sort="own_goals_team" class="sort">OGs</th>
+        <th id="penalties_missed_team" data-sort="penalties_missed_team" class="sort">PM</th> -->
       </tr>
     </thead>
     <tbody id="mini-league-table-body">
-
-      
-
     </tbody>
     <tfoot class="th-purple">
       <tr>
-        <th colspan="3" class="vert-border-white round-border-btm"><div id="loading" style="display:none">Loading</div></th>
-        <th colspan="2" class="vert-border-white round-border-btm" style="color:#38003c;">.</th>
-        <th colspan="3" class="vert-border-white round-border-btm"></th>
-        <th colspan="6" class="vert-border-white round-border-btm"></th>
-        <th colspan="2" class="vert-border-white round-border-btm"></th>
-        <th colspan="3" class="vert-border-white round-border-btm"></th>
-        <th colspan="2" class="vert-border-white round-border-btm"></th>
-        <th colspan="4" class="vert-border-white round-border-btm"></th>
-        <th colspan="4" class="vert-border-white round-border-btm"></th>
+        <th colspan="3" class="vert-border-white"><div id="loading" style="display:none">Loading</div></th>
+        <th colspan="2" class="vert-border-white" style="color:#38003c;">.</th>
+        <th colspan="3" class="vert-border-white"></th>
+        <th colspan="6" class="vert-border-white"></th>
+        <th colspan="2" class="vert-border-white"></th>
+        <th colspan="3" class="vert-border-white round"></th>
+        <!-- <th colspan="2" class="vert-border-white round-border-btm"></th> -->
+        <!-- <th colspan="4" class="vert-border-white round-border-btm"></th> -->
+        <!-- <th colspan="4" class="vert-border-white round-border-btm"></th> -->
       </tr>
     </tfoot>
   </table>
@@ -146,26 +121,34 @@
 
   // highlight config…
   lookup: {
-    rank: "Rank", overall_rank: "Overall rank", player_name: "Manager", team_name: "Team name", manager: "Manager name, team name and years played", last_deadline_value: "Team value and money in the bank",
-    total_points: "Total points", points_behind: "Points behind mini league leader", pts_behind_overall: "Points behind overall leader",
-    minutes_team: "Minutes", last_deadline_total_transfers: "Total transfers made", transfer_cost: "Minus points for hits",
+    rank: "Minileague rank", overall_rank: "Overall rank", player_name: "Manager", 
+    team_name: "Team name", years_active: "Nationality and years active as an FPL manager", player_name: "Manager name and team name", last_deadline_value: "Team value and money in the bank",
+    total_points: "Total points", pts_behind_league_leader: "Trailing mini league leader by", pts_behind_overall: "Trailing overall leader by",
+    minutes_team: "Total minutes played", last_deadline_total_transfers: "Total transfers made", transfer_cost: "Minus points for hits",
     clean_sheets_team: "Clean sheets", goals_scored_team: "Goals scored", goals_benched_team: "Goals benched",
-    assists_team: "Assists", wc1: "Wildcard 1", wc2: "Wildcard 2", ['3xc']: "Triple captain", bboost: "Bench boost", am: "Assistant manager",
-    expected_goals_team: "Expected Goals", bps_team: "BPS", freehit: "Free hit",
+    assists_team: "Assists", 
+    wildcard1_gw: "Wildcard 1", wildcard2_gw: "Wildcard 2", ['3xc_gw']: "Triple captain", bboost_gw: "Bench boost", manager_gw: "Assistant manager", freehit_gw: "Free hit",
+    expected_goals_team: "Expected Goals", bps_team: "BPS", 
     expected_assists_team: "Expected Assists", dreamteam_count_team: "Times in Dream Team",  yellow_cards_team: "Yellow cards", red_cards_team: "Red cards",
     own_goals_team: "Own goals", penalties_saved_team: "Penalties Saved", penalties_missed_team: "Penalties Missed"
   },
   invertKeys: [
-    "yellow_cards_team", "red_cards_team", "own_goals_team", "penalties_missed_team", "goals_benched_team", "points_behind"
+    "rank", "overall_rank",
+    "yellow_cards_team", "red_cards_team", "own_goals_team", "penalties_missed_team", "goals_benched_team", "points_behind", "transfer_cost"
   ],
     statsKeys: [
-      "minutes_team", "clean_sheets_team", "goals_scored_team", "goals_benched_team",
-      "assists_team", "bps_team", "expected_goals_team", "expected_assists_team",
-      "dreamteam_count_team", "yellow_cards_team", "red_cards_team",
-      "own_goals_team", "penalties_saved_team", "penalties_missed_team"
+      "years_active",
+      "rank", "overall_rank", "total_points", "pts_behind_league_leader", "pts_behind_overall",
+      "wildcard1_gw", "wildcard2_gw", ["3xc_gw"], "bboost_gw", "freehit_gw", "am_gw",
+      "last_deadline_total_transfers", "transfer_cost", 
+      "goals_scored_team", "expected_goals_team", "goals_benched_team",
+      "minutes_team", "clean_sheets_team", 
+      "assists_team", "expected_assists_team",
+      
+      "minutes_team", "clean_sheets_team", "bps_team", "dreamteam_count_team", 
+      "yellow_cards_team", "red_cards_team", "own_goals_team", "penalties_missed_team",
     ],
     
-    fields: ["wildcard", "3xc", "bboost", "freehit", "manager"],
     columns: [
       { key: "last_deadline_value",
       render: t => {
@@ -173,14 +156,13 @@
         const bank = (t.last_deadline_bank / 10).toFixed(1);
         return `
             <td class="vert-border">
-              
               <div class="text-start">💰 £${pounds}M</div>
               <div class="text-start">🏦 ${bank}M</div>
             </td>
             `
         }
       },
-      { flag: "flag",
+      { key: "years_active",
       render: t => {
         return `
         <td>
@@ -222,7 +204,6 @@
               arrow = ' <span class="text-danger">&#9660;</span>'
             }
           }
-
           return `<td class="vert-border">${formatted}${arrow}</td>`
         }
       },
@@ -242,78 +223,120 @@
           return v.toLocaleString("de-CH");
         }
       },
-
       { key: "total_points", className: "vert-border" },
       { key: "pts_behind_league_leader" },
       { key: "pts_behind_overall"},
       {
-        key: "wildcard1",
+        key: "wildcard1_gw",
         title: "Wildcard 1",
         render: t => {
-          const wildcards = t.chips.filter(c => c.name === "wildcard");
-          const wc1 = wildcards[0];
+          const gw = t.wildcard1_gw;
+          if (!gw) {
+            return `<td></td>`;
+          }
           return `
-            <td class="vert-border">${wc1 ? `<div>✅</div><div>GW${wc1.event}</div>` : ""}</td>
-          
+            <td>
+              <div>✅</div>
+              <div>GW${gw}</div>
+            </td>
           `;
         }
       },
       {
-        key: "wildcard2",
+        key: "wildcard2_gw",
         title: "Wildcard 2",
         render: t => {
-          const wildcards = t.chips.filter(c => c.name === "wildcard");
-          const wc2 = wildcards[1];
-          return `<td>${wc2 ? `<div>✅</div><div>GW${wc2.event}</div>` : ""}</td>`;
+          const gw = t.wildcard2_gw;
+          if (!gw) {
+            return `<td></td>`;
+          }
+          return `
+            <td>
+              <div>✅</div>
+              <div>GW${gw}</div>
+            </td>
+          `;
         }
       },
       {
-        key: "3xc",
-        title: "3xc",
+        key: ["3xc_gw"],
+        title: "3x C!!!!",
         render: t => {
-          const chip = t.chips.find(c => c.name === "3xc");
-          return `<td>${chip ? `<div>✅</div><div>GW${chip.event}</div>` : ""}</td>`;
+          const gw = t["3xc_gw"];
+          if (!gw) {
+            return `<td></td>`;
+          }
+          return `
+            <td>
+              <div>✅</div>
+              <div>GW${gw}</div>
+            </td>
+          `;
         }
       },
       {
-        key: "bboost",
+        key: "bboost_gw",
         title: "bboost",
         render: t => {
-          const chip = t.chips.find(c => c.name === "bboost");
-          return `<td>${chip ? `<div>✅</div><div>GW${chip.event}</div>` : ""}</td>`;
+          const gw = t.bboost_gw;
+          if (!gw) {
+            return `<td></td>`;
+          }
+          return `
+            <td>
+              <div>✅</div>
+              <div>GW${gw}</div>
+            </td>
+          `;
         }
       },
       {
-        key: "freehit",
+        key: "freehit_gw",
         title: "freehit",
         render: t => {
-          const chip = t.chips.find(c => c.name === "freehit");
-          return `<td>${chip ? `<div>✅</div><div>GW${chip.event}</div>` : ""}</td>`;
+          const gw = t.freehit_gw;
+          if (!gw) {
+            return `<td></td>`;
+          }
+          return `
+            <td>
+              <div>✅</div>
+              <div>GW${gw}</div>
+            </td>
+          `;
         }
       },
       {
-        key: "manager",
-        title: "manager",
+        key: "manager_gw",
+        title: "am",
         render: t => {
-          const chip = t.chips.find(c => c.name === "manager");
-          return `<td>${chip ? `<div>✅</div><div>GW${chip.event}</div>` : ""}</td>`;
+          const gw = t.manager_gw;
+          if (!gw) {
+            return `<td></td>`;
+          }
+          return `
+            <td>
+              <div>✅</div>
+              <div>GW${gw}</div>
+            </td>
+          `;
         }
       },
       { key: "last_deadline_total_transfers", className: "vert-border"},
-      { key: "transfer_cost", extraClass: "text-danger" },
+      { key: "transfer_cost", className: "text-danger" },
       { key: "goals_scored_team", className: "vert-border" },
       { key: "expected_goals_team", formatter: v => v.toFixed(1) },
-      { key: "goals_benched_team", className: "vert-border-end", extraClass: "text-danger"},
-      { key: "assists_team" },
-      { key: "expected_assists_team", formatter: v => v.toFixed(1) },
-      { key: "minutes_team", className: "vert-border" },
-      { key: "clean_sheets_team" },
-      { key: "bps_team" },
-      { key: "dreamteam_count_team" },
-      { key: "yellow_cards_team", className: "vert-border", extraClass: "text-danger" },
-      { key: "red_cards_team", extraClass: "text-danger" },
-      { key: "own_goals_team", extraClass: "text-danger" },
-      { key: "penalties_missed_team", extraClass: "text-danger" },
+      { key: "goals_benched_team", className: "vert-border-end text-danger"},
+      // { key: "assists_team" },
+      // { key: "expected_assists_team", formatter: v => v.toFixed(1) },
+      // { key: "minutes_team", className: "vert-border" },
+      // { key: "clean_sheets_team" },
+      // { key: "bps_team" },
+      // { key: "dreamteam_count_team" },
+      // { key: "yellow_cards_team", className: "vert-border text-danger" },
+      // { key: "red_cards_team", className: "text-danger" },
+      // { key: "own_goals_team", className: "text-danger" },
+      // { key: "penalties_missed_team", className: "text-danger" },
 
     ],
 
@@ -334,13 +357,6 @@
         );
       });
     }
-
-    // 2) fire the first load (use fetchData, not sortTable)
-    // Doing this in layout.html instead now
-    // window.fetchData(
-    //   window.tableConfig.sortBy,
-    //   window.tableConfig.sortOrder
-    // );
   });
 
 </script>

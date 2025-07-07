@@ -162,11 +162,12 @@
             { key: "penalties_saved_team", className: "sort-team", sortLevel: "primary", dataColumn: "penalties_saved" },
             { key: "starts_benched_team", className: "sort-team", sortLevel: "primary" },
             { key: "minutes_benched_team", className: "sort-team", sortLevel: "primary" },
-            { key: "yellow_cards_team", className: "sort-team", sortLevel: "primary", dataColumn: "yellow_cards" },
-            { key: "red_cards_team", className: "sort-team", sortLevel: "primary", dataColumn: "red_cards" },
-            { key: "goals_conceded_team", className: "sort-team", sortLevel: "primary", dataColumn: "goals_conceded" },
-            { key: "own_goals_team", className: "sort-team", sortLevel: "primary", dataColumn: "own_goals" },
-            { key: "penalties_missed_team", className: "sort-team", sortLevel: "primary", dataColumn: "penalties_missed" },
+            // Negatives
+            { key: "yellow_cards_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "yellow_cards" },
+            { key: "red_cards_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "red_cards" },
+            { key: "goals_conceded_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "goals_conceded" },
+            { key: "own_goals_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "own_goals" },
+            { key: "penalties_missed_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "penalties_missed" },
 
             // 15 overall (secondary) columns:
             { key: "starts", className: "sort", sortLevel: "secondary", dataColumn: "starts" },
@@ -179,11 +180,12 @@
             { key: "dreamteam_count", className: "sort", sortLevel: "secondary", dataColumn: "dreamteam_count" },
             { key: "bps", className: "sort", sortLevel: "secondary", dataColumn: "bps" },
             { key: "penalties_saved", className: "sort", sortLevel: "secondary", dataColumn: "penalties_saved" },
-            { key: "yellow_cards", className: "sort", sortLevel: "secondary", dataColumn: "yellow_cards" },
-            { key: "red_cards", className: "sort", sortLevel: "secondary", dataColumn: "red_cards" },
-            { key: "goals_conceded", className: "sort", sortLevel: "secondary", dataColumn: "goals_conceded" },
-            { key: "own_goals", className: "sort", sortLevel: "secondary", dataColumn: "own_goals" },
-            { key: "penalties_missed", className: "sort", sortLevel: "secondary", dataColumn: "penalties_missed" }
+            // Negatives
+            { key: "yellow_cards", className: "sort text-danger", sortLevel: "secondary", dataColumn: "yellow_cards" },
+            { key: "red_cards", className: "sort text-danger", sortLevel: "secondary", dataColumn: "red_cards" },
+            { key: "goals_conceded", className: "sort text-danger", sortLevel: "secondary", dataColumn: "goals_conceded" },
+            { key: "own_goals", className: "sort text-danger", sortLevel: "secondary", dataColumn: "own_goals" },
+            { key: "penalties_missed", className: "sort text-danger", sortLevel: "secondary", dataColumn: "penalties_missed" }
         ]
     };
 </script>
