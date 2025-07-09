@@ -11,7 +11,8 @@
         <thead class="th-purple sticky-th text-center">
             <tr>
                 <th colspan="1" id="top-players" class="sticky-col align-middle" data-sort="top-players">↑ Top Five</th>
-                <th colspan="20" data-sort="team-data" title="Manager stats">Manager stats</th>
+                <th colspan="15" data-sort="team-data" title="Manager stats">Manager stats</th>
+                <th colspan="5" data-sort="team-Fixtures" title="Fixtures" class="vert-border-white">Fixtures</th>
             </tr>
             <tr>
                 <th colspan="1" id="entries" class="sticky-col"></th>
@@ -34,7 +35,7 @@
                 ('team_join_date','Team Join'),
                 ('birth_date','Age')
                 ] %}
-                <th data-sort="{{ col[0] }}" class="sort{% if request.args.get('sort_by')==col[0] %} sorted{% endif %}">
+                <th data-sort="{{ col[0] }}" class="sort">
                     {{ col[1] }}</th>
                 {% endfor %}
 
@@ -42,7 +43,7 @@
                 {% for i in range(1,6) %}
                 {% set gw = current_gw + i %}
                 <th data-sort="fixture{{ i }}"
-                    class="sort{% if request.args.get('sort_by')=='fixture'~i %} sorted{% endif %}">
+                    class="vert-border-white sort">
                     {% if gw <= 38 %}GW{{ gw }}{% else %}N/A{% endif %} </th>
                         {% endfor %}
             </tr>

@@ -82,7 +82,16 @@
             {{ nav_item('Most Categories', 'starts', 'starts') }}
             {{ nav_item('By Points', 'points', 'points') }}
             {{ nav_item('By Teams', 'teams', 'teams') }}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
             {{ nav_item('Chips', 'chips', 'chips') }}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            <li>
+              {{ nav_item('Assistant Managers', 'am', 'am') }}
+            </li>
             <li>
               <hr class="dropdown-divider">
             </li>
@@ -115,11 +124,8 @@
               <li><a class="dropdown-item disabled">No mini-leagues</a></li>
               {% endif %}
         
-              <li>
-                <hr class="dropdown-divider">
-              </li>
-              {{ nav_item('Assistant Managers', 'am', 'am') }}
-              <li><a class="dropdown-item disabled">Fixtures</a></li>
+
+
               <li>
                 <hr class="dropdown-divider">
               </li>
