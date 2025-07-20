@@ -3,7 +3,7 @@
 
 {% block page_content %}
 <div class="table-responsive">
-    <table id="starts-table" class="interactive-table table table-borderless table-striped custom-striped text-nowrap">
+    <table id="starts-table" class="interactive-table table table-borderless table-striped text-nowrap">
         <thead class="th-purple text-center">
             <tr>
                 <th id="top-players" data-sort="top-players" class="sticky-col align-middle round-border-top">↑ Top Five
@@ -29,8 +29,8 @@
                 <th data-sort="dreamteam_count_team" class="sort-team bg-team">DT</th>
                 <th data-sort="bps_team" class="sort-team bg-team">BPS</th>
                 <th data-sort="penalties_saved_team" class="sort-team bg-team">PS</th>
-                <th data-sort="starts_benched_team" class="sort-team bg-team">S</th>
-                <th data-sort="minutes_benched_team" class="sort-team bg-team">M</th>
+                <th data-sort="starts_benched_team" class="sort-team bg-team">bS</th>
+                <th data-sort="minutes_benched_team" class="sort-team bg-team">bM</th>
                 <th data-sort="yellow_cards_team" class="sort-team bg-team">YC</th>
                 <th data-sort="red_cards_team" class="sort-team bg-team">RC</th>
                 <th data-sort="goals_conceded_team" class="sort-team bg-team">GC</th>
@@ -130,21 +130,27 @@
         // columns tells script.js what to render, in order:
         columns: [
             // rank + name
-            {
-                render: (p, idx) => {
-                    const name = p.web_name.length > 11
-                        ? p.web_name.slice(0, 11) + "…"
-                        : p.web_name;
-                    return `
-            <td class="sticky-col vert-border-end">
-              <div class="d-flex">
-                <div style="width:3ch">${idx + 1}</div>
-                <div class="d-none d-sm-table-cell" style="width:5ch">
-                  ${p.team_short_name}
-                </div>
-                <div>${name}</div>
-              </div>
-            </td>`;
+            { render: (p, idx) => {
+                const short = p.web_name.length > 11 ? p.web_name.slice(0, 13) + '…' : p.web_name;
+                const badgeUrl = `https://resources.premierleague.com/premierleague/badges/100/t${p.team_code}@x2.png`;
+
+                return `
+
+                    <td class="sticky-col vert-border-end vert-border">
+                    <div class="d-flex align-items-center">
+                        <div class="text-center" style="width:2ch; flex:0 0 auto;">${idx + 1}</div>
+                        <img 
+                            src="${badgeUrl}"
+                            alt="${p.team_name} badge"
+                            class="img-fluid overlap-badge ms-1"
+                            data-bs-toggle="tooltip"
+                            title="${p.team_name}"
+                            style="width: 20px; height: 20px; flex:0 0 auto;"
+                            onerror="this.onerror=null;this.src='https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png';"
+                        >
+                        <div class="ms-1 text-truncate" style="max-width: 12ch;">${short}</div>
+                    </div>
+                    </td>`;
                 }
             },
 
@@ -163,14 +169,14 @@
             { key: "starts_benched_team", className: "sort-team", sortLevel: "primary" },
             { key: "minutes_benched_team", className: "sort-team", sortLevel: "primary" },
             // Negatives
-            { key: "yellow_cards_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "yellow_cards" },
+            { key: "yellow_cards_team", className: "sort-team text-danger vert-border", sortLevel: "primary", dataColumn: "yellow_cards" },
             { key: "red_cards_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "red_cards" },
             { key: "goals_conceded_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "goals_conceded" },
             { key: "own_goals_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "own_goals" },
             { key: "penalties_missed_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "penalties_missed" },
 
             // 15 overall (secondary) columns:
-            { key: "starts", className: "sort", sortLevel: "secondary", dataColumn: "starts" },
+            { key: "starts", className: "sort vert-border", sortLevel: "secondary", dataColumn: "starts" },
             { key: "minutes", className: "sort", sortLevel: "secondary", dataColumn: "minutes" },
             { key: "clean_sheets", className: "sort", sortLevel: "secondary", dataColumn: "clean_sheets" },
             { key: "assists", className: "sort", sortLevel: "secondary", dataColumn: "assists" },

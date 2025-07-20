@@ -1,3 +1,12 @@
+window.initTooltips = () => {
+  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => {
+    // Avoid double-initialising the same tooltip
+    if (!el.getAttribute("data-bs-original-title")) {
+      new bootstrap.Tooltip(el);
+    }
+  });
+};
+
 // ─────────────── 1) Header update ──────────────────
 function updateHeader(mgr) {
   console.groupCollapsed("🔔 updateHeader called");
@@ -197,7 +206,7 @@ async function fetchMiniLeague(sortBy, sortOrder) {
 async function fetchData(sortBy, sortOrder) {
   if (await fetchMiniLeague(sortBy, sortOrder)) return;
 
-  // update sort‐info bar
+  // 1) update sort‐info bar
   const sortEl = document.getElementById("current-sort");
   const orderEl = document.getElementById("current-order");
   if (sortEl)
@@ -208,22 +217,26 @@ async function fetchData(sortBy, sortOrder) {
   const tbody = document.querySelector(cfg.tbodySelector);
   const loading = document.querySelector(cfg.loadingSelector);
 
-  // 1) Always include sort & order
+  // 2) Always include sort & order
   const params = {
     sort_by: sortBy,
     order: sortOrder,
   };
 
-  // 2) Only add filters if we're NOT on the Assistant Managers page
+  // 3) Only add filters if we're NOT on the Assistant Managers page
   if (cfg.table !== "am") {
     const { minCost, maxCost } = getSelectedPriceRange();
     const selectedPositions = getSelectedPositions();
-    params.selected_positions = selectedPositions;
+
+    if (selectedPositions && selectedPositions.length > 0) {
+      params.selected_positions = selectedPositions;
+    }
+
     params.min_cost = minCost;
     params.max_cost = maxCost;
   }
 
-  // 3) Build the query string and fetch
+  // 4) Build the query string and fetch
   const qs = new URLSearchParams(params);
   const resp = await fetch(`${cfg.url}&${qs}`);
 
@@ -241,10 +254,10 @@ async function fetchData(sortBy, sortOrder) {
     players.length === 1 ? "1 entry" : `${players.length} entries`;
   updateTopPlayersText(players.length);
 
-  // clear out old rows
+  // 5) clear out old rows
   tbody.innerHTML = "";
 
-  // for each player, build a <tr>…
+  // 6) for each player, build a <tr>…
   players.forEach((p, idx) => {
     const tr = document.createElement("tr");
     tr.classList.add(
@@ -283,6 +296,9 @@ async function fetchData(sortBy, sortOrder) {
     });
 
     tbody.appendChild(tr);
+
+    // 🪛 Initialise tooltips on new rows
+    window.initTooltips();
   });
 
   if (window.tableConfig.table === "teams") {
@@ -404,6 +420,15 @@ document.addEventListener("DOMContentLoaded", () => {
   // 8.6) Initial AJAX load
   if (window.tableConfig) {
     window.fetchData(tableConfig.sortBy, tableConfig.sortOrder);
+  }
+});
+
+// Tooltip for table headers
+document.querySelectorAll("table thead th").forEach((th) => {
+  const sortKey = th.getAttribute("data-sort");
+  if (sortKey && window.tableConfig.lookup[sortKey]) {
+    th.setAttribute("title", window.tableConfig.lookup[sortKey]);
+    th.setAttribute("data-bs-toggle", "tooltip");
   }
 });
 

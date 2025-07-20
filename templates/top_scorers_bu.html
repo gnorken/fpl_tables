@@ -1,12 +1,9 @@
 {% extends "info.html" %}
-
 {% block title %}Top Scorers{% endblock %}
 
 {% block page_content %}
-<!-- PLAYER TABLE -->
 <div class="table-responsive">
-    <!-- PLAYER TABLE -->
-    <table id="goals-table" class="table table-borderless table-striped custom-striped text-nowrap">
+    <table id="goals-table" class="interactive-table table table-borderless table-striped custom-striped text-nowrap">
         <thead class="th-purple">
             <tr class="text-center">
                 <th colspan="1" id="top-players" data-sort="top-players" class="sticky-col round-border-top">↑ Top Five
@@ -16,301 +13,141 @@
                 <th colspan="9" data-sort="overall-data" class="round-border-top">Player Totals</th>
             </tr>
             <tr class="text-center">
-                <th colspan="1" id="entries" data-sort="entries" class="sticky-col">Players </th>
-                <th id="goals_scored" data-sort="goals_scored_team" onclick="sortTable('goals_scored_team')"
-                    class="sort-team bg-team {% if request.args.get('sort_by') == 'goals_scored_team' %}sorted{% endif %}">
-                    G
+                <th colspan="1" id="entries" data-sort="entries" class="sticky-col">Players</th>
+                <!-- note: no onclicks here any more -->
+                <th data-sort="goals_scored_team" class="sort-team bg-team">G</th>
+                <th data-sort="expected_goals_team" class="sort-team bg-team">xG</th>
+                <th data-sort="goals_performance_team" class="sort-team bg-team">+/−</th>
+                <th data-sort="goals_benched_team" class="sort-team bg-team">bG</th>
+                <th data-sort="goals_captained_team" class="sort-team bg-team">cG</th>
+                <th data-sort="assists_team" class="sort-team bg-team">A</th>
+                <th data-sort="expected_assists_team" class="sort-team bg-team">xA</th>
+                <th data-sort="assists_performance_team" class="sort-team bg-team">+/−</th>
+                <th data-sort="assists_benched_team" class="sort-team bg-team">bA</th>
+                <th data-sort="assists_captained_team" class="sort-team bg-team">cA</th>
+                <th data-sort="goals_assists_team" class="sort-team bg-team">GA</th>
+                <th data-sort="expected_goal_involvements_team" class="sort-team bg-team">xGA</th>
+                <th data-sort="goals_assists_performance_team" class="sort-team bg-team">+/−</th>
+                <th data-sort="goals_assists_performance_team_vs_total" class="sort-team bg-team">+/−
                 </th>
-                <th id="expected_goals_team" data-sort="expected_goals_team" onclick="sortTable('expected_goals_team')"
-                    class=" d-sm-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'expected_goals_team' %}sorted{% endif %}">
-                    xG
-                </th>
-                <th id="goals_performance_team" data-sort="goals_performance_team"
-                    onclick="sortTable('goals_performance_team')"
-                    class=" d-sm-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'goals_performance_team' %}sorted{% endif %}">
-                    +/-
-                </th>
-                <th id="goals_benched_team" data-sort="goals_benched_team" onclick="sortTable('goals_benched_team')"
-                    class="sort-team bg-team {% if request.args.get('sort_by') == 'goals_benched_team' %}sorted{% endif %}">
-                    bG
-                </th>
-                <th id="goals_captained_team" data-sort="goals_captained_team"
-                    onclick="sortTable('goals_captained_team')"
-                    class="sort-team bg-team {% if request.args.get('sort_by') == 'goals_captained_team' %}sorted{% endif %}">
-                    cG
-                </th>
-                <th id="assists_team" data-sort="assists_team" onclick="sortTable('assists_team')"
-                    class=" d-md-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'assists_team' %}sorted{% endif %}">
-                    A
-                </th>
-                <th id="expected_assists_team" data-sort="expected_assists_team"
-                    onclick="sortTable('expected_assists_team')"
-                    class=" d-md-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'expected_assists_team' %}sorted{% endif %}">
-                    xA
-                </th>
-                <th id="assists_performance_team" data-sort="assists_performance_team"
-                    onclick="sortTable('assists_performance_team')"
-                    class=" d-md-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'assists_performance_team' %}sorted{% endif %}">
-                    +/-
-                </th>
-                <th id="assists_benched_team" data-sort="assists_benched_team"
-                    onclick="sortTable('assists_benched_team')"
-                    class=" d-md-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'assists_benched_team' %}sorted{% endif %}">
-                    bA
-                </th>
-                <th id="assists_captained_team" data-sort="assists_captained_team"
-                    onclick="sortTable('assists_captained_team')"
-                    class=" d-md-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'assists_captained_team' %}sorted{% endif %}">
-                    cA
-                </th>
-                <th id="goals_assists_team" data-sort="goals_assists_team" onclick="sortTable('goals_assists_team')"
-                    class=" d-lg-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'goals_assists_team' %}sorted{% endif %}">
-                    GA
-                </th>
-                <th id="expected_goal_involvements_team" data-sort="expected_goal_involvements_team"
-                    onclick="sortTable('expected_goal_involvements_team')"
-                    class=" d-lg-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'expected_goal_involvements_team' %}sorted{% endif %}">
-                    xGA
-                </th>
-                <th id="goals_assists_performance_team" data-sort="goals_assists_performance_team"
-                    onclick="sortTable('goals_assists_performance_team')"
-                    class=" d-lg-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'goals_assists_performance_team' %}sorted{% endif %}">
-                    +/-
-                </th>
-                <th id="goals_assists_performance_team_vs_total" data-sort="goals_assists_performance_team_vs_total"
-                    onclick="sortTable('goals_assists_performance_team_vs_total')"
-                    class=" d-lg-table-cell sort-team bg-team {% if request.args.get('sort_by') == 'goals_assists_performance_team_vs_total' %}sorted{% endif %}">
-                    +/-
-                </th>
-                <!-- Player Totals -->
-                <th id="goals_scored" data-sort="goals_scored" onclick="sortTable('goals_scored')"
-                    class="sort  d-xl-table-cell {% if request.args.get('sort_by') == 'goals_scored' %}sorted{% endif %}">
-                    G
-                </th>
-                <th id="expected_goals" data-sort="expected_goals" onclick="sortTable('expected_goals')"
-                    class="sort  d-xl-table-cell {% if request.args.get('sort_by') == 'expected_goals' %}sorted{% endif %}">
-                    xG
-                </th>
-                <th id="goals_performance" data-sort="goals_performance" onclick="sortTable('goals_performance')"
-                    class="sort  d-xl-table-cell {% if request.args.get('sort_by') == 'goals_performance' %}sorted{% endif %}">
-                    +/-
-                </th>
-                <th id="assists" data-sort="assists" onclick="sortTable('assists')"
-                    class="sort  d-xxl-table-cell {% if request.args.get('sort_by') == 'assists' %}sorted{% endif %}">
-                    A
-                </th>
-                <th id="expected_assists" data-sort="expected_assists" onclick="sortTable('expected_assists')"
-                    class="sort  d-xxl-table-cell {% if request.args.get('sort_by') == 'expected_assists' %}sorted{% endif %}">
-                    xA
-                </th>
-                <th id="assists_performance" data-sort="assists_performance" onclick="sortTable('assists_performance')"
-                    class="sort  d-xxl-table-cell {% if request.args.get('sort_by') == 'assists_performance' %}sorted{% endif %}">
-                    +/-
-                </th>
-                <th id="goals_assists" data-sort="goals_assists" onclick="sortTable('goals_assists')"
-                    class="sort  d-xxl-table-cell {% if request.args.get('sort_by') == 'goals_assists' %}sorted{% endif %}">
-                    GA
-                </th>
-                <th id="expected_goal_involvements" data-sort="expected_goal_involvements"
-                    onclick="sortTable('expected_goal_involvements')"
-                    class=" d-xxl-table-cell sort {% if request.args.get('sort_by') == 'expected_goal_involvements' %}sorted{% endif %}">
-                    xGA
-                </th>
-                <th id="goals_assists_performance" data-sort="goals_assists_performance"
-                    onclick="sortTable('goals_assists_performance')"
-                    class=" d-xxl-table-cell sort {% if request.args.get('sort_by') == 'goals_assists_performance' %}sorted{% endif %}">
-                    +/-
-                </th>
+                <!-- overall columns -->
+                <th data-sort="goals_scored" class="sort">G</th>
+                <th data-sort="expected_goals" class="sort">xG</th>
+                <th data-sort="goals_performance" class="sort">+/−</th>
+                <th data-sort="assists" class="sort">A</th>
+                <th data-sort="expected_assists" class="sort">xA</th>
+                <th data-sort="assists_performance" class="sort">+/−</th>
+                <th data-sort="goals_assists" class="sort">GA</th>
+                <th data-sort="expected_goal_involvements" class="sort">xGA</th>
+                <th data-sort="goals_assists_performance" class="sort">+/−</th>
             </tr>
         </thead>
         <tbody id="player-table-body">
-            <!-- Player rows will be inserted here dynamically by JavaScript -->
+            <!-- rows get injected here -->
         </tbody>
         <tfoot>
             <tr class="th-purple text-center">
-                <th colspan="1" style="color: var(--purple);" class="sticky-col">.</th>
-                <th colspan="14" class="bg-team align-middle">
-                    <div id="loading" style="display: none;">Loading...</div>
+                <th colspan="1" class="sticky-col round-border-btm">.</th>
+                <th colspan="14" class="bg-team align-middle round-border-btm">
+                    <div id="loading" style="display:none">Loading...</div>
                 </th>
-                <th colspan="9" class=" d-xl-table-cell"></th>
+                <th colspan="9" class="round-border-btm"></th>
             </tr>
         </tfoot>
     </table>
 </div>
+{% endblock %}
 
-<!-- Include the external script BEFORE the inline script -->
+{% block scripts %}
 <script>
-    window.teamId = {{ team_id | tojson }};
-    window.tableType = "{{ current_page }}";
-    window.currentSortColumn = {{ sort_by | tojson }};
-    window.currentSortOrder = {{ order | tojson }};
-</script>
-<script src="{{ url_for('static', filename='js/script.js') }}"></script>
-
-
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        // Set global variables from your template.
-        window.currentSortColumn = {{ sort_by | tojson }
+    // --- Top Scorers page config ---
+    window.tableConfig = {
+        table: 'goals',
+        url: `/get-sorted-players?table=goals&team_id={{ team_id }}`,
+        tbodySelector: '#player-table-body',
+        loadingSelector: '#loading',
+        sortBy: '{{ sort_by }}',
+        sortOrder: '{{ order }}',
+        columns: [
+            // rank + name
+            {
+                render: (p, idx) => {
+                    const short = p.web_name.length > 11 ? p.web_name.slice(0, 11) + '…' : p.web_name;
+                    return `
+            <td class="sticky-col vert-border-end vert-border">
+            <div class="d-flex">
+                <div style="width:3ch">${idx + 1}</div>
+                <div class="d-none d-sm-table-cell" style="width:5ch">${p.team_short_name}</div>
+                <div>${short}</div>
+            </div>
+            </td>`;
+                }
+            },
+            // 14 team-specific metrics
+            { key: 'goals_scored_team', dataColumn: "goals_scored", sortLevel: "primary", className: 'sort-team vert-border' },
+            { key: 'expected_goals_team', dataColumn: "expected_goals", sortLevel: "primary", className: 'sort-team', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'goals_performance_team', dataColumn: "goals_performance", sortLevel: "primary", className: 'sort-team', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'goals_benched_team', className: 'sort-team text-danger' },
+            { key: 'goals_captained_team', className: 'sort-team' },
+            { key: 'assists_team', dataColumn: "assists", sortLevel: "primary", className: 'sort-team vert-border' },
+            { key: 'expected_assists_team', dataColumn: "expected_assists", sortLevel: "primary", className: 'sort-team', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'assists_performance_team', dataColumn: "assists_performance", sortLevel: "primary", className: 'sort-team', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'assists_benched_team', className: 'sort-team text-danger' },
+            { key: 'assists_captained_team', className: 'sort-team' },
+            { key: 'goals_assists_team', dataColumn: "goals_assists", sortLevel: "primary", className: 'sort-team vert-border' },
+            { key: 'expected_goal_involvements_team', dataColumn: "expected_goal_involvements", sortLevel: "primary", className: 'sort-team', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'goals_assists_performance_team', dataColumn: "goals_assists_performance", sortLevel: "primary", className: 'sort-team', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'goals_assists_performance_team_vs_total', sortLevel: "primary", className: 'sort-team', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            // 9 overall metrics
+            { key: 'goals_scored', dataColumn: "goals_scored", sortLevel: "secondary", className: 'sort vert-border' },
+            { key: 'expected_goals', dataColumn: "expected_goals", sortLevel: "secondary", className: 'sort', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'goals_performance', dataColumn: "goals_performance", sortLevel: "secondary", className: 'sort', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'assists', dataColumn: "assists", sortLevel: "secondary", className: 'sort vert-border' },
+            { key: 'expected_assists', dataColumn: "expected_assists", sortLevel: "secondary", className: 'sort', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'assists_performance', dataColumn: "assists_performance", sortLevel: "secondary", className: 'sort', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'goals_assists', dataColumn: "goals_assists", sortLevel: "secondary", className: 'sort vert-border' },
+            { key: 'expected_goal_involvements', dataColumn: "expected_goal_involvements", sortLevel: "secondary", className: 'sort', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'goals_assists_performance', dataColumn: "goals_assists_performance", sortLevel: "secondary", className: 'sort vert-border-end', formatter: v => (Math.round(v * 10) / 10).toFixed(1) }
+        ]
     };
-    window.currentSortOrder = {{ order | tojson }};
-    const managerName = {{ manager.team_name | tojson }};
 
-    // Page-specific column definitions.
-    const col_definitions = (managerName) => ({
-        "goals_scored_team": `Goals scored for ${managerName}`,
-        "expected_goals_team": `Expected goals for ${managerName}`,
-        "goals_performance_team": `Goals scored for ${managerName} versus expected`,
-        "goals_benched_team": `Goals benched for ${managerName}`,
-        "goals_captained_team": `Goals captained for ${managerName}`,
-        "assists_team": `Assists made for ${managerName}`,
-        "expected_assists_team": `Expected assists for ${managerName}`,
-        "assists_performance_team": `Assists for ${managerName} versus expected`,
-        "assists_benched_team": `Assists benched for ${managerName}`,
-        "assists_captained_team": `Assists captained for ${managerName}`,
-        "goals_assists_team": `Goals and assists for ${managerName}`,
-        "expected_goal_involvements_team": `Expected goals and assists for ${managerName}`,
-        "goals_assists_performance_team": `Goals and assists for ${managerName} versus expected`,
-        "goals_assists_performance_team_vs_total": `Goals and assists for ${managerName} versus expected compared to player total`,
-
-        "goals_scored": `Total goals scored`,
-        "expected_goals": `Total expected goals`,
-        "goals_performance": `Total goals scored versus expected`,
+    // ── page-specific human‐readable lookup for tooltips & sort-info ──
+    ; (function () {
+        const name = {{ manager.team_name| tojson
+    }};
+    window.tableConfig.lookup = {
+        "goals_scored_team": `Goals scored for ${name}`,
+        "expected_goals_team": `Expected goals for ${name}`,
+        "goals_performance_team": `Goals scored vs expected goals scored for ${name}`,
+        "goals_benched_team": `Benched goals for ${name}`,
+        "goals_captained_team": `Captain goals for ${name}`,
+        "assists_team": `Assists for ${name}`,
+        "expected_assists_team": `Expected assists for ${name}`,
+        "assists_performance_team": `Assists vs expected assists for ${name}`,
+        "assists_benched_team": `Benched assists for ${name}`,
+        "assists_captained_team": `Captain assists for ${name}`,
+        "goals_assists_team": `G+A for ${name}`,
+        "expected_goal_involvements_team": `Expected goals + expected assists for ${name}`,
+        "goals_assists_performance_team": `G+A vs xG+xA for ${name}`,
+        "goals_assists_performance_team_vs_total":
+            `G+A vs xG+xA vs total for ${name}`,
+        "goals_scored": `Total G`,
+        "expected_goals": `Total xG`,
+        "goals_performance": `Goals scored vs expected goals`,
         "assists": `Total assists`,
-        "expected_assists": `Total expected assists`,
-        "assists_performance": `Total assists versus expected`,
-        "goals_assists": `Total goals and assists`,
-        "expected_goal_involvements": `Total expected goals and assists`,
-        "goals_assists_performance": `Total goals and assists versus expected`,
-        "top-players": `Pictures of the top players for this category`,
-        "entries": `Number of entries for this category`,
+        "expected_assists": `Expected assists`,
+        "assists_performance": `Assists vs expected assists`,
+        "goals_assists": `Total goals + assists`,
+        "expected_goal_involvements": `Total xG+xA`,
+        "goals_assists_performance": `G+A vs xG+xA`,
+        "top-players": `Top player pictures`,
+        "entries": `Number of players`,
         "team-data": `Team stats`,
         "overall-data": `Overall stats`
-    });
+    };
+}) ();
 
-    // Make lookup globally available.
-    window.lookup = col_definitions(managerName);
-
-    // Make fetchData global so that script.js can call it.
-    window.fetchData = function (sortBy, sortOrder) {
-
-        const teamId = {{ team_id | tojson
-    }};
-    const { minCost, maxCost } = getSelectedPriceRange();
-    const selectedPositions = getSelectedPositions();
-    const lookup = col_definitions(managerName);
-    const categoriesColText = lookup[window.currentSortColumn] || "Unknown category";
-    const categoriesSortText = sortOrder === "desc" ? "" : "(ascending)";
-
-    // Show loading indicators.
-    document.getElementById('loading').style.display = 'block';
-    document.getElementById('player-table-body').style.display = 'none';
-
-    //document.getElementById('current-sort').innerHTML = categoriesColText;
-    //document.getElementById('current-order').innerHTML = categoriesSortText;
-
-    const sortEl = document.getElementById('current-sort');
-    if (sortEl) sortEl.textContent = categoriesColText;
-
-    const orderEl = document.getElementById('current-order');
-    if (orderEl) orderEl.textContent = categoriesSortText;
-
-
-    // The AJAX call.
-    fetch(`/get-sorted-players?team_id=${teamId}&sort_by=${sortBy}&order=${sortOrder}&selected_positions=${selectedPositions}&min_cost=${minCost}&max_cost=${maxCost}`)
-        .then(response => response.json())
-        .then(data => {
-
-            // Make sure I update the manager
-            // ─── Update the header ─────────────────────────
-            if (data.manager) {
-                document.querySelector('#flag').innerHTML =
-                    `<span class="fi fi-${data.manager.country_code}"></span>`;
-                document.querySelector('#header-team-name h1:first-child')
-                    .textContent = `${data.manager.first_name} ${data.manager.last_name}'s `;
-                document.querySelector('#header-team-name + div h1.mb-0')
-                    .textContent = data.manager.team_name;
-            }
-            // ─── Then render your table rows ─────────────────
-            // Update entry count.
-            const players = data.players || [];
-            const entryCount = players.length;
-            document.getElementById('entries').textContent =
-                entryCount === 1 ? "1 entry" : `${entryCount} entries`;
-
-            window.updateTopPlayersText(entryCount); // Update top players text.
-
-            // Update table rows.
-            const tableBody = document.getElementById('player-table-body');
-            tableBody.innerHTML = ''; // Clear existing rows.
-            data.players.forEach((player, index) => {
-                const row = document.createElement('tr');
-                row.classList.add(
-                    'vert-border',
-                    'align-middle',
-                    `team-${player.team_code}`,
-                    `element-type-${player.element_type}`
-                );
-                const truncatedWebName =
-                    player.web_name.length > 11
-                        ? player.web_name.slice(0, 11) + '...'
-                        : player.web_name;
-                row.innerHTML = `
-                    <td class="sticky-col vert-border-end vert-border">
-                        <div class="d-flex">
-                            <div class="" style="width: 3ch;">${index + 1}</div>
-                            <div class="d-none d-sm-table-cell" style="width: 5ch;">${player.team_short_name} </div>
-                            <div>${truncatedWebName}</div>
-                        </div>
-                    </td>
-                    <td data-column="goals_scored" data-sort="primary">${player.goals_scored_team}</td>
-                    <td data-column="expected_goals" data-sort="primary" class="d-sm-table-cell">${(Math.round(player.expected_goals_team * 10) / 10).toFixed(1)}</td>
-                    <td data-column="performance" data-sort="primary" class="d-sm-table-cell ${player.goals_performance_team > 0 ? 'green-text' : player.goals_performance_team < 0 ? 'red-text' : ''}">${(Math.round(player.goals_performance_team * 10) / 10).toFixed(1)}</td>
-                    <td data-column="benched_goals" data-sort="primary">${player.goals_benched_team}</td>
-                    <td data-column="goals_captained" data-sort="primary" class="vert-border-end">${player.goals_captained_team}</td>
-                    <td data-column="assists" data-sort="primary" class="d-md-table-cell">${player.assists_team}</td>
-                    <td data-column="expected_assists" data-sort="primary" class="d-md-table-cell">${(Math.round(player.expected_assists_team * 10) / 10).toFixed(1)}</td>
-                    <td data-column="assists_performance" data-sort="primary" class="d-md-table-cell ${player.assists_performance_team > 0 ? 'green-text' : player.assists_performance_team < 0 ? 'red-text' : ''}">${(Math.round(player.assists_performance_team * 10) / 10).toFixed(1)}</td>
-                    <td data-column="benched_assists" data-sort="primary" class="d-md-table-cell">${player.assists_benched_team}</td>
-                    <td data-column="assists_captained" data-sort="primary" class="d-md-table-cell vert-border-end">${player.assists_captained_team}</td>
-                    <td data-column="goal_involvements" data-sort="primary" class="d-lg-table-cell">${player.goals_assists_team}</td>
-                    <td data-column="expected_goal_involvements" data-sort="primary" class="d-lg-table-cell">${(Math.round(player.expected_goal_involvements_team * 10) / 10).toFixed(1)}</td>
-                    <td data-column="goal_involvements_performance" data-sort="primary" class="d-lg-table-cell ${player.goals_assists_performance_team > 0 ? 'green-text' : player.goals_assists_performance_team < 0 ? 'red-text' : ''}">${(Math.round(player.goals_assists_performance_team * 10) / 10).toFixed(1)}</td>
-                    <td data-column="performance_performance" data-sort="primary" class="d-lg-table-cell vert-border-end ${player.goals_assists_performance_team_vs_total > 0 ? 'green-text' : player.goals_assists_performance_team_vs_total < 0 ? 'red-text' : ''}">${(Math.round(player.goals_assists_performance_team_vs_total * 10) / 10).toFixed(1)}</td>
-                    <td data-column="goals_scored" data-sort="secondary" class="d-xl-table-cell vert-border">${player.goals_scored}</td>
-                    <td data-column="expected_goals" data-sort="secondary" class="d-xl-table-cell">${(Math.round(player.expected_goals * 10) / 10).toFixed(1)}</td>
-                    <td data-column="performance" data-sort="secondary" class="d-xl-table-cell vert-border-end ${player.goals_performance > 0 ? 'green-text' : player.goals_performance < 0 ? 'red-text' : ''}">${(Math.round(player.goals_performance * 10) / 10).toFixed(1)}</td>
-                    <td data-column="assists" data-sort="secondary" class="d-xxl-table-cell">${player.assists}</td>
-                    <td data-column="expected_assists" data-sort="secondary" class="d-xxl-table-cell">${(Math.round(player.expected_assists * 10) / 10).toFixed(1)}</td>
-                    <td data-column="assists_performance" data-sort="secondary" class="d-xxl-table-cell vert-border-end ${player.assists_performance > 0 ? 'green-text' : player.assists_performance < 0 ? 'red-text' : ''}">${(Math.round(player.assists_performance * 10) / 10).toFixed(1)}</td>
-                    <td data-column="goal_involvements" data-sort="secondary" class="d-xxl-table-cell">${player.goals_assists}</td>
-                    <td data-column="expected_goal_involvements" data-sort="secondary" class="d-xxl-table-cell">${(Math.round(player.expected_goal_involvements * 10) / 10).toFixed(1)}</td>
-                    <td data-column="goal_involvements_performance" data-sort="secondary" class="d-xxl-table-cell vert-border-end ${player.goals_assists_performance > 0 ? 'green-text' : player.goals_assists_performance < 0 ? 'red-text' : ''}">${(Math.round(player.goals_assists_performance * 10) / 10).toFixed(1)}</td>
-                  `;
-                tableBody.appendChild(row);
-            });
-
-            // Once the table rows are added, hide the loading indicator and show the table.
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('player-table-body').style.display = '';
-
-            window.updatePlayerImages(data);
-            //⚡️ update the little arrow in the current <th>
-            updateSortIndicator(sortBy, sortOrder);
-        })
-        .catch(error => console.error('Error fetching player images:', error));
-          };
-
-    const { minCost, maxCost } = getSelectedPriceRange();
-
-            // kick off the very first load using your saved order too
-            // Doing this in layout.html instead
-            //window.fetchData(window.currentSortColumn, window.currentSortOrder);
-
-        });
 </script>
-
-
-
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
 
 {% endblock %}

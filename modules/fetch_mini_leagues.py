@@ -198,9 +198,9 @@ def get_team_mini_league_summary(team_id: int, static_data: dict) -> dict:
         "dreamteam_count_team":   0,
         "yellow_cards_team":      0,
         "red_cards_team":         0,
-        "own_goals_team":         0,
-        "penalties_saved_team":   0,
-        "penalties_missed_team":  0,
+        # "own_goals_team":         0,
+        # "penalties_saved_team":   0,
+        # "penalties_missed_team":  0,
         "minutes_team":           0,
         "total_points_team":      0,
     }
@@ -238,18 +238,18 @@ def get_team_mini_league_summary(team_id: int, static_data: dict) -> dict:
                 summary["clean_sheets_team"] += stats.get(
                     "clean_sheets", 0) * mult
                 summary["bps_team"] += stats.get("bps", 0) * mult
-                summary["expected_goals_team"] += float(
-                    stats.get("expected_goals", 0)) * mult
-                summary["expected_assists_team"] += float(
-                    stats.get("expected_assists", 0)) * mult
+                # summary["expected_goals_team"] += float(
+                #     stats.get("expected_goals", 0)) * mult
+                # summary["expected_assists_team"] += float(
+                #     stats.get("expected_assists", 0)) * mult
                 summary["yellow_cards_team"] += stats.get(
                     "yellow_cards", 0) * mult
                 summary["red_cards_team"] += stats.get("red_cards", 0) * mult
-                summary["own_goals_team"] += stats.get("own_goals", 0) * mult
-                summary["penalties_saved_team"] += stats.get(
-                    "penalties_saved", 0) * mult
-                summary["penalties_missed_team"] += stats.get(
-                    "penalties_missed", 0) * mult
+                # summary["own_goals_team"] += stats.get("own_goals", 0) * mult
+                # summary["penalties_saved_team"] += stats.get(
+                #     "penalties_saved", 0) * mult
+                # summary["penalties_missed_team"] += stats.get(
+                #     "penalties_missed", 0) * mult
                 summary["minutes_team"] += stats.get("minutes", 0) * mult
                 if stats.get("in_dreamteam", False):
                     summary["dreamteam_count_team"] += mult

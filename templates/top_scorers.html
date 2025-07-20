@@ -3,7 +3,7 @@
 
 {% block page_content %}
 <div class="table-responsive">
-    <table id="goals-table" class="interactive-table table table-borderless table-striped custom-striped text-nowrap">
+    <table id="goals-table" class="interactive-table table table-borderless table-striped text-nowrap">
         <thead class="th-purple">
             <tr class="text-center">
                 <th colspan="1" id="top-players" data-sort="top-players" class="sticky-col round-border-top">↑ Top Five
@@ -71,17 +71,28 @@ window.tableConfig = {
   columns: [
     // rank + name
     { render: (p, idx) => {
-        const short = p.web_name.length > 11 ? p.web_name.slice(0,11)+'…' : p.web_name;
+        const short = p.web_name.length > 11 ? p.web_name.slice(0, 13) + '…' : p.web_name;
+        const badgeUrl = `https://resources.premierleague.com/premierleague/badges/100/t${p.team_code}@x2.png`;
+
         return `
             <td class="sticky-col vert-border-end vert-border">
-            <div class="d-flex">
-                <div style="width:3ch">${idx+1}</div>
-                <div class="d-none d-sm-table-cell" style="width:5ch">${p.team_short_name}</div>
-                <div>${short}</div>
+            <div class="d-flex align-items-center">
+                <div class="text-center" style="width:2ch; flex:0 0 auto;">${idx + 1}</div>
+                <img 
+                    src="${badgeUrl}"
+                    alt="${p.team_name} badge"
+                    class="img-fluid overlap-badge ms-1"
+                    data-bs-toggle="tooltip"
+                    title="${p.team_name}"
+                    style="width: 20px; height: 20px; flex:0 0 auto;"
+                    onerror="this.onerror=null;this.src='https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png';"
+                >
+                <div class="ms-1 text-truncate" style="max-width: 12ch;">${short}</div>
             </div>
             </td>`;
-      }
-    },
+          }
+      },
+
     // 14 team-specific metrics
     { key: 'goals_scored_team', dataColumn: "goals_scored", sortLevel: "primary", className: 'sort-team vert-border' },
     { key: 'expected_goals_team', dataColumn: "expected_goals", sortLevel: "primary", className: 'sort-team', formatter: v => (Math.round(v*10)/10).toFixed(1) },
@@ -130,8 +141,8 @@ window.tableConfig.lookup = {
     "goals_assists_performance_team": `G+A vs xG+xA for ${name}`,
     "goals_assists_performance_team_vs_total":
         `G+A vs xG+xA vs total for ${name}`,
-    "goals_scored": `Total G`,
-    "expected_goals": `Total xG`,
+    "goals_scored": `Total goals scored`,
+    "expected_goals": `Total expected goals`,
     "goals_performance": `Goals scored vs expected goals`,
     "assists": `Total assists`,
     "expected_assists": `Expected assists`,
