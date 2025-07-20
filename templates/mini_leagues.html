@@ -15,25 +15,24 @@
   </div>
 
 <div class="table-responsive">
-  <table id="mini-league-table" class="table table-sm interactive-table table-borderless table-striped text-nowrap">
+  <table id="mini-league-table" class="table table-borderless interactive-table table-striped text-nowrap">
     <thead class="th-purple">
-      <tr class="text-center">
-        <th colspan="2" class="round-border-top-left"></th>
-        <th colspan="1" class="sticky-col text-start">Manager</th>
-        <th colspan="2" class="vert-border-white">Ranks</th>
-        <th colspan="3" class="vert-border-white">Points</th>
-        <th colspan="6" class="vert-border-white">Chips</th>
-        <th colspan="2" class="vert-border-white">Transfers</th>
-        <th colspan="3" class="vert-border-white">Goals</th>
-        <th colspan="2" class="vert-border-white">Assists</th>
-        <th colspan="4" class="vert-border-white">Div</th>
-        <th colspan="4" class="vert-border-white round-border-top-right">Negatives</th>
-      </tr>
+    <tr class="text-center btm-border-white">
+        <th colspan="2" class="round-border-top">Team</th>
+        <th colspan="1" class="sticky-col round-border-top vert-border-white text-start text-lg-center">Manager</th>
+        <th colspan="2" class="vert-border-white round-border-top">Ranks</th>
+        <th colspan="3" class="vert-border-white round-border-top">Points</th>
+        <th colspan="4" class="vert-border-white round-border-top">Chips</th>
+        <th colspan="2" class="vert-border-white round-border-top">Transfers</th>
+        <th colspan="8" class="vert-border-white round-border-top">Breakdown</th>
+        <!-- <th colspan="4" class="vert-border-white round-border-top-right">Negatives</th> -->
+      </tr> 
       <tr class="text-center">
         <!-- Manager info-->
         <th id="last_deadline_value" data-sort="last_deadline_value" class="sort vert-border-white text-start">Team Value</th>
         <th id="years_active" data-sort="years_active" class="sort text-start">Season</th>
-        <th id="player_name" data-sort="player_name" class="sort sticky-col text-start">Name</th>
+
+        <th id="player_name" data-sort="player_name" class="sort sticky-col text-start text-lg-center vert-border-white">Name</th>
 
         <!-- Rank -->
         <th id="rank" data-sort="rank" class="sort vert-border-white">Rank</th>
@@ -45,52 +44,43 @@
         <th id="pts_behind_overall" data-sort="pts_behind_overall" class="sort">T OR</th>
     
         <!-- Chips -->
-        <th id="wildcard1_gw" data-sort="wildcard1_gw" class="sort vert-border-white">WC1</th>
-        <th id="wildcard2_gw" data-sort="wildcard2_gw" class="sort">WC2</th>
+        <th id="wildcard1_gw" data-sort="wildcard1_gw" class="sort vert-border-white">WC</th>
         <th id="3xc_gw" data-sort="3xc_gw" class="sort text-center">3x C</th>
         <th id="bboost_gw" data-sort="bboost_gw" class="sort">BB</th>
         <th id="freehit_gw" data-sort="freehit_gw" class="sort">FH</th>
-        <th id="manager_gw" data-sort="manager_gw" class="sort">AM</th>
+        <!-- <th id="manager_gw" data-sort="manager_gw" class="sort">AM</th> -->
 
         <!-- Transfers -->
-        <th id="last_deadline_total_transfers" data-sort="last_deadline_total_transfers" class="sort vert-border-white text-start">Total</th>
+        <th id="last_deadline_total_transfers" data-sort="last_deadline_total_transfers" class="sort vert-border-white  text-start">Total</th>
         <th id="transfer_cost" data-sort="transfer_cost" class="sort">Hits</th>
 
-        <!-- Goals -->
+        <!-- Breakdown -->
         <th id="goals_scored_team" data-sort="goals_scored_team" class="sort vert-border-white">G</th>
-        <th id="expected_goals_team" data-sort="expected_goals_team" class="sort">xG</th>
-        <th id="goals_benched_team" data-sort="goals_benched_team" class="sort">bG</th>
-
-        <!-- Assists -->
-        <th id="assists_team" data-sort="assists_team" class="sort vert-border-white">A</th>
-        <th id="expected_assists_team" data-sort="expected_assists_team" class="sort">xA</th>
-
-        <!-- Misc. -->
-        <th id="minutes_team" data-sort="minutes_team" class="sort vert-border-white">Minutes</th>
+        <th id="assists_team" data-sort="assists_team" class="sort ">A</th>
+        <th id="minutes_team" data-sort="minutes_team" class="sort ">Mi</th>
+        <th id="dc-team" data-sort="dc_team" class="sort ">DC</th>
         <th id="clean_sheets_team" data-sort="clean_sheets_team" class="sort">CS</th>
-        <th id="bps_team" data-sort="bps_team" class="sort">BPS</th>
-        <th id="dreamteam_count_team" data-sort="dreamteam_count_team" class="sort">DT</th>
+        <th id="bps_team" data-sort="bps_team" class="sort">BPS*</th>
+        <!-- <th id="dreamteam_count_team" data-sort="dreamteam_count_team" class="sort">DT</th> -->
 
         <!-- Negatives -->
-        <th id="yellow_cards_team" data-sort="yellow_cards_team" class="sort vert-border-white">Y</th>
+        <th id="yellow_cards_team" data-sort="yellow_cards_team" class="sort ">Y</th>
         <th id="red_cards_team" data-sort="red_cards_team" class="sort">R</th>
-        <th id="own_goals_team" data-sort="own_goals_team" class="sort">OGs</th>
-        <th id="penalties_missed_team" data-sort="penalties_missed_team" class="sort">PM</th>
+        <!-- <th id="own_goals_team" data-sort="own_goals_team" class="sort">OGs</th>
+        <th id="penalties_missed_team" data-sort="penalties_missed_team" class="sort">PM</th> -->
       </tr>
     </thead>
     <tbody id="mini-league-table-body">
     </tbody>
     <tfoot class="th-purple">
       <tr>
-        <th colspan="3" class=""><div id="loading" style="display:none">Loading</div></th>
-        <th colspan="2" class="" style="color:#38003c;">.</th>
-        <th colspan="3" class=""></th>
-        <th colspan="6" class=""></th>
+        <th colspan="2" class=""><div id="loading" style="display:none">Loading</div></th>
+        <th colspan="1" class="" style="color:#38003c;">.</th>
         <th colspan="2" class=""></th>
         <th colspan="3" class=""></th>
+        <th colspan="4" class=""></th>
         <th colspan="2" class=""></th>
-        <th colspan="4" class=""></th>
-        <th colspan="4" class=""></th>
+        <th colspan="8" class=""></th>
       </tr>
     </tfoot>
   </table>
@@ -127,8 +117,8 @@
     total_points: "Total points", pts_behind_league_leader: "Trailing mini league leader by", pts_behind_overall: "Trailing overall leader by",
     minutes_team: "Total minutes played", last_deadline_total_transfers: "Total transfers made", transfer_cost: "Minus points for hits",
     clean_sheets_team: "Clean sheets", goals_scored_team: "Goals scored", goals_benched_team: "Goals benched",
-    assists_team: "Assists", 
-    wildcard1_gw: "Wildcard 1", wildcard2_gw: "Wildcard 2", ['3xc_gw']: "Triple captain", bboost_gw: "Bench boost", manager_gw: "Assistant manager", freehit_gw: "Free hit",
+    assists_team: "Assists", dc_team: "Defensive contributions",
+    wildcard1_gw: "Wildcards", ['3xc_gw']: "Triple captains", bboost_gw: "Bench boosts", freehit_gw: "Free hits",
     expected_goals_team: "Expected Goals", bps_team: "BPS", 
     expected_assists_team: "Expected Assists", dreamteam_count_team: "Times in Dream Team",  yellow_cards_team: "Yellow cards", red_cards_team: "Red cards",
     own_goals_team: "Own goals", penalties_saved_team: "Penalties Saved", penalties_missed_team: "Penalties Missed"
@@ -174,10 +164,10 @@
           `
         }
       },
-      {
+       {
         key: "player_name",
         className: "",
-        render: t => 
+        render: t =>
           `
             <td class="sticky-col vert-border">
               <div class="text-start text-lg-center fw-bold"> ${t.player_name}</div>
@@ -228,50 +218,50 @@
       { key: "pts_behind_league_leader" },
       { key: "pts_behind_overall"},
       {
-        key: "wildcard1_gw",
-        title: "Wildcard 1",
+        key: "wildcards_gw",
+        title: "Wildcards",
         render: t => {
-          const gw = t.wildcard1_gw;
-          if (!gw) {
-            return `<td class="vert-border"></td>`;
-          }
+          const wc1 = t.wildcard1_gw;
+          const wc2 = t.wildcard2_gw;
+
+          const formatGW = gw => {
+            if (!gw) return "⬜️";
+            // pad single-digit GWs with leading space or 0
+            const padded = gw < 10 ? ` ${gw}` : gw; // note: first char is &nbsp;
+            return `✅ GW <span class="font-monospace">${padded}</span>`;
+          };
+
+          const wildcard1 = `<div>${formatGW(wc1)}</div>`;
+          const wildcard2 = `<div>${formatGW(wc2)}</div>`;
+
           return `
-            <td class="vert-border">
-              <div>✅</div>
-              <div>GW${gw}</div>
-            </td>
-          `;
-        }
-      },
-      {
-        key: "wildcard2_gw",
-        title: "Wildcard 2",
-        render: t => {
-          const gw = t.wildcard2_gw;
-          if (!gw) {
-            return `<td></td>`;
-          }
-          return `
-            <td>
-              <div>✅</div>
-              <div>GW${gw}</div>
-            </td>
-          `;
+      <td class="vert-border text-start">
+        ${wildcard1}${wildcard2}
+      </td>
+    `;
         }
       },
       {
         key: ["3xc_gw"],
         title: "3x C!!!!",
-        render: t => {
-          const gw = t["3xc_gw"];
-          if (!gw) {
-            return `<td></td>`;
-          }
-          return `
-            <td>
-              <div>✅</div>
-              <div>GW${gw}</div>
-            </td>
+              render: t => {
+                const t1 = t["3xc_gw"];
+                const t2 = t["3xc2_gw"]; // Need to flatten or just have a list??
+     
+                // default to empty
+                let content = "";
+
+                if (!t1 && !t2) {
+                  content = "<div>⬜️</div><div>⬜️</div>";
+                } else {
+                  const triple1 = t1 ? `<div>✅ GW ${t1}</div>` : "⬜️";
+                  const triple2 = t2 ? `<div>✅ GW ${t2}</div>` : "⬜️";
+                  content = `${triple1} ${triple2}`;
+                }
+                return `
+              <td class="vert-border text-start">
+                <div>${content}</div>
+              </td>
           `;
         }
       },
@@ -279,15 +269,23 @@
         key: "bboost_gw",
         title: "bboost",
         render: t => {
-          const gw = t.bboost_gw;
-          if (!gw) {
-            return `<td></td>`;
+          const bb1 = t.bboost_gw;
+          const bb2 = t.bboost2_gw; // Need to flatten or just have a list??
+
+          // default to empty
+          let content = "";
+
+          if (!bb1 && !bb2) {
+            content = "<div>⬜️</div><div>⬜️</div>";
+          } else {
+            const bboost1 = bb1 ? `<div>✅ GW ${bb1}</div>` : "⬜️";
+            const bboost2 = bb2 ? `<div>✅ GW ${bb2}</div>` : "⬜️";
+            content = `${bboost1} ${bboost2}`;
           }
           return `
-            <td>
-              <div>✅</div>
-              <div>GW${gw}</div>
-            </td>
+              <td class="vert-border text-start">
+                <div>${content}</div>
+              </td>
           `;
         }
       },
@@ -295,49 +293,57 @@
         key: "freehit_gw",
         title: "freehit",
         render: t => {
-          const gw = t.freehit_gw;
-          if (!gw) {
-            return `<td></td>`;
+          const fh1 = t.freehit_gw;
+          const fh2 = t.freehit2_gw; // Need to flatten or just have a list??
+
+          // default to empty
+          let content = "";
+
+          if (!fh1 && !fh2) {
+            content = "<div>⬜️</div><div>⬜️</div>";
+          } else {
+            const freehit1 = fh1 ? `<div>✅ GW ${fh1}</div>` : "⬜️";
+            const freehit2 = fh2 ? `<div>✅ GW ${fh2}</div>` : "⬜️";
+            content = `${freehit1} ${freehit2}`;
           }
           return `
-            <td>
-              <div>✅</div>
-              <div>GW${gw}</div>
-            </td>
+              <td class="vert-border text-start">
+                <div>${content}</div>
+              </td>
           `;
         }
       },
-      {
-        key: "manager_gw",
-        title: "am",
-        render: t => {
-          const gw = t.manager_gw;
-          if (!gw) {
-            return `<td></td>`;
-          }
-          return `
-            <td>
-              <div>✅</div>
-              <div>GW${gw}</div>
-            </td>
-          `;
-        }
-      },
+      // {
+      //   key: "manager_gw",
+      //   title: "am",
+      //   render: t => {
+      //     const gw = t.manager_gw;
+      //     if (!gw) {
+      //       return `<td></td>`;
+      //     }
+      //     return `
+      //       <td>
+      //         <div>✅</div>
+      //         <div>GW${gw}</div>
+      //       </td>
+      //     `;
+      //   }
+      // },
       { key: "last_deadline_total_transfers", className: "vert-border"},
       { key: "transfer_cost", className: "text-danger" },
       { key: "goals_scored_team", className: "vert-border" },
-      { key: "expected_goals_team", formatter: v => v.toFixed(1) },
-      { key: "goals_benched_team", className: "vert-border-end text-danger"},
+      // { key: "expected_goals_team", formatter: v => v.toFixed(1) },
+      // { key: "goals_benched_team", className: "vert-border-end text-danger"},
       { key: "assists_team" },
-      { key: "expected_assists_team", formatter: v => v.toFixed(1) },
+      // { key: "expected_assists_team", formatter: v => v.toFixed(1) },
       { key: "minutes_team", className: "vert-border" },
       { key: "clean_sheets_team" },
       { key: "bps_team" },
-      { key: "dreamteam_count_team" },
+      { key: "dreamteam_count_team" }, // Defensive contributions 
       { key: "yellow_cards_team", className: "vert-border text-danger" },
       { key: "red_cards_team", className: "text-danger" },
-      { key: "own_goals_team", className: "text-danger" },
-      { key: "penalties_missed_team", className: "text-danger" },
+      // { key: "own_goals_team", className: "text-danger" },
+      // { key: "penalties_missed_team", className: "text-danger" },
 
     ],
 

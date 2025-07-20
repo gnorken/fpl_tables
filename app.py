@@ -405,6 +405,20 @@ def get_sorted_players():
         )
         conn.commit()
 
+    # ✅ Add filtering logic here
+    if table != "teams":
+        selected_positions = request.args.get("selected_positions", "")
+        if selected_positions:
+            positions = set(selected_positions.split(","))
+            team_blob = {
+                pid: p
+                for pid, p in team_blob.items()
+                if str(p["element_type"]) in positions
+            }
+        else:
+            # no positions selected → return no players
+            team_blob = {}
+
     conn.close()
 
     if table == "teams":
@@ -413,7 +427,7 @@ def get_sorted_players():
 
         # 2️⃣ Turn into a list and sort by the chosen metric
         sorted_stats = sorted(
-            stats.values(),
+            [team for team in stats.values() if team.get(sort_by, 0) != 0],
             key=lambda team: team.get(sort_by, 0),
             reverse=(order == "desc")
         )

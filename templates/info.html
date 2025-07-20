@@ -15,9 +15,11 @@
   </div>
 
   <!-- Reorder columns so filter (with checkboxes) comes before player images on mobile -->
+  <!-- Reorder columns so filter (with checkboxes) comes before player images on mobile -->
   <div class="row">
-    <!-- Filter section: order-1 on mobile, order-lg-2 on large screens -->
-    <div id="filter" class="col-12 col-lg-6 order-1 order-lg-2 d-flex flex-column flex-lg-row align-items-center py-2 {% if hide_element %}d-none{% endif %}">
+    <!-- Filter section: order-1 on mobile, order-md-2 on md+ -->
+    <div id="filter"
+      class="col-12 col-lg-6 order-1 order-lg-2 d-flex flex-column flex-lg-row align-items-center py-2 {% if hide_element %}d-none{% endif %}">
       <!-- Checkbox column -->
       <div class="col-12 col-lg-3 ">
         <form id="checkboxForm" class="d-flex flex-row flex-lg-column justify-content-around">
@@ -39,18 +41,18 @@
           </div>
         </form>
       </div>
-      
+  
       <!-- Price slider column (optional; adjust as needed) -->
       <div class="d-none d-lg-inline col-12 col-lg-5 py-5">
         <div id="price">
           <div id="price-slider-div" class="form-group">
             <div id="price-slider"></div>
             <label id="price-label" for="price-slider">Price</label>
-          </div>                
+          </div>
         </div>
       </div>
     </div>
-
+  
     <!-- Player images section: order-2 on mobile, order-lg-1 on large screens -->
     <div class="col-12 col-lg-6 order-2 order-lg-1">
       <div id="player-images" class="player-image-container d-flex">
@@ -61,6 +63,7 @@
       </div>
     </div>
   </div>
+
 
   <div class="row">
     {% block page_content %}

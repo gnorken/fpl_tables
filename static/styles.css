@@ -40,89 +40,131 @@ a:active {
 .red-text a {color:var(--red);}
 .green-text a {color:green;}
 
-
 /* Team colors */
-.team-1 td:first-child, .team-1 {
+.team-1 {
   background-color: #ef0107 !important;
   color: white !important;
-} /* Manchester United */
-.team-3 td:first-child, .team-3 {
+}
+
+/* Manchester United */
+.team-3 {
   background-color: #ef0107 !important;
   color: white !important;
-} /* Arsenal */
-.team-4 td:first-child, .team-4 {
+}
+
+/* Arsenal */
+.team-4 {
   background-color: #241f20 !important;
   color: white !important;
-} /* Newcastle */
-.team-6 td:first-child, .team-6 {
+}
+
+/* Newcastle */
+.team-6 {
   background-color: #ffffff !important;
-} /* Tottenham */
-.team-7 td:first-child, .team-7 {
+}
+
+/* Tottenham */
+.team-7 {
   background-color: #7a263a !important;
   color: white !important;
-} /* Aston Villa */
-.team-8 td:first-child, .team-8 {
+}
+
+/* Aston Villa */
+.team-8 {
   background-color: #034694 !important;
   color: white !important;
-} /* Chelsea */
-.team-9 td:first-child, .team-9 {
+}
+
+/* Chelsea */
+.team-9 {
   background-color: #1b458f !important;
-} /* Leicester City */
-.team-11 td:first-child, .team-11 {
+}
+
+/* Leicester City */
+.team-11 {
   background-color: #274488 !important;
   color: white !important;
-} /* Everton */
-.team-13 td:first-child, .team-13 {
+}
+
+/* Everton */
+.team-13 {
   background-color: #0101e8 !important;
   color: white !important;
-} /* Leicester */
-.team-14 td:first-child, .team-14 {
+}
+
+/* Leicester */
+.team-14 {
   background-color: #dd0000 !important;
   color: white !important;
-} /* Liverpool */
-.team-17 td:first-child, .team-17 {
+}
+
+/* Liverpool */
+.team-17 {
   background-color: #e53233 !important;
   color: white !important;
-} /* Nottingham Forest */
-.team-20 td:first-child, .team-20 {
+}
+
+/* Nottingham Forest */
+.team-20 {
   background-color: #ff0000 !important;
-} /* Southampton */
-.team-31 td:first-child, .team-31 {
+}
+
+/* Southampton */
+.team-31 {
   background-color: #0a4af5 !important;
   color: white !important;
-} /* Crystal Palace */
-.team-39 td:first-child, .team-39 {
+}
+
+/* Crystal Palace */
+.team-39 {
   background-color: #fdb913 !important;
-} /* Wolves */
-.team-36 td:first-child, .team-36 {
+}
+
+/* Wolves */
+.team-36 {
   background-color: #0057b8 !important;
   color: white !important;
-} /* Brighton */
-.team-40 td:first-child, .team-43 {
+}
+
+/* Brighton */
+.team-43 {
   background-color: #3a64a3 !important;
   color: white !important;
-} /* Ipswich */
-.team-43 td:first-child, .team-43 {
+}
+
+/* Ipswich */
+.team-43 {
   background-color: #6cabdd !important;
-} /* Manchester City */
-.team-54 td:first-child, .team-54 {
+}
+
+/* Manchester City */
+.team-54 {
   background-color: #ffffff !important;
-} /* Fulham */
-.team-91 td:first-child, .team-91 {
+}
+
+/* Fulham */
+.team-91 {
   background-color: #da291c !important;
   color: white !important;
-} /* Bournemouth */
-.team-94 td:first-child, .team-94 {
+}
+
+/* Bournemouth */
+.team-94 {
   background-color: #d20000 !important;
   color: white !important;
-} /* Brentford */
-.default-team td:first-child, .default-team {
-  background-color: #eeeeee !important;
-} /* Fallback */
+}
 
+/* Brentford */
+.default-team {
+  background-color: #eeeeee !important;
+}
+
+/* Fallback */
+
+ 
 /* TABLE */
 /* table colours */
-.bg-team {
+x.bg-team {
   background-color: var(--red) !important;
   color: white !important;
 } /* th team */
@@ -226,6 +268,9 @@ td {
 .vert-border-end-white {
   border-right: 1px solid whitesmoke;
 }
+.btm-border-white {
+  border-bottom: 1px solid whitesmoke !important;
+}
 
 /* Rounded borders */
 .round-border {
@@ -309,11 +354,6 @@ td {
   animation: skeleton-animation 1.5s infinite ease-in-out;
 }
 
-/* Removed striped from col 1 */
-.custom-striped > tbody > tr:nth-of-type(odd) > *:nth-child(1) {
-  --bs-table-bg-type: inherit;
-  --bs-table-color-type: inherit;
-}
 
 /* header */
 #header-logo-gw a {
@@ -506,8 +546,6 @@ th.sorted {
 /* mini league current team highlighter */
 /* .highlight-current>td:nth-child(-n+4) { */
 .highlight-current {
-  xbackground-color: var(--red);
-  zcolor: whitesmoke;
   border: 2px solid var(--red) !important;
 }
 
