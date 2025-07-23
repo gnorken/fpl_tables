@@ -578,3 +578,24 @@ th.sorted {
   animation: dots 1s steps(1, end) infinite;
 }
 
+/* Chart.js */
+.chart-container {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  height: 300px;
+  /* You can adjust this */
+  margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .chart-container {
+    height: 400px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .chart-container {
+    height: 500px;
+  }
+}

@@ -28,6 +28,8 @@ def validate_team_id(team_id, max_users):
             # Test API to check if the game is being updated
             manager_url = f"{FPL_API_BASE}/entry/{team_id}/"
             manager_response = requests.get(manager_url)
+            print(f"FPL API status code: {manager_response.status_code}")
+            print(f"max_users: {max_users}")
 
             if manager_response.status_code == 503:
                 flash(
@@ -136,10 +138,18 @@ def ordinalformat(n):
 
 # Formatting numbers in dropdown menu
 def thousands(n):
-    """
-    Convert an integer to a string with apostrophe thousands separators.
-    """
+    if n is None:
+        return "-"
+    # Convert an integer to a string with apostrophe thousands separators.
     return "{:,}".format(int(n)).replace(",", "'")
+
+# Formatting to millions
+
+
+def millions(value):
+    if value is None:
+        return "-"
+    return f"{value / 1_000_000:.2f}M"
 
 
 # Creative mapping of club names or codes to a pair of color emojis + team symbol
@@ -163,11 +173,11 @@ TEAM_EMOJIS = {
     "southampton":              "🔴⚪️🛥️",  # Red & White, ship
     "spurs":                    "⚪️🔵🐓",    # White & Navy, cockerel
     "west ham":                 "🟣🟫🛠️",   # Claret & Blue, crossed hammers
-    "wolves":                   "🟨⚫️🐺",   # Gold & Black, wolf
+    "wolves":                   "🟡⚫️🐺",   # Gold & Black, wolf
     # Next season promotions (2025-2026)
-    "burnley":               "🟣🔵🏰",    # Claret & Blue, castle
-    "leeds united":          "⚪️🟨🦁",    # White & Yellow, lion
-    "sunderland":            "🔴⚪️🐈"     # Red & White, cat
+    "burnley":                   "🟣🔵🏰",    # Claret & Blue, castle
+    "leeds":                     "⚪️🟡🌸",    # White & Yellow, flower
+    "sunderland":                "🔴⚪️🐈"     # Red & White, cat
 }
 
 LEAGUE_EMOJIS = {
@@ -182,6 +192,7 @@ LEAGUE_EMOJIS = {
     "broadcast": "📺",
     "cash": "🤑",
     # "fpl": "⚽️",
+    "fml fpl": "🐑",
     "gameweek 1": "🐣",
     "gameweek 2": "🐥",
     "general": "⭐️⭐️⭐️⭐️",
@@ -273,3 +284,34 @@ def get_overall_league_leader_total():
         leader = results[0]
 
     return leader.get("total")
+
+# emojis for manager history performance
+
+
+def performance_emoji(percentile):
+    if percentile is None:
+        return "–"
+    if percentile > 50:
+        return "💩"
+    elif percentile > 40:
+        return "☹️"
+    elif percentile > 30:
+        return "🙁"
+    elif percentile > 20:
+        return "😐"
+    elif percentile > 15:
+        return "🫤"
+    elif percentile > 10:
+        return "🙂"
+    elif percentile > 5:
+        return "😁"
+    elif percentile > 1:
+        return "🥰"
+    elif percentile == 1:
+        return "😍"
+    elif percentile > 0.5:
+        return "🤯"
+    elif percentile > 0.1:
+        return "🤯🤯"
+    else:
+        return "🤯🤯🤯"

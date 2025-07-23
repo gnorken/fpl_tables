@@ -1,0 +1,116 @@
+<header class="bg-purple text-light p-2">
+    <div class="d-flex align-items-center">
+        <div id="header-logo-gw" class="d-none d-md-block">
+            <a href="/" class="d-flex align-items-end text-light text-decoration-none btn-turqouise">
+                <h1 id="header-logo" class="m-0">FPL Tables</h1>
+                <span id="header-gw" class="d-none d-sm-block px-2 text-center fst-italic fw-lighter">
+                    GW{{ current_gw }}
+                </span>
+            </a>
+        </div>
+
+        {% if manager %}
+        <div id="header-team" class="d-flex align-items-center p-1">
+            <div id="flag" class="mx-2">
+                {{ manager.flag_html | safe }}
+            </div>
+            <a href="{{ url_for('manager', team_id=team_id) }}">
+                <div id="header-team-name" class="d-flex flex-column">
+                    <h1 class="mb-0">{{ manager.first_name }} {{ manager.last_name }}'s&nbsp;</h1>
+                    <h1 class="mb-0">{{ manager.team_name }}</h1>
+                </div>
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- THE DROPDOWN BUTTON -->
+        <div class="dropdown ms-auto">
+            <button id="tables-btn" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                Tables
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="tables-btn">
+                {% macro nav_item(label, endpoint, page_name) %}
+                <li>
+                    {% if team_id %}
+                    <a class="dropdown-item{% if current_page == page_name %} active{% endif %}"
+                        href="{{ url_for(endpoint, team_id=team_id) }}">
+                        {{ label }}
+                    </a>
+                    {% else %}
+                    <a class="dropdown-item disabled">{{ label }}</a>
+                    {% endif %}
+                </li>
+                {% endmacro %}
+
+                <li>
+                    {% if manager %}
+                    <a class="dropdown-item{% if current_page == 'manager' %} active{% endif %}"
+                        href="{{ url_for('manager', team_id=team_id) }}">
+                        {{ manager.team_name }}
+                    </a>
+                    {% else %}
+                    <a class="dropdown-item disabled">No manager</a>
+                    {% endif %}
+                </li>
+
+                <li>
+                    <hr class="dropdown-divider">
+                </li>
+                <li>
+                    <h6 class="dropdown-header">Tables</h6>
+                </li>
+                {{ nav_item('Goals & Assists', 'top_scorers', 'top_scorers') }}
+                {{ nav_item('Most Categories', 'starts', 'starts') }}
+                {{ nav_item('By Points', 'points', 'points') }}
+                {{ nav_item('By Teams', 'teams', 'teams') }}
+                <li>
+                    <hr class="dropdown-divider">
+                </li>
+
+                {% if manager and manager.classic_leagues %}
+                <li>
+                    <h6 class="dropdown-header">My Mini-Leagues</h6>
+                </li>
+                {% for league in manager.classic_leagues %}
+                {% set r = league.entry_rank %}
+                {% set pod =
+                r == league.rank_count and "💩" or
+                r in [1,2,3] and ( session.current_gw==38
+                and ["🥇","🥈","🥉"][r-1]
+                or ["1️⃣","2️⃣","3️⃣"][r-1] )
+                or ( league.entry_rank < league.entry_last_rank and "▲" or league.entry_rank> league.entry_last_rank and
+                    "▼"
+                    or "—" )
+                    %}
+                    <li
+                        class="{{ 'green-text' if league.entry_rank < league.entry_last_rank else league.entry_rank > league.entry_last_rank and 'red-text' or '' }}">
+                        <a class="dropdown-item d-flex justify-content-between {% if current_page=='mini_leagues' and league.id==league_id %} active{% endif %}"
+                            href="{{ url_for('mini_leagues', league_id=league.id) }}">
+                            <span>
+                                <span class="me-2">{{ pod }}</span>
+                                {{ league.name }} {{ league.name|territory_icon|safe }}
+                            </span>
+                            <span>
+                                ({{ r|ordinalformat }} of {{ league.rank_count|thousands }})
+                            </span>
+                        </a>
+                    </li>
+                    {% endfor %}
+                    {% else %}
+                    <li><a class="dropdown-item disabled">No mini-leagues</a></li>
+                    {% endif %}
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    <li><a class="dropdown-item" href="/">Enter New ID</a></li>
+                    <li>
+                        <a class="dropdown-item{% if current_page=='about' %} active{% endif %}"
+                            href="{{ url_for('about') }}">
+                            About
+                        </a>
+                    </li>
+            </ul>
+        </div>
+
+    </div>
+</header>
