@@ -1,0 +1,407 @@
+{% extends "layout.html" %}
+
+{% block body %}
+
+<div class="container">
+  <!-- Past Performance Chart -->
+  <div class="row mt-4">
+    <div class="col">
+      <h3>Percentile by Season</h3>
+      <div class="chart-container">
+        <canvas id="historyChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Past Perfomance Table -->
+  <div class="row mt-4">
+    <div class="col">
+      <h3>Past Seasons Performance</h3>
+      <div class="table-responsive">
+        <table class="table table-striped table-sm text-center">
+          <thead>
+            <tr>
+              <th>Season</th>
+              <th>Vibes</th>
+              <th><span class="d-lg-none">%</span><span class="d-none d-lg-inline">Percentile</span></th>
+              <th><span class="d-lg-none">OR</span><span class="d-none d-lg-inline">Overall Rank</span></th>
+              <th>Managers</th>
+              <th><span class="d-lg-none">Points</span><span class="d-none d-lg-inline">Total Points</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for season in history.past | reverse %}
+            <tr>
+              <td>{{ season.season_name }}</td>
+              <td>
+                <span class="{% if season.percentile < 10 %}text-success{% elif season.percentile > 50 %}text-danger{% endif %}">
+                  {{ season.percentile | performance_emoji }}
+                </span>
+              </td>
+              <td>
+                {% if season.percentile is not none %}
+                  {% if season.percentile < 1 %}
+                    {{ "%0.1f" | format(season.percentile | float) }}%
+                  {% else %}
+                    {{ season.percentile | round }}%
+                  {% endif %}
+                {% else %}
+                –
+                {% endif %}
+              </td>
+              <td>{{ season.rank | thousands }}</td>
+              <td>
+                {% if season.total_managers %}
+                  {{ season.total_managers | millions }}
+                {% else %}
+                –
+                {% endif %}
+              </td>
+              <td>{{ season.total_points }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Chips Tables -->
+  <div class="row">
+    <h3>Chips</h3>
+    <div class="col">
+      <div class="table-responsive">
+        <table class="my-3 table">
+          <thead>
+            <tr>
+              <th colspan="4">
+                First Half of the Season
+              </th>
+            </tr>
+            <tr>
+              <caption>Gameweeks 1-19</caption>
+              <th class="text-nowrap align-top"><span class="d-sm-none">WC</span><span class="d-none d-sm-inline">Wildcard</span></th>
+              <th class="text-nowrap align-top"><span class="d-sm-none">FH</span><span class="d-none d-sm-inline">Freehit</span></th>
+              <th><span class="d-sm-none">3x Cap</span><span class="d-none d-sm-inline">Triple Captain</span></th>
+              <th><span class="d-sm-none">BB</span><span class="d-none d-sm-inline">Bench Boost</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="text-nowrap">
+              <td>{% if chips_state.wildcard_1.used %} GW {{ chips_state.wildcard_1.gw }}  {% else %} <span class="text-muted">Unused</span> {% endif %}</td>
+              <td>{% if chips_state.freehit_1.used %} GW {{ chips_state.freehit_1.gw }} {% else %} <span class="text-muted">Unused</span> {% endif %}</td>
+              <td>{% if chips_state['3xc_1'].used %} GW {{ chips_state['3xc_1'].gw }}  {% else %} <span class="text-muted">Unused</span> {% endif %}</td>
+              <td>{% if chips_state.bboost_1.used %} GW {{ chips_state.bboost_1.gw }}  {% else %} <span class="text-muted">Unused</span> {% endif %}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-responsive">
+        <table class="my-3 table">
+          <thead>
+            <tr>
+              <th colspan="4">
+                Second Half of the Season
+              </th>
+            </tr>
+            <tr>
+              <caption>Gameweeks 20-38</caption>
+              <th class="text-nowrap align-top"><span class="d-sm-none">WC</span><span class="d-none d-sm-inline">Wildcard</span></th>
+              <th class="text-nowrap align-top"><span class="d-sm-none">FH</span><span class="d-none d-sm-inline">Freehit</span></th>
+              <th><span class="d-sm-none">3x Cap</span><span class="d-none d-sm-inline">Triple Captain</span></th>
+              <th><span class="d-sm-none">BB</span><span class="d-none d-sm-inline">Bench Boost</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="text-nowrap">
+              <td>{% if chips_state.wildcard_2.used %} GW {{ chips_state.wildcard_2.gw }} {% else %} <span class="text-muted">Unused</span> {% endif %}</td>
+              <td>{% if chips_state.freehit_2.used %} GW {{ chips_state.freehit_2.gw }} {% else %} <span class="text-muted">Unused</span> {% endif %}</td>
+              <td>{% if chips_state['3xc_2'].used %} GW {{ chips_state['3xc_2'].gw }}  {% else %} <span class="text-muted">Unused</span> {% endif %}</td>
+              <td>{% if chips_state.bboost_2.used %} GW {{ chips_state.bboost_2.gw }}  {% else %} <span class="text-muted">Unused</span> {% endif %}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Triple Captains Section -->
+  <div class="row">
+    <!-- Triple Captain 1 Column -->
+    <div class="col-12 col-lg-6">
+      <div id="3xc_1" class="mb-3 shadow rounded" style="overflow: hidden;">
+        <div class="bg-purple p-2">
+          <div class="px-3 fw-bold">
+            Triple Captain 1 {% if chips_state['3xc_1']['used'] %} | {{ chips_state['3xc_1']['total_points'] }} points {% endif %}
+          </div>
+          <div class="px-3 fw-bold">
+            {% if chips_state['3xc_1']['used'] %} GW {{ chips_state['3xc_1']['gw'] }} {% else %} <span style="color: var(--purple)">.</span> {% endif %}
+          </div>
+        </div>
+        <div class="team-{{ chips_state['3xc_1']['team_code'] }} p-0 pt-1 text-end">
+          <div class="position-relative">
+            <img class="team-player " loading="lazy" 
+                 src="https://resources.premierleague.com/premierleague/photos/players/250x250/{{ chips_state['3xc_1']['photo'] }}.png" 
+                 alt="Triple Captain">
+            <div class="position-absolute chips-text text-overlay">
+              {% if chips_state['3xc_1']['used'] %} {{ chips_state['3xc_1']['web_name'] }} {% endif %}
+            </div>
+            <div class="position-absolute chips-text-points text-overlay">
+              {% if chips_state['3xc_1']['used'] %} {{ chips_state['3xc_1']['total_points'] * 3 }} Points {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Triple Captain 2 Column -->
+    <div class="col-12 col-lg-6">
+      <div id="3xc_2" class="mb-3 shadow rounded" style="overflow: hidden;">
+        <div class="bg-purple p-2">
+          <div class="px-3 fw-bold">
+            Triple Captain 2 {% if chips_state['3xc_2']['used'] %} | {{ chips_state['3xc_2']['total_points'] }} points {% endif %}
+          </div>
+          <div class="px-3 fw-bold">
+            {% if chips_state['3xc_2']['used'] %} GW {{ chips_state['3xc_2']['gw'] }} {% else %} <span style="color: var(--purple)">.</span> {% endif %}
+          </div>
+        </div>
+        <div class="team-{{ chips_state['3xc_2']['team_code'] }} p-0 pt-1 text-end">
+          <div class="position-relative">
+            <img class="team-player " loading="lazy" 
+                 src="https://resources.premierleague.com/premierleague/photos/players/250x250/{{ chips_state['3xc_2']['photo'] }}.png" 
+                 alt="Triple Captain">
+            <div class="position-absolute chips-text text-overlay">
+              {% if chips_state['3xc_2']['used'] %} {{ chips_state['3xc_2']['web_name'] }} {% endif %}
+            </div>
+            <div class="position-absolute chips-text-points text-overlay">
+              {% if chips_state['3xc_2']['used'] %} {{ chips_state['3xc_2']['total_points'] * 3 }} Points {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bench Boosts section -->
+  <!-- Bench Boost 1 -->
+  <div class="shadow rounded p-0 mb-5 overflow-hidden">
+    <div class="row g-0">
+      <div id="bboost_1" class="bg-purple d-flex p-2 fw-bold w-100">
+        <div>
+          Bench Boost 1
+          {% if chips_state.bboost_1.used %} | {{ chips_state.bboost_1.total_points }} points {% endif %}
+        </div>
+        <div class="ms-auto">
+          {% if chips_state.bboost_1.used %} GW {{ chips_state.bboost_1.gw }} {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-0 text-center">
+      {% for player in chips_state.bboost_1.players %}
+      <div class="col-12 col-md-6 col-lg-3 {% if not loop.last %} border-end {% endif %}">
+
+        <div class="team-{{ player.team_code }} p-0 pt-1">
+          <div class="position-relative">
+            <img class="team-player" loading="lazy"
+              src="http://resources.premierleague.com/premierleague/photos/players/250x250/{{ player.photo }}.png"
+              alt="Bench Boost Player">
+
+            <div class="position-absolute chips-text text-overlay">
+              {% if chips_state.bboost_1.used %} {{ player.web_name }} {% endif %}
+            </div>
+
+            <div class="position-absolute chips-text-points text-overlay">
+              {% if chips_state.bboost_1.used %} {{ player.total_points }} points {% endif %}
+            </div>
+          </div>
+        </div>
+
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Bench boost 2 -->
+  <div class="shadow rounded p-0 mb-5 overflow-hidden">
+    <div class="row g-0">
+      <div id="bboost_2" class="bg-purple d-flex p-2 fw-bold w-100">
+        <div>
+          Bench Boost 2
+          {% if chips_state.bboost_2.used %} | {{ chips_state.bboost_2.total_points }} points {% endif %}
+        </div>
+        <div class="ms-auto">
+          {% if chips_state.bboost_2.used %} GW {{ chips_state.bboost_2.gw }} {% endif %}
+        </div>
+      </div>
+    </div>
+  
+    <div class="row g-0 text-center">
+      {% for player in chips_state.bboost_2.players %}
+      <div class="col-12 col-md-6 col-lg-3 {% if not loop.last %} border-end {% endif %}">
+  
+        <div class="team-{{ player.team_code }} p-0 pt-1">
+          <div class="position-relative">
+            <img class="team-player" loading="lazy"
+              src="http://resources.premierleague.com/premierleague/photos/players/250x250/{{ player.photo }}.png"
+              alt="Bench Boost Player">
+  
+            <div class="position-absolute chips-text text-overlay">
+              {% if chips_state.bboost_2.used %} {{ player.web_name }} {% endif %}
+            </div>
+  
+            <div class="position-absolute chips-text-points text-overlay">
+              {% if chips_state.bboost_2.used %} {{ player.total_points }} points {% endif %}
+            </div>
+          </div>
+        </div>
+  
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  
+<script>
+  const historyData = {{ history.past | tojson }};
+
+  // Extract arrays
+  const labels = historyData.map(s => s.season_name).reverse();
+  const percentiles = historyData.map(s => s.percentile).reverse();
+  const ranks = historyData.map(s => s.rank).reverse();
+
+  Chart.register(window['chartjs-plugin-annotation']); // if using annotations
+
+  const ctx = document.getElementById('historyChart').getContext('2d');
+
+  new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: labels,
+    datasets: [{
+      label: '{{ manager.first_name }} {{ manager.last_name }} (%)',
+      data: percentiles,
+      fill: false,
+      tension: 0.2,
+      pointRadius: 4,
+      borderColor: 'purple',
+      backgroundColor: 'purple'
+    },
+    {
+      label: "Top 1%",
+      borderColor: 'red',
+      backgroundColor: 'red'
+    },
+    {
+      label: "Top 10%",
+      borderColor: 'orange',
+      backgroundColor: 'orange'
+    }
+  ]
+  },
+  options: {
+    maintainAspectRatio: false, // important!
+    scales: {
+      y: {
+        min: 0.08,
+        max: 100,
+        type: 'logarithmic',
+        reverse: true,
+        title: {
+          display: false,
+          text: 'Percentile'
+        },
+        ticks: {
+          maxTicksLimit: 6, // keeps it readable on mobile
+          callback: (value) => `${value}%`,
+          font: {
+            size: 10 // smaller labels for narrow screens
+          }
+        }
+      },
+      x: {
+        reverse: true,
+        title: {
+          display: true,
+          text: 'Season'
+        },
+        ticks: {
+          font: {
+            size: 10
+          }
+        }
+      }
+    },
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            const percentile = context.parsed.y;
+            const rank = ranks[context.dataIndex];
+            return [
+              `Percentile: ${percentile}%`,
+              `Rank: ${rank.toLocaleString()}`
+            ];
+          },
+        },
+      },
+      annotation: {
+        annotations: {
+          top1: {
+            type: 'line',
+            yMin: 1,
+            yMax: 1,
+            borderColor: 'red',
+            borderWidth: 2,
+              label: {
+                enabled: false, // Change this to true to display
+                content: 'Top 1%',
+                position: 'center',
+                yAdjust: -8,
+                backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                color: 'red'
+              }
+          },
+          top10: {
+            type: 'line',
+            yMin: 10,
+            yMax: 10,
+            borderColor: 'orange',
+            borderWidth: 2,
+            label: {
+              enabled: false, // Change this to true to display
+              content: 'Top 10%',
+              position: 'center',
+              yAdjust: -8,
+              backgroundColor: 'rgba(255, 165, 0, 0.2)',
+              color: 'orange'
+            }
+          }
+        }
+      }
+    }
+  }
+});
+
+  // You can log variables passed from Flask as follows:
+  console.log('team_id:', {{ team_id }});
+  console.log('current_gw:', '{{ current_gw }}');
+  console.log('manager:', {{ manager | tojson }});
+  console.log('chips_state:', {{ chips_state | tojson }});
+  console.log('current_page:', '{{ current_page }}');
+</script>
+  <!-- 
+  <div class="row">
+    <div class="col">
+      <p>{{ chips_state.wildcard_1 }}</p>
+      <p>{{ chips_state.wildcard_2 }}</p>
+      <p>{{ chips_state.freehit }}</p>
+      <p>{{ chips_state.am }}</p>
+      <p>{{ chips_state['3xc'] }}</p>
+      <p>{{ chips_state.bboost }}</p>
+    </div>
+  </div>
+</div>
+-->
+{% endblock %}
