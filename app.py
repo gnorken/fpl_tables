@@ -379,7 +379,7 @@ def get_sorted_players():
                 p["pts_behind_league_leader"] = p.get(
                     "total_points", 0) - league_leader_pts
                 print(
-                    f"pts_behind_league_leader: {p["pts_behind_league_leader"]}")
+                    f"pts_behind_league_leader: {p['pts_behind_league_leader']}")
                 # points behind the overall league leader
                 p["pts_behind_overall"] = p.get("total_points", 0) - leader_pts
 
