@@ -3,74 +3,75 @@
 {% block body %}
 
 <div class="container">
-  <!-- Past Performance Chart -->
-  <div class="row mt-4">
-    <div class="col">
-      <h3>Percentile by Season</h3>
-      <div class="chart-container">
-        <canvas id="historyChart"></canvas>
+  {% if history.past %}
+    <!-- Past Performance Chart -->
+    <div class="row mt-4">
+      <div class="col">
+        <h3>Percentile by Season</h3>
+        <div class="chart-container">
+          <canvas id="historyChart"></canvas>
+        </div>
       </div>
-    </div>
-  </div>
 
-
-  <!-- Past Perfomance Table -->
-  <div class="row mt-4">
-    <div class="col">
-      <h3>Past Seasons Performance</h3>
-      <div class="table-responsive">
-        <table class="table table-striped table-sm text-center">
-          <thead>
-            <tr>
-              <th>Season</th>
-              <th>Vibes</th>
-              <th><span class="d-lg-none">%</span><span class="d-none d-lg-inline">Percentile</span></th>
-              <th><span class="d-lg-none">OR</span><span class="d-none d-lg-inline">Overall Rank</span></th>
-              <th>Managers</th>
-              <th><span class="d-lg-none">Points</span><span class="d-none d-lg-inline">Total Points</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for season in history.past | reverse %}
-            <tr>
-              <td>{{ season.season_name }}</td>
-              <td>
-                <span class="{% if season.percentile < 10 %}text-success{% elif season.percentile > 50 %}text-danger{% endif %}">
-                  {{ season.percentile | performance_emoji }}
-                </span>
-              </td>
-              <td>
-                {% if season.percentile is not none %}
-                  {% if season.percentile < 1 %}
-                    {{ "%0.1f" | format(season.percentile | float) }}%
+    <!-- Past Perfomance Table -->
+      <div class="col">
+        <h3>Past Seasons Performance</h3>
+        <div class="table-responsive">
+          <table class="table table-striped table-sm text-center">
+            <thead>
+              <tr>
+                <th>Season</th>
+                <th>Vibes</th>
+                <th><span class="d-lg-none">%</span><span class="d-none d-lg-inline">Percentile</span></th>
+                <th><span class="d-lg-none">OR</span><span class="d-none d-lg-inline">Overall Rank</span></th>
+                <th>Managers</th>
+                <th><span class="d-lg-none">Points</span><span class="d-none d-lg-inline">Total Points</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for season in history.past | reverse %}
+              <tr>
+                <td>
+                  <span class="d-lg-none">{{ season.season_name[2:] }}</span>
+                  <span class="d-none d-lg-inline">{{ season.season_name}}</span>
+                <td>
+                  <span class="{% if season.percentile < 10 %}text-success{% elif season.percentile > 50 %}text-danger{% endif %}">
+                    {{ season.percentile | performance_emoji }}
+                  </span>
+                </td>
+                <td>
+                  {% if season.percentile is not none %}
+                    {% if season.percentile < 1 %}
+                      {{ "%0.1f" | format(season.percentile | float) }}%
+                    {% else %}
+                      {{ season.percentile | round }}%
+                    {% endif %}
                   {% else %}
-                    {{ season.percentile | round }}%
+                  –
                   {% endif %}
-                {% else %}
-                –
-                {% endif %}
-              </td>
-              <td>{{ season.rank | thousands }}</td>
-              <td>
-                {% if season.total_managers %}
-                  {{ season.total_managers | millions }}
-                {% else %}
-                –
-                {% endif %}
-              </td>
-              <td>{{ season.total_points }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+                </td>
+                <td>{{ season.rank | thousands }}</td>
+                <td>
+                  {% if season.total_managers %}
+                    {{ season.total_managers | millions }}
+                  {% else %}
+                  –
+                  {% endif %}
+                </td>
+                <td>{{ season.total_points }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
-  </div>
+  {% endif %}
 
 
 
   <!-- Chips Tables -->
-  <div class="row">
+  <div class="row mt-4">
     <h3>Chips</h3>
     <div class="col">
       <div class="table-responsive">
@@ -264,133 +265,141 @@
   </div>
   
 <script>
-  const historyData = {{ history.past | tojson }};
+  const rawData = {{ history.past | tojson }};
+  const ranksBySeason = {};
+  const percentilesBySeason = {};
 
-  // Extract arrays
-  const labels = historyData.map(s => s.season_name).reverse();
-  const percentiles = historyData.map(s => s.percentile).reverse();
-  const ranks = historyData.map(s => s.rank).reverse();
+  // Fill dicts with user data
+  rawData.forEach(s => {
+    const [start, end] = s.season_name.split("/");
+    const shortName = `${start.slice(2)}/${end}`;
+    ranksBySeason[shortName] = s.rank;
+    percentilesBySeason[shortName] = s.percentile;
+  });
 
-  Chart.register(window['chartjs-plugin-annotation']); // if using annotations
+  // Ensure minimum 3 seasons, padded with nulls
+  const requiredSeasons = ['24/25', '23/24', '22/23']; // Latest first
+  const allSeasons = Array.from(new Set([...requiredSeasons, ...Object.keys(percentilesBySeason)])).sort().reverse();
+
+  const labels = allSeasons;
+  const percentiles = labels.map(season => percentilesBySeason[season] ?? null);
+  const ranks = labels.map(season => ranksBySeason[season] ?? null);
+
+  Chart.register(window['chartjs-plugin-annotation']);
 
   const ctx = document.getElementById('historyChart').getContext('2d');
 
   new Chart(ctx, {
-  type: 'line',
-  data: {
-    labels: labels,
-    datasets: [{
-      label: '{{ manager.first_name }} {{ manager.last_name }} (%)',
-      data: percentiles,
-      fill: false,
-      tension: 0.2,
-      pointRadius: 4,
-      borderColor: 'purple',
-      backgroundColor: 'purple'
-    },
-    {
-      label: "Top 1%",
-      borderColor: 'red',
-      backgroundColor: 'red'
-    },
-    {
-      label: "Top 10%",
-      borderColor: 'orange',
-      backgroundColor: 'orange'
-    }
-  ]
-  },
-  options: {
-    maintainAspectRatio: false, // important!
-    scales: {
-      y: {
-        min: 0.08,
-        max: 100,
-        type: 'logarithmic',
-        reverse: true,
-        title: {
-          display: false,
-          text: 'Percentile'
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: '{{ manager.first_name }} {{ manager.last_name }} (%)',
+          data: percentiles,
+          fill: false,
+          tension: 0.2,
+          pointRadius: 4,
+          borderColor: 'purple',
+          backgroundColor: 'purple'
         },
-        ticks: {
-          maxTicksLimit: 6, // keeps it readable on mobile
-          callback: (value) => `${value}%`,
-          font: {
-            size: 10 // smaller labels for narrow screens
-          }
-        }
-      },
-      x: {
-        reverse: true,
-        title: {
-          display: true,
-          text: 'Season'
+        {
+          label: "Top 1%",
+          borderColor: 'red',
+          backgroundColor: 'red'
         },
-        ticks: {
-          font: {
-            size: 10
-          }
+        {
+          label: "Top 10%",
+          borderColor: 'orange',
+          backgroundColor: 'orange'
         }
-      }
+      ]
     },
-    plugins: {
-      tooltip: {
-        callbacks: {
-          label: (context) => {
-            const percentile = context.parsed.y;
-            const rank = ranks[context.dataIndex];
-            return [
-              `Percentile: ${percentile}%`,
-              `Rank: ${rank.toLocaleString()}`
-            ];
+    options: {
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          min: 0.08,
+          max: 100,
+          type: 'logarithmic',
+          reverse: true,
+          title: {
+            display: false,
+            text: 'Percentile'
           },
+          ticks: {
+            maxTicksLimit: 6,
+            callback: value => `${value}%`,
+            font: {
+              size: 10
+            }
+          }
         },
+        x: {
+          reverse: true,
+          title: {
+            display: true,
+            text: 'Season'
+          },
+          ticks: {
+            font: {
+              size: 10
+            }
+          }
+        }
       },
-      annotation: {
-        annotations: {
-          top1: {
-            type: 'line',
-            yMin: 1,
-            yMax: 1,
-            borderColor: 'red',
-            borderWidth: 2,
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: (context) => {
+              const percentile = context.parsed.y;
+              const rank = ranks[context.dataIndex];
+              return [
+                percentile !== null ? `Percentile: ${percentile}%` : 'No data',
+                rank !== null ? `Rank: ${rank.toLocaleString()}` : ''
+              ];
+            }
+          }
+        },
+        annotation: {
+          annotations: {
+            top1: {
+              type: 'line',
+              yMin: 1,
+              yMax: 1,
+              borderColor: 'red',
+              borderWidth: 2,
               label: {
-                enabled: false, // Change this to true to display
+                enabled: false,
                 content: 'Top 1%',
                 position: 'center',
                 yAdjust: -8,
                 backgroundColor: 'rgba(255, 0, 0, 0.2)',
                 color: 'red'
               }
-          },
-          top10: {
-            type: 'line',
-            yMin: 10,
-            yMax: 10,
-            borderColor: 'orange',
-            borderWidth: 2,
-            label: {
-              enabled: false, // Change this to true to display
-              content: 'Top 10%',
-              position: 'center',
-              yAdjust: -8,
-              backgroundColor: 'rgba(255, 165, 0, 0.2)',
-              color: 'orange'
+            },
+            top10: {
+              type: 'line',
+              yMin: 10,
+              yMax: 10,
+              borderColor: 'orange',
+              borderWidth: 2,
+              label: {
+                enabled: false,
+                content: 'Top 10%',
+                position: 'center',
+                yAdjust: -8,
+                backgroundColor: 'rgba(255, 165, 0, 0.2)',
+                color: 'orange'
+              }
             }
           }
         }
       }
     }
-  }
-});
-
-  // You can log variables passed from Flask as follows:
-  console.log('team_id:', {{ team_id }});
-  console.log('current_gw:', '{{ current_gw }}');
-  console.log('manager:', {{ manager | tojson }});
-  console.log('chips_state:', {{ chips_state | tojson }});
-  console.log('current_page:', '{{ current_page }}');
+  });
 </script>
+
   <!-- 
   <div class="row">
     <div class="col">

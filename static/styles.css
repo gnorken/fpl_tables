@@ -164,7 +164,7 @@ a:active {
  
 /* TABLE */
 /* table colours */
-x.bg-team {
+.bg-team {
   background-color: var(--red) !important;
   color: white !important;
 } /* th team */

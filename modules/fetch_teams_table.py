@@ -1,4 +1,5 @@
 import requests
+import json
 
 FPL_API_BASE = "https://fantasy.premierleague.com/api"
 

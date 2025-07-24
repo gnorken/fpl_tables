@@ -66,7 +66,7 @@ def get_current_gw():
     static_data = get_static_data()
     events = static_data["events"]
     current_gw = next((event["id"]
-                      for event in events if event["is_current"]), 1)
+                      for event in events if event["is_current"]), None)
     return current_gw
 
 # Fetch static player data
@@ -181,8 +181,10 @@ TEAM_EMOJIS = {
 }
 
 LEAGUE_EMOJIS = {
+    "top 10% 24/25 league": "Need an emoji here",
+    "top 1% 24/25 league": "Need an even more exclusive emoji here",
     ".com": "🧑‍💻",
-    "AI": "🤖",
+    "ai": "🤖",
     "algorithm": "🤖",
     "analytics": "📊",
     "astro sport league": "📺",
@@ -291,8 +293,12 @@ def get_overall_league_leader_total():
 def performance_emoji(percentile):
     if percentile is None:
         return "–"
-    if percentile > 50:
+    if percentile > 70:
         return "💩"
+    elif percentile > 60:
+        return "😭"
+    elif percentile > 50:
+        return "😢"
     elif percentile > 40:
         return "☹️"
     elif percentile > 30:
@@ -300,18 +306,18 @@ def performance_emoji(percentile):
     elif percentile > 20:
         return "😐"
     elif percentile > 15:
-        return "🫤"
+        return "😌"
     elif percentile > 10:
         return "🙂"
     elif percentile > 5:
         return "😁"
     elif percentile > 1:
-        return "🥰"
+        return "😎"
     elif percentile == 1:
-        return "😍"
+        return "🥰"
     elif percentile > 0.5:
-        return "🤯"
+        return "😍"
     elif percentile > 0.1:
-        return "🤯🤯"
+        return "🤩"
     else:
-        return "🤯🤯🤯"
+        return "🤯"

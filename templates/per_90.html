@@ -1,0 +1,151 @@
+{% extends "info.html" %}
+{% block title %}Per 90{% endblock %}
+
+{% block page_content %}
+<div class="table-responsive">
+    <table id="per-90-table" class="interactive-table table table-borderless table-striped text-nowrap">
+        <thead class="th-purple">
+            <tr class="text-center">
+                <th colspan="1" id="top-players" data-sort="top-players" class="sticky-col round-border-top">↑ Top Five
+                </th>
+                <th colspan="8" data-sort="team-data" class="bg-team round-border-top">Per 90 stats for {{ manager.team_name
+                    }}</th>
+                <th colspan="8" data-sort="overall-data" class="round-border-top">Per 90 Player Totals</th>
+            </tr>
+            <tr class="text-center">
+                <th colspan="1" id="entries" data-sort="entries" class="sticky-col">Players</th>
+                <!-- Team columns -->
+                <th data-sort="point_per_game_team" class="sort-team bg-team">PPG</th>
+                <th data-sort="starts_per_90_team" class="sort-team bg-team">Starts</th>
+                <th data-sort="expected_goals_per_90_team" class="sort-team bg-team">xG</th>
+                <th data-sort="expected_assists_per_90_team" class="sort-team bg-team">xA</th>
+                <th data-sort="expected_goal_involvements_per_90_team" class="sort-team bg-team">xGI</th>
+                <th data-sort="saves_per_90_team" class="sort-team bg-team">Saves</th>
+                
+                <!-- Negatives -->
+                <th data-sort="expected_goals_conceded_per_90_team" class="sort-team bg-team">xGC</th>
+                <th data-sort="goals_conceded_per_90_team" class="sort-team bg-team">GC</th>
+                
+                <!-- overall columns -->
+                <th data-sort="point_per_game" class="sort">PPG</th>
+                <th data-sort="starts_per_90" class="sort">Starts</th>
+                <th data-sort="expected_goals_per_90" class="sort">xG</th>
+                <th data-sort="expected_assists_per_90" class="sort">xA</th>
+                <th data-sort="expected_goal_involvements_per_90" class="sort">xGI</th>
+                <th data-sort="saves_per_90" class="sort">Saves</th>
+
+                 <!-- Negatives -->
+                <th data-sort="expected_goals_conceded_per_90" class="sort">xGC</th>
+                <th data-sort="goals_conceded_per_90" class="sort">GC</th>
+            </tr>
+        </thead>
+        <tbody id="player-table-body">
+            <!-- rows get injected here -->
+        </tbody>
+        <tfoot>
+            <tr class="th-purple text-center">
+                <th colspan="1" class="sticky-col round-border-btm">.</th>
+                <th colspan="8" class="bg-team align-middle round-border-btm">
+                    <div id="loading" style="display:none">Loading...</div>
+                </th>
+                <th colspan="8" class="round-border-btm"></th>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // --- Top Scorers page config ---
+    window.tableConfig = {
+        table: 'per_90',
+        url: `/get-sorted-players?table=per_90&team_id={{ team_id }}`,
+        tbodySelector: '#player-table-body',
+        loadingSelector: '#loading',
+        sortBy: '{{ sort_by }}',
+        sortOrder: '{{ order }}',
+        columns: [
+            // rank + name
+            {
+                render: (p, idx) => {
+                    const short = p.web_name.length > 11 ? p.web_name.slice(0, 13) + '…' : p.web_name;
+                    const badgeUrl = `https://resources.premierleague.com/premierleague/badges/100/t${p.team_code}@x2.png`;
+
+                    return `
+            <td class="sticky-col vert-border-end vert-border">
+            <div class="d-flex align-items-center">
+                <div class="text-center" style="width:2ch; flex:0 0 auto;">${idx + 1}</div>
+                <img 
+                    src="${badgeUrl}"
+                    alt="${p.team_name} badge"
+                    class="img-fluid overlap-badge ms-1"
+                    data-bs-toggle="tooltip"
+                    title="${p.team_name}"
+                    style="width: 20px; height: 20px; flex:0 0 auto;"
+                    onerror="this.onerror=null;this.src='https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png';"
+                >
+                <div class="ms-1 text-truncate" style="max-width: 12ch;">${short}</div>
+            </div>
+            </td>`;
+                }
+            },
+
+            // team-specific metric
+            { key: 'point_per_game_team', dataColumn: "point_per_game", sortLevel: "primary", className: 'sort-team vert-border' },
+            { key: 'starts_per_90_team', dataColumn: "starts_per_90", sortLevel: "primary", className: 'sort-team', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'expected_goals_per_90_team', dataColumn: "expected_goals_per_90", sortLevel: "primary", className: 'sort-team', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'expected_assists_per_90_team', dataColumn: "expected_assists_per_90", className: 'sort-team' },
+            { key: 'expected_goal_involvements_per_90_team', dataColumn: "expected_goal_involvements_per_90", className: 'sort-team' },
+            { key: 'saves_per_90_team', dataColumn: "saves_per_90", sortLevel: "primary", className: 'sort-team vert-border' },
+
+            { key: 'expected_goals_conceded_per_90_team', dataColumn: "expected_goals_conceded_per_90", sortLevel: "primary", className: 'sort-team', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'goals_conceded_per_90_team', dataColumn: "goals_conceded_per_90", sortLevel: "primary", className: 'sort-team', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            
+            // Total metric
+            { key: 'point_per_game', dataColumn: "point_per_game", sortLevel: "primary", className: 'sort-team vert-border' },
+            { key: 'starts_per_90', dataColumn: "starts_per_90", sortLevel: "primary", className: 'sort-team', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'expected_goals_per_90', dataColumn: "expected_goals_per_90", sortLevel: "primary", className: 'sort-team', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'expected_assists_per_90', dataColumn: "expected_assists_per_90", className: 'sort-team' },
+            { key: 'expected_goal_involvements_per_90', dataColumn: "expected_goal_involvements_per_90", className: 'sort-team' },
+            { key: 'saves_per_90', dataColumn: "saves_per_90", sortLevel: "primary", className: 'sort-team vert-border' },
+
+            { key: 'expected_goals_conceded_per_90', dataColumn: "expected_goals_conceded_per_90", sortLevel: "primary", className: 'sort-team text-danger', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'goals_conceded_per_90', dataColumn: "goals_conceded_per_90", sortLevel: "primary", className: 'sort-team text-danger', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+        ]
+    };
+
+    // ── page-specific human‐readable lookup for tooltips & sort-info ──
+    ; (function () {
+        const name = {{ manager.team_name| tojson
+    }};
+    window.tableConfig.lookup = {
+        // Team-specific
+        "point_per_game_team": `Points per game for ${name}`,
+        "starts_per_90_team": `Starts per 90 for ${name}`,
+        "expected_goals_per_90_team": `Expected goals per 90 for ${name}`,
+        "expected_assists_per_90_team": `Expected assists per 90 ${name}`,
+        "expected_goal_involvements_per_90_team": `Expected goal involvements per 90 for ${name}`,
+        "saves_per_90_team": `Saves per 90 for ${name}`,
+
+        "expected_goals_conceded_per_90_team": `Expected goals conceded per 90 for ${name}`,
+        "goals_conceded_per_90_team": `Goals conceded for ${name}`,
+
+        // Totals
+        "point_per_game": `Points per game`,
+        "starts_per_90": `Starts per 90`,
+        "expected_goals_per_90": `Expected goals per 90`,
+        "expected_assists_per_90": `Expected assists per 90`,
+        "expected_goal_involvements_per_90": `Expected goal involvements per 90`,
+        "saves_per_90": `Saves per 90`,
+
+        "expected_goals_conceded_per_90": `Expected goals conceded per 90`,
+        "goals_conceded_per_90": `Goals conceded per 90`,
+
+    };
+}) ();
+
+</script>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+{% endblock %}

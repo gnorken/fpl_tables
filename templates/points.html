@@ -8,11 +8,11 @@
             <tr>
                 <th id="top-players" data-sort="top-players" class="sticky-col align-middle round-border-top">↑ Top Five
                 </th>
-                <th colspan="16" data-sort="team-data" class="bg-team round-border-top"
+                <th colspan="17" data-sort="team-data" class="bg-team round-border-top"
                     title="Players that are or have been in {{ manager.team_name }} this season">
                     Stats for {{ manager.team_name }}
                 </th>
-                <th colspan="14" data-sort="overall-data" class="round-border-top">Player Totals</th>
+                <th colspan="15" data-sort="overall-data" class="round-border-top">Player Totals</th>
             </tr>
             <tr>
                 <th id="entries" data-sort="entries" class="sticky-col"></th>
@@ -21,6 +21,7 @@
                 <th data-sort="total_points_team" class="sort-team bg-team">P</th>
                 <th data-sort="ppm_team" class="sort-team bg-team">PPM</th>
                 <th data-sort="minutes_points_team" class="sort-team bg-team">M</th>
+                <th data-sort="defcon_team" class="sort-team bg-team">DC</th>
                 <th data-sort="clean_sheets_points_team" class="sort-team bg-team">CS</th>
                 <th data-sort="assists_points_team" class="sort-team bg-team">A</th>
                 <th data-sort="goals_points_team" class="sort-team bg-team">G</th>
@@ -39,6 +40,7 @@
                 <th data-sort="total_points" class="sort">P</th>
                 <th data-sort="ppm" class="sort">PPM</th>
                 <th data-sort="minutes_points" class="sort">M</th>
+                <th data-sort="defcon" class="sort">DC</th>
                 <th data-sort="clean_sheets_points" class="sort">CS</th>
                 <th data-sort="assists_points" class="sort">A</th>
                 <th data-sort="goals_points" class="sort">G</th>
@@ -60,10 +62,10 @@
         <tfoot>
             <tr class="th-purple text-center">
                 <th class="sticky-col round-border-btm">.</th>
-                <th colspan="16" class="bg-team round-border-btm">
+                <th colspan="17" class="bg-team round-border-btm">
                     <div id="loading" style="display:none;">Loading…</div>
                 </th>
-                <th colspan="14" class="round-border-btm"></th>
+                <th colspan="15" class="round-border-btm"></th>
             </tr>
         </tfoot>
     </table>
@@ -78,6 +80,7 @@
         "total_points_team": `Points for ${managerName}`,
         "ppm_team": `Points per million for ${managerName}`,
         "minutes_points_team": `Points for minutes played by ${managerName}`,
+        "defcon_team": `Points for defensive contributions by ${managerName}`,
         "clean_sheets_points_team": `Points for clean sheets by ${managerName}`,
         "assists_points_team": `Points for assists by ${managerName}`,
         "goals_points_team": `Points for goals by ${managerName}`,
@@ -95,6 +98,7 @@
         "total_points": "Total points",
         "ppm": "Total points-per-million",
         "minutes_points": "Total points for minutes playeds",
+        "defcon": "Total points for defensive contributions",
         "clean_sheets_points": "Total points for clean sheets",
         "assists_points": "Total points for assist",
         "goals_points": "Total points for goal scored",
@@ -151,6 +155,7 @@
             { key: "total_points_team", className: "sort-team", sortLevel: "primary", dataColumn: "total_points" },
             { key: "ppm_team", className: "sort-team", sortLevel: "primary", dataColumn: "ppm" },
             { key: "minutes_points_team", className: "sort-team", sortLevel: "primary", dataColumn: "minutes_points" },
+            { key: "defcon_team", className: "sort-team", sortLevel: "primary", dataColumn: "defcon_points" },
             { key: "clean_sheets_points_team", className: "sort-team", sortLevel: "primary", dataColumn: "clean_sheets_points" },
             { key: "assists_points_team", className: "sort-team", sortLevel: "primary", dataColumn: "assists_points" },
             { key: "goals_points_team", className: "sort-team", sortLevel: "primary", dataColumn: "goals_points" },
@@ -169,6 +174,7 @@
             { key: "total_points", className: "sort", sortLevel: "secondary", dataColumn: "total_points" },
             { key: "ppm", className: "sort", sortLevel: "secondary", dataColumn: "ppm" },
             { key: "minutes_points", className: "sort", sortLevel: "secondary", dataColumn: "minutes_points" },
+            { key: "defcon_points", className: "sort", sortLevel: "secondary", dataColumn: "defcon_points" },
             { key: "clean_sheets_points", className: "sort", sortLevel: "secondary", dataColumn: "clean_sheets_points" },
             { key: "assists_points", className: "sort", sortLevel: "secondary", dataColumn: "assists_points" },
             { key: "goals_points", className: "sort", sortLevel: "secondary", dataColumn: "goals_points" },

@@ -34,14 +34,14 @@
         {% endif %}
     </head>
     <body class="d-flex flex-column min-vh-100">
+      {% if get_flashed_messages() %}
+          <div class="alert alert-primary my-3 text-center" role="alert">
+              {{ get_flashed_messages() | join(" ") }}
+          </div>
+      {% endif %}
       {% include "nav.html" %}
         <main class="flex-fill">
-            {% if get_flashed_messages() %}
-                <div class="alert alert-primary my-3 text-center" role="alert">
-                    {{ get_flashed_messages() | join(" ") }}
-                </div>
-            {% endif %}
-            {% block body %}{% endblock %}
+          {% block body %}{% endblock %}
             {% block scripts %}{% endblock %}
         </main>
         <footer class="text-center py-3 bg-light border-top">

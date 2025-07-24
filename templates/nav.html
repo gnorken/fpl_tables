@@ -12,7 +12,14 @@
         {% if manager %}
         <div id="header-team" class="d-flex align-items-center p-1">
             <div id="flag" class="mx-2">
-                {{ manager.flag_html | safe }}
+                {% if manager.national_league_url %}
+                <a href="{{ manager.national_league_url }}">
+                    {{ manager.flag_html|safe }}
+                </a>
+                {% else %}
+                    {{ manager.flag_html|safe }}
+                {% endif %}
+
             </div>
             <a href="{{ url_for('manager', team_id=team_id) }}">
                 <div id="header-team-name" class="d-flex flex-column">
@@ -59,10 +66,12 @@
                 <li>
                     <h6 class="dropdown-header">Tables</h6>
                 </li>
-                {{ nav_item('Goals & Assists', 'top_scorers', 'top_scorers') }}
-                {{ nav_item('Most Categories', 'starts', 'starts') }}
+                {{ nav_item('Offence', 'offence', 'offence') }}
+                {{ nav_item('Defence', 'defence', 'defence') }}
                 {{ nav_item('By Points', 'points', 'points') }}
+                {{ nav_item('Per 90', 'per_90', 'per_90') }}
                 {{ nav_item('By Teams', 'teams', 'teams') }}
+
                 <li>
                     <hr class="dropdown-divider">
                 </li>
