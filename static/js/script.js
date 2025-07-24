@@ -223,7 +223,7 @@ async function fetchData(sortBy, sortOrder) {
     order: sortOrder,
   };
 
-  // 3) Only add filters if we're NOT on the Assistant Managers page
+  // 3) Only add filters if we're NOT on the Assistant Managers page. Could use this for other pages without slider.
   if (cfg.table !== "am") {
     const { minCost, maxCost } = getSelectedPriceRange();
     const selectedPositions = getSelectedPositions();

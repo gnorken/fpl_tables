@@ -18,7 +18,6 @@ from flask import (
     current_app as app,
 )
 
-from modules.fetch_am_data import get_player_data_am
 from modules.fetch_manager_data import get_manager_data, get_manager_history
 from modules.fetch_all_tables import (
     build_player_info,
@@ -39,8 +38,10 @@ from modules.utils import (
     get_current_gw,
     ordinalformat,
     thousands,
+    millions,
     territory_icon,
     get_overall_league_leader_total,
+    performance_emoji,
 )
 
 FPL_API = "https://fantasy.premierleague.com/api"
@@ -48,15 +49,18 @@ HEADERS = {"User-Agent": "Mozilla/5.0"}
 
 app = Flask(__name__)
 app.logger.setLevel(logging.DEBUG)
-# app.secret_key = os.urandom(24) # For deployment
-app.secret_key = os.environ.get(
-    "FLASK_SECRET", "dev-secret-for-local")  # Development only
+app.secret_key = os.urandom(24)  # For deployment
+# app.secret_key = os.environ.get(
+#     "FLASK_SECRET", "dev-secret-for-local")  # Development only
 app.config["TEMPLATES_AUTO_RELOAD"] = True
+
 
 # Jinja filters
 app.jinja_env.filters["ordinalformat"] = ordinalformat
 app.jinja_env.filters["thousands"] = thousands
+app.jinja_env.filters["millions"] = millions
 app.jinja_env.filters["territory_icon"] = territory_icon
+app.jinja_env.filters["performance_emoji"] = performance_emoji
 
 DATABASE = "page_views.db"
 
@@ -109,21 +113,20 @@ def initialize_session():
 def index():
     MAX_USERS = get_max_users()
     current_gw = session.get('current_gw', '__')
+    # GET
     if request.method == "GET":
-        if request.method == "GET":
-            session.pop("team_id", None)
+        session.pop("team_id", None)
         return render_template("index.html",
                                max_users=MAX_USERS,
                                current_gw=current_gw)
     # POST
     team_id = validate_team_id(request.form.get("team_id"), MAX_USERS)
     if team_id is None:
-        flash("Invalid team ID", "error")
         return render_template("index.html",
                                max_users=MAX_USERS,
                                current_gw=current_gw)
     session['team_id'] = team_id
-    return redirect(url_for("top_scorers", team_id=team_id))
+    return redirect(url_for("manager", team_id=team_id))
 
 # --- ABOUT ---
 
@@ -133,18 +136,29 @@ def about():
     return render_template("about.html",
                            current_gw=session.get('current_gw'))
 
-# --- CHIPS ---
+# --- Manager ---
 
 
-@app.route("/<int:team_id>/team/chips")
-def chips(team_id):
+@app.route("/<int:team_id>/team/manager")
+def manager(team_id):
     try:
-        return render_template("chips.html",
-                               team_id=team_id,
-                               current_gw=session.get('current_gw'),
-                               manager=g.manager,
-                               history=get_manager_history(team_id),
-                               current_page='chips')
+        manager_history = get_manager_history(team_id)
+
+        # print(json.dumps(g.manager, indent=2))
+        m = g.manager
+        print(
+            f"{m['id']} - {m['first_name']} {m['last_name']} - {m['team_name']} - {m['country_code']}")
+
+        return render_template(
+            "manager.html",
+            team_id=team_id,
+            current_gw=session.get('current_gw'),
+            manager=g.manager,
+            chips_state=manager_history["chips_state"],
+            history=manager_history["history"],
+            current_page='manager'
+        )
+
     except Exception as e:
         flash(f"Error: {e}", "error")
         return redirect(url_for("index"))
@@ -159,22 +173,22 @@ def top_scorers(team_id):
                            current_gw=session.get('current_gw'),
                            manager=g.manager,
                            sort_by=request.args.get(
-                               'sort_by', 'goals_scored_team'),
+                               'sort_by', 'goals_scored'),
                            order=request.args.get('order', 'desc'),
                            current_page='top_scorers')
 
-# --- STARTS PAGE ---
+# --- DEFENCE PAGE ---
 
 
-@app.route("/<int:team_id>/team/starts")
-def starts(team_id):
-    return render_template("starts.html",
+@app.route("/<int:team_id>/team/defence")
+def defence(team_id):
+    return render_template("defence.html",
                            team_id=team_id,
                            current_gw=session.get('current_gw'),
                            manager=g.manager,
-                           sort_by=request.args.get('sort_by', 'starts_team'),
+                           sort_by=request.args.get('sort_by', 'starts'),
                            order=request.args.get('order', 'desc'),
-                           current_page='starts')
+                           current_page='defence')
 
 # --- POINTS PAGE ---
 
@@ -186,7 +200,7 @@ def points(team_id):
                            current_gw=session.get('current_gw'),
                            manager=g.manager,
                            sort_by=request.args.get(
-                               'sort_by', 'total_points_team'),
+                               'sort_by', 'total_points'),
                            order=request.args.get('order', 'desc'),
                            current_page='points')
 
@@ -200,7 +214,7 @@ def teams(team_id):
         current_gw = session.get('current_gw', '__')
 
         # default sort key + order
-        default_sort_by = 'starts_team'
+        default_sort_by = 'starts'
         default_order = 'desc'
 
         # allow user to override via query-string
@@ -309,7 +323,7 @@ def get_sorted_players():
         )
         conn.commit()
 
-    # 4️⃣ Handle mini-league table
+    # 4️⃣ Handle mini-league table ////////////////////////////////////////////////////////////////
     if table == "mini_league":
         static_data = get_static_data()
 
@@ -370,7 +384,7 @@ def get_sorted_players():
                 p["pts_behind_league_leader"] = p.get(
                     "total_points", 0) - league_leader_pts
                 print(
-                    f"pts_behind_league_leader: {p["pts_behind_league_leader"]}")
+                    f"pts_behind_league_leader: {p['pts_behind_league_leader']}")
                 # points behind the overall league leader
                 p["pts_behind_overall"] = p.get("total_points", 0) - leader_pts
 
@@ -405,6 +419,20 @@ def get_sorted_players():
         )
         conn.commit()
 
+    # ✅ Add filtering logic here
+    if table != "teams":
+        selected_positions = request.args.get("selected_positions", "")
+        if selected_positions:
+            positions = set(selected_positions.split(","))
+            team_blob = {
+                pid: p
+                for pid, p in team_blob.items()
+                if str(p["element_type"]) in positions
+            }
+        else:
+            # no positions selected → return no players
+            team_blob = {}
+
     conn.close()
 
     if table == "teams":
@@ -413,7 +441,7 @@ def get_sorted_players():
 
         # 2️⃣ Turn into a list and sort by the chosen metric
         sorted_stats = sorted(
-            stats.values(),
+            [team for team in stats.values() if team.get(sort_by, 0) != 0],
             key=lambda team: team.get(sort_by, 0),
             reverse=(order == "desc")
         )
@@ -440,13 +468,13 @@ def get_sorted_players():
             players_images=top5,        # <= your badges
             manager=g.manager
         )
-    if table == "am":
-        print("🚀 AM branch")
-        am_blob = get_player_data_am(get_static_data())
-        players, images = filter_and_sort_players(am_blob, request.args)
-        print(f"📝 AM returned {len(players)} players")
-        return jsonify(players=players, players_images=images, manager=g.manager)
-    else:  # This is for top_scorers, starts and points table
+    # if table == "am":  # Assistant manager ///////////////////////////////////////////////////////////////////
+    #     print("🚀 AM branch")
+    #     am_blob = get_player_data_am(get_static_data())
+    #     players, images = filter_and_sort_players(am_blob, request.args)
+    #     print(f"📝 AM returned {len(players)} players")
+    #     return jsonify(players=players, players_images=images, manager=g.manager)
+    else:  # This is for top_scorers, starts and points table ///////////////////////////////////////////////
         players, images = filter_and_sort_players(team_blob, request.args)
         return jsonify(players=players, players_images=images, manager=g.manager)
 

@@ -1,8 +1,9 @@
 import requests
 import sqlite3
 import json
-from flask import session
+from flask import session, url_for
 from modules.utils import (territory_icon)
+
 
 TOTAL_MANAGERS_BY_SEASON = {
     "2002/03": 76_284,
@@ -73,15 +74,28 @@ def get_manager_data(team_id):
     response = requests.get(
         f"{FPL_API_BASE}/entry/{team_id}/", headers=HEADERS)
     api_data = response.json()
+    # print(json.dumps(api_data, indent=2))
 
     manager = {
-        "first_name":      api_data.get("player_first_name"),
-        "last_name":       api_data.get("player_last_name"),
-        "team_name":       api_data.get("name"),
-        "country_code":    api_data.get("player_region_iso_code_short", "").lower(),
-        "classic_leagues": api_data.get("leagues", {}).get("classic", []),
-        "flag_html":       territory_icon(api_data.get("player_region_iso_code_short", "")),
+        "first_name":       api_data.get("player_first_name"),
+        "last_name":        api_data.get("player_last_name"),
+        "team_name":        api_data.get("name"),
+        "country_code":     api_data.get("player_region_iso_code_short", "").lower(),
+        "classic_leagues":  api_data.get("leagues", {}).get("classic", []),
+        "flag_html":        territory_icon(api_data.get("player_region_iso_code_short", "")),
+        # "club_badge_src":   api_data.get("club_badge_data"),
     }
+
+    # After building manager["classic_leagues"]
+    national_league_url = None
+    country_name = api_data.get("player_region_name", "")
+    for league in manager["classic_leagues"]:
+        if league.get("name", "").lower() == country_name.lower():
+            national_league_url = url_for(
+                'mini_leagues', league_id=league['id'])
+            break
+
+    manager["national_league_url"] = national_league_url
 
     # 3) Upsert the JSON blob
     data_json = json.dumps(manager)
@@ -105,7 +119,6 @@ def get_manager_history(team_id):
     history_url = f"{FPL_API_BASE}/entry/{team_id}/history/"
     history_response = requests.get(history_url, headers=HEADERS)
     history_data = history_response.json()
-    print(json.dumps(history_data, indent=2))
 
     for season in history_data.get("past", []):
         tm = TOTAL_MANAGERS_BY_SEASON.get(season['season_name'])

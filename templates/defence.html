@@ -8,7 +8,7 @@
             <tr>
                 <th id="top-players" data-sort="top-players" class="sticky-col align-middle round-border-top">↑ Top Five
                 </th>
-                <th colspan="18" data-sort="team-data" class="bg-team round-border-top"
+                <th colspan="15" data-sort="team-data" class="bg-team round-border-top"
                     title="Players that are or have been in {{ manager.team_name }} this season">
                     Stats for {{ manager.team_name }}
                 </th>
@@ -20,11 +20,9 @@
                 {# --- Team-specific columns (primary) --- #}
                 <th data-sort="starts_team" class="sort-team bg-team">S</th>
                 <th data-sort="minutes_team" class="sort-team bg-team">M</th>
+                <th data-sort="defcon_team" class="sort-team bg-team">DC</th>
                 <th data-sort="clean_sheets_team" class="sort-team bg-team">CS</th>
-                <th data-sort="assists_team" class="sort-team bg-team">A</th>
-                <th data-sort="expected_assists_team" class="sort-team bg-team">xA</th>
-                <th data-sort="goals_scored_team" class="sort-team bg-team">G</th>
-                <th data-sort="expected_goals_team" class="sort-team bg-team">xG</th>
+               
                 <th data-sort="captained_team" class="sort-team bg-team">C</th>
                 <th data-sort="dreamteam_count_team" class="sort-team bg-team">DT</th>
                 <th data-sort="bps_team" class="sort-team bg-team">BPS</th>
@@ -40,11 +38,9 @@
                 {# --- Overall columns (secondary) --- #}
                 <th data-sort="starts" class="sort">S</th>
                 <th data-sort="minutes" class="sort">M</th>
+                <th data-sort="defcon" class="sort">DC</th>
                 <th data-sort="clean_sheets" class="sort">CS</th>
-                <th data-sort="assists" class="sort">A</th>
-                <th data-sort="expected_assists" class="sort">xA</th>
-                <th data-sort="goals_scored" class="sort">G</th>
-                <th data-sort="expected_goals" class="sort">xG</th>
+        
                 <th data-sort="dreamteam_count" class="sort">DT</th>
                 <th data-sort="bps" class="sort">BPS</th>
                 <th data-sort="penalties_saved" class="sort">PS</th>
@@ -63,7 +59,7 @@
         <tfoot>
             <tr class="th-purple text-center">
                 <th class="sticky-col round-border-btm">.</th>
-                <th colspan="18" class="bg-team round-border-btm">
+                <th colspan="15" class="bg-team round-border-btm">
                     <div id="loading" style="display:none;">Loading…</div>
                 </th>
                 <th colspan="15" class="round-border-btm"></th>
@@ -80,11 +76,8 @@
     const lookup = {
         "starts_team": `Starts for ${managerName}`,
         "minutes_team": `Minutes played for ${managerName}`,
+        "defcon_team": `Defensive contributions for ${managerName}`,
         "clean_sheets_team": `Clean sheets for ${managerName}`,
-        "assists_team": `Assists for ${managerName}`,
-        "expected_assists_team": `Expected assists for ${managerName}`,
-        "goals_scored_team": `Goals scored for ${managerName}`,
-        "expected_goals_team": `Expected goals for ${managerName}`,
         "captained_team": `Times captained for ${managerName}`,
         "dreamteam_count_team": `# in Dreamteam for ${managerName}`,
         "bps_team": `BPS for ${managerName}`,
@@ -99,11 +92,8 @@
 
         "starts": "Total starts",
         "minutes": "Total minutes",
+        "defcon": "Total defensive contributions",
         "clean_sheets": "Total clean sheets",
-        "assists": "Total assists",
-        "expected_assists": "Total expected assists",
-        "goals_scored": "Total goals scored",
-        "expected_goals": "Total expected goals",
         "dreamteam_count": "Total Dreamteam appearances",
         "bps": "Total BPS",
         "penalties_saved": "Total penalties saved",
@@ -120,8 +110,8 @@
 
     // 2) Now inject the shared tableConfig for `script.js` to pick up:
     window.tableConfig = {
-        table: "starts",
-        url: `/get-sorted-players?table=starts&team_id={{ team_id }}`,
+        table: "defence",
+        url: `/get-sorted-players?table=defence&team_id={{ team_id }}`,
         tbodySelector: "#player-table-body",
         loadingSelector: "#loading",
         sortBy: "{{ sort_by }}",
@@ -157,11 +147,8 @@
             // 18 team‐specific (primary) columns:
             { key: "starts_team", className: "sort-team", sortLevel: "primary", dataColumn: "starts" },
             { key: "minutes_team", className: "sort-team", sortLevel: "primary", dataColumn: "minutes" },
+            { key: "defcon_team", className: "sort-team", sortLevel: "primary", dataColumn: "defcon" },
             { key: "clean_sheets_team", className: "sort-team", sortLevel: "primary", dataColumn: "clean_sheets" },
-            { key: "assists_team", className: "sort-team", sortLevel: "primary", dataColumn: "assists" },
-            { key: "expected_assists_team", className: "sort-team", sortLevel: "primary", dataColumn: "expected_assists", formatter: v => (v).toFixed(1) },
-            { key: "goals_scored_team", className: "sort-team", sortLevel: "primary", dataColumn: "goals_scored" },
-            { key: "expected_goals_team", className: "sort-team", sortLevel: "primary", dataColumn: "expected_goals", formatter: v => (v).toFixed(1) },
             { key: "captained_team", className: "sort-team", sortLevel: "primary", dataColumn: "captained" },
             { key: "dreamteam_count_team", className: "sort-team", sortLevel: "primary", dataColumn: "dreamteam_count" },
             { key: "bps_team", className: "sort-team", sortLevel: "primary", dataColumn: "bps" },
@@ -178,11 +165,8 @@
             // 15 overall (secondary) columns:
             { key: "starts", className: "sort vert-border", sortLevel: "secondary", dataColumn: "starts" },
             { key: "minutes", className: "sort", sortLevel: "secondary", dataColumn: "minutes" },
+            { key: "defcon", className: "sort", sortLevel: "secondary", dataColumn: "defcon" },
             { key: "clean_sheets", className: "sort", sortLevel: "secondary", dataColumn: "clean_sheets" },
-            { key: "assists", className: "sort", sortLevel: "secondary", dataColumn: "assists" },
-            { key: "expected_assists", className: "sort", sortLevel: "secondary", dataColumn: "expected_assists", formatter: v => (v).toFixed(1) },
-            { key: "goals_scored", className: "sort", sortLevel: "secondary", dataColumn: "goals_scored" },
-            { key: "expected_goals", className: "sort", sortLevel: "secondary", dataColumn: "expected_goals", formatter: v => (v).toFixed(1) },
             { key: "dreamteam_count", className: "sort", sortLevel: "secondary", dataColumn: "dreamteam_count" },
             { key: "bps", className: "sort", sortLevel: "secondary", dataColumn: "bps" },
             { key: "penalties_saved", className: "sort", sortLevel: "secondary", dataColumn: "penalties_saved" },
