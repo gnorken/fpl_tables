@@ -175,6 +175,27 @@ def manager(team_id):
         flash(f"Error: {e}", "error")
         return redirect(url_for("index"))
 
+# AJAX routes for table and graphs in manager.html
+
+
+@app.route("/get-sorted-current-season")
+def get_sorted_current_season():
+    mock_data = [
+        {"gw": 1, "or": 79512, "#:": -2, "op": 44, "gwr": 3061510, "gwp": 76,
+            "pb": 5, "tm": 1, "tc": "4", "£": 100},
+        {"gw": 2, "or": 227258, "#:": 2342, "op": 105, "gwr": 154874, "gwp": 52,
+            "pb": 0, "tm": 1, "tc": "4", "£": 100.2},
+        {"gw": 3, "or": 367366, "#:": -2234, "op": 49, "gwr": 3456322, "gwp": 50,
+            "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
+        {"gw": 4, "or": 4924653, "#:": -2, "op": 83, "gwr": 4009234, "gwp": 76,
+            "pb": 5, "tm": 1, "tc": "4", "£": 100},
+        {"gw": 5, "or": 5398543, "#:": 2342, "op": 47, "gwr": 4566213, "gwp": 42,
+            "pb": 0, "tm": 1, "tc": "4", "£": 100.2},
+        {"gw": 6, "or": 7238234, "#:": -2234, "op": 98, "gwr": 822508, "gwp": 60,
+            "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
+    ]
+    return jsonify(mock_data)
+
 # --- OFFENCE PAGE ---
 
 
@@ -270,19 +291,6 @@ def teams(team_id):
 
     return redirect(url_for("index"))
 
-
-# --- ASSISTANT MANAGERS PAGE ---
-
-
-@app.route("/<int:team_id>/team/am")
-def am(team_id):
-    return render_template("assistant_managers.html",
-                           team_id=team_id,
-                           current_gw=session.get('current_gw'),
-                           sort_by=request.args.get(
-                               'sort_by', 'total_points'),
-                           order=request.args.get('order', 'desc'),
-                           current_page='am')
 
 # --- MINI LEAGUES PAGE ---
 
