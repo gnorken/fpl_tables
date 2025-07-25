@@ -40,18 +40,40 @@ window.getSelectedPriceRange = () => {
 };
 
 // ─────────────── 3) Sort‐arrow indicator ────────────
+// ─────────────── 3) Sort‐arrow indicator ─────────────────
 window.updateSortIndicator = (sortBy, sortOrder) => {
+  // only these table‐IDs get the rounded‐corner “sorted” class
+  const roundedTables = [
+    "defence-table",
+    "offence-table",
+    "points-table",
+    "per-90-table",
+    "teams-table",
+  ];
+
   document.querySelectorAll("th[data-sort]").forEach((th) => {
+    const table = th.closest("table");
     const isCurrent = th.dataset.sort === sortBy;
-    th.classList.toggle("sorted", isCurrent);
+
+    // only toggle `sorted` if this <th> lives in one of the roundedTables
+    if (table && roundedTables.includes(table.id)) {
+      th.classList.toggle("sorted", isCurrent);
+    } else {
+      // ensure it's removed on non‑rounded tables
+      th.classList.remove("sorted");
+    }
+
+    // still toggle asc/desc everywhere
     th.classList.toggle("asc", isCurrent && sortOrder === "asc");
     th.classList.toggle("desc", isCurrent && sortOrder === "desc");
+
+    // arrow logic stays global
     const old = th.querySelector(".sort-arrow");
     if (old) old.remove();
     if (isCurrent) {
       const arrow = document.createElement("span");
       arrow.className = "sort-arrow";
-      arrow.textContent = sortOrder === "asc" ? "↑" : "↓";
+      arrow.textContent = sortOrder === "asc" ? "▲" : "▼";
       th.appendChild(arrow);
     }
   });
@@ -324,7 +346,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // 8.1.1) Immediately reflect that in the headers
-  updateSortIndicator(window.tableConfig.sortBy, window.tableConfig.sortOrder);
+  // only run the *global* arrow logic for pages with tableConfig.url
+  if (window.tableConfig && window.tableConfig.url) {
+    updateSortIndicator(
+      window.tableConfig.sortBy,
+      window.tableConfig.sortOrder
+    );
+  }
 
   // 8.2) Header-hover descriptions
   const hoverEl = document.getElementById("current-hover");
@@ -394,7 +422,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 8.4) Price-slider hookup
   const slider = document.getElementById("price-slider");
-  if (slider && window.noUiSlider) {
+  if (slider && window.noUiSlider && !slider.noUiSlider) {
     noUiSlider.create(slider, {
       start: [3, 15],
       connect: true,
@@ -418,19 +446,26 @@ document.addEventListener("DOMContentLoaded", () => {
     );
 
   // 8.6) Initial AJAX load
-  if (window.tableConfig) {
+  if (window.tableConfig && window.tableConfig.url) {
     window.fetchData(tableConfig.sortBy, tableConfig.sortOrder);
   }
+
+  // 🆕 Manager page initialiser
+  // if (window.pageConfigs) {
+  //   initManagerPage(window.pageConfigs);
+  // }
 });
 
-// Tooltip for table headers
-document.querySelectorAll("table thead th").forEach((th) => {
-  const sortKey = th.getAttribute("data-sort");
-  if (sortKey && window.tableConfig.lookup[sortKey]) {
-    th.setAttribute("title", window.tableConfig.lookup[sortKey]);
-    th.setAttribute("data-bs-toggle", "tooltip");
-  }
-});
+// Tooltip for table headers (only for AJAX-driven tables with tableConfig)
+if (window.tableConfig && window.tableConfig.lookup) {
+  document.querySelectorAll("table thead th").forEach((th) => {
+    const sortKey = th.getAttribute("data-sort");
+    if (sortKey && window.tableConfig.lookup[sortKey]) {
+      th.setAttribute("title", window.tableConfig.lookup[sortKey]);
+      th.setAttribute("data-bs-toggle", "tooltip");
+    }
+  });
+}
 
 // ──────────── 9) popstate (back/forward) ─────────────
 window.addEventListener("popstate", () => {
@@ -466,3 +501,166 @@ document.body.addEventListener("click", (e) => {
   // re-fetch
   window.fetchData(key, dir);
 });
+
+//─────────── 11) Table and Graph ────────────────
+function initManagerPage(configs) {
+  Object.values(configs).forEach((config) => {
+    loadTableAndChart(config);
+  });
+}
+
+async function loadTableAndChart(config) {
+  console.log(
+    "🖐 container element:",
+    document.getElementById(config.tableContainerId),
+    document.getElementById(config.chartId)
+  );
+
+  // Fetch data from backend
+  console.log("🔄 Loading", config.ajaxRoute);
+  const res = await fetch(config.ajaxRoute);
+  const data = await res.json();
+  console.log("✅ Got data for", config.ajaxRoute, data);
+
+  // Build table HTML
+  const tableHtml = buildSortableTable(data, config.columns, config.dataKey);
+  document.getElementById(config.tableContainerId).innerHTML = tableHtml;
+
+  // Hover event listener for current season chart
+  if (config.chartId === "currentSeasonChart") {
+    const rows = document.querySelectorAll(
+      `#${config.tableContainerId} table tbody tr`
+    );
+
+    rows.forEach((row, i) => {
+      row.addEventListener("mouseenter", (e) => {
+        // Find Current Season chart
+        const chart = Chart.getChart("currentSeasonChart");
+        if (!chart) return;
+
+        // Find OR dataset index
+        const orDatasetIndex = chart.data.datasets.findIndex(
+          (ds) => ds.label === "Overall Rank"
+        );
+        if (orDatasetIndex === -1) return;
+
+        // Activate the OR point only
+        const active = [{ datasetIndex: orDatasetIndex, index: i }];
+        chart.setActiveElements(active);
+        chart.tooltip.setActiveElements(active, { x: e.offsetX, y: e.offsetY });
+        chart.update();
+
+        row.classList.add("table-active");
+      });
+
+      row.addEventListener("mouseleave", () => {
+        const chart = Chart.getChart("currentSeasonChart");
+        if (chart) {
+          chart.setActiveElements([]);
+          chart.tooltip.setActiveElements([], { x: 0, y: 0 });
+          chart.update();
+        }
+        row.classList.remove("table-active");
+      });
+    });
+  }
+
+  // ✅ Special case: Current Season Chart (green/red bars)
+  if (config.chartId === "currentSeasonChart") {
+    const gwData = data.map((d) => d.gw);
+    const orData = data.map((d) => d.or);
+    const gwrData = data.map((d) => d.gwr);
+    const gwpData = data.map((d) => d.gwp);
+
+    buildCurrentSeasonChart(gwData, orData, gwrData, gwpData);
+  } else {
+    // Build Chart.js graph (generic charts)
+    const ctx = document.getElementById(config.chartId);
+    renderChart(ctx, data, config);
+  }
+
+  // Add table ↔ graph hover interactivity (kept for all)
+  attachTableGraphHover(config.chartId, config.tableContainerId, data);
+}
+
+// Hover logic for table and graph
+function attachTableGraphHover(chartId, tableId, data) {
+  const chart = Chart.getChart(chartId);
+  const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+
+  rows.forEach((row, index) => {
+    row.addEventListener("mouseenter", () => {
+      chart.setActiveElements([{ datasetIndex: 0, index }]);
+      chart.update();
+    });
+    row.addEventListener("mouseleave", () => {
+      chart.setActiveElements([]);
+      chart.update();
+    });
+  });
+}
+
+// Build the graph and table for manager.html
+function buildSortableTable(data, columns, dataKey) {
+  if (!data || data.length === 0) return "<p>No data</p>";
+
+  let html = `<table class="table table-striped table-sm text-center">
+    <thead><tr>`;
+
+  // headers
+  columns.forEach((col) => {
+    const sortKey = col.toLowerCase().replace(/[^a-z0-9]/g, "");
+    html += `<th data-sort="${sortKey}">${col}</th>`;
+  });
+
+  html += `</tr></thead><tbody>`;
+
+  // rows
+  data.forEach((row) => {
+    html += `<tr>`;
+    columns.forEach((colLabel) => {
+      // default mapping: lowercase & strip non-alphanumerics
+      let key = colLabel.toLowerCase().replace(/[^a-z0-9]/g, "");
+      // special case: "#" header maps to "#:" in your JSON
+      if (colLabel === "#") key = "#:";
+      else if (colLabel === "£") key = "£"; // squad value column
+      const val = row[key];
+      html += `<td>${val != null ? val : ""}</td>`;
+    });
+    html += `</tr>`;
+  });
+
+  html += `</tbody></table>`;
+  return html;
+}
+
+// Render chart for manager.html
+function renderChart(ctx, data, config) {
+  if (!ctx || !data) return;
+
+  const labels = data.map((row) => row[config.dataKey]);
+  const values = data.map((row) => {
+    // pick one numeric column to graph; adapt later
+    return row.points || row.percentile || row.gwp || 0;
+  });
+
+  new Chart(ctx, {
+    type: config.chartType,
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: "Data",
+          data: values,
+          borderColor: "purple",
+          backgroundColor: "rgba(128,0,128,0.4)",
+          fill: false,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+    },
+  });
+}
