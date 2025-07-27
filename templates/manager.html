@@ -2,57 +2,65 @@
 
 {% block body %}
 <div class="container">
-  <h1>Manager stats</h1>
+  <!-- <h1>Manager stats</h1> -->
 
-  <!-- Current Season -->
-  <section id="current-season-section">
-    <h2>Current Season</h2>
-    <div class="row">
-      <div class="col-12 col-lg-6 mb-3">
-        <div class="chart-container mb-3">
-          <canvas id="currentSeasonChart"></canvas>
-        </div>
-      </div>
-      <div class="col-12 col-lg-6">
-        <div class="table-responsive">
-          <div id="current-season-table-container"></div>
-        </div>
-      </div>
-    </div>
-  </section>
+
 
   <!-- Past Seasons -->
   {% if history.past %}
+
   <section id="previous-seasons-section" class="mt-5 row">
     <h2>Past Seasons</h2>
-    <div class="col-12 col-lg-6 mb-3">
-      <div class="chart-container mb-3">
-        <canvas id="previousSeasonsChart"></canvas>
+    <div class="row">
+      <div class="col-12 col-lg-6 mb-3">
+        <div class="chart-container mb-5 position-relative">
+          <div class="btn-group btn-group-sm toggle-group">
+            <button type="button" id="past-linear-btn" class="btn btn-outline-secondary">
+              Linear
+            </button>
+            <button type="button" id="past-log-btn" class="btn btn-outline-secondary active">
+              Log
+            </button>
+          </div>
+          <canvas id="previousSeasonsChart"></canvas>
+        </div>
       </div>
-    </div>
-
-    <div class="col-12 col-lg-6">
-      <div id="previous-seasons-table-container">
-        <div class="table-responsive">
-          <table id="previous-seasons-table" data-table="pastSeasons" class="table table-striped table-sm text-center">
-            <thead>
-              <tr>
-                <th data-sort="season_name">Season<span class="sort-arrow">▼</span></th>
-                <th data-sort="percentile">Vibes</th>
-                <th data-sort="percentile">Percentile</th>
-                <th data-sort="rank">Overall Rank</th>
-                <th data-sort="total_managers">Managers</th>
-                <th data-sort="total_points">Total Points</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+      
+      <!-- Past Seasons Table -->
+      <div class="col-12 col-lg-6">
+        <div class="table-responsive manager-scrollable-table">
+          <div id="previous-seasons-table-container">
+          </div>
         </div>
       </div>
     </div>
   </section>
   {% endif %}
 
+  <!-- Current Season -->
+  <section id="current-season-section">
+    <h2 class="mt-3">Current Season</h2>
+    <i>Mock data. Season not yet started.</i>
+    <div class="row">
+      <!-- Current Season Chart -->
+      <div class="col-12 col-lg-9">
+        <div class="chart-container mb-5 position-relative">
+          <div class="btn-group btn-group-sm toggle-group">
+            <button type="button" id="current-linear-btn" class="btn btn-outline-secondary">Linear</button>
+            <button type="button" id="current-log-btn" class="btn btn-outline-secondary active">Log</button>
+          </div>
+          <canvas id="currentSeasonChart"></canvas>
+        </div>
+      </div>
+  
+      <!-- Current Season Table  -->
+      <div class="col-12 col-lg-3">
+        <div class="table-responsive manager-scrollable-table">
+          <div id="current-season-table-container"></div>
+        </div>
+      </div>
+    </div>
+  </section>
   <!-- CHIPS -->
   <section>
     <!-- Chips Tables -->
@@ -271,350 +279,243 @@
       </div>
     </div>
   </section>
+{% endblock %}
+{% block scripts %}
+  <script>
+      console.log(
+          '[inline] initManagerPage defined?',
+          typeof initManagerPage
+        );
 
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    console.log("🔥 manager.html inline script running");
+        // Utility: performance emoji for past seasons table
+        function performanceEmoji(p) {
+          if (p === null) return "–";
+          if (p > 70) return "💩";
+          if (p > 60) return "😭";
+          if (p > 50) return "😢";
+          if (p > 40) return "☹️";
+          if (p > 30) return "🙁";
+          if (p > 20) return "😐";
+          if (p > 15) return "😌";
+          if (p > 10) return "🙂";
+          if (p > 5) return "😁";
+          if (p > 1) return "😎";
+          if (p === 1) return "🥰";
+          if (p > 0.5) return "😍";
+          if (p > 0.1) return "🤩";
+          return "🤯";
+        }
+        
+    // Formatters
+    const nf = new Intl.NumberFormat();               // 1234567 -> 1,234,567
+    const compact = new Intl.NumberFormat("en", {     // 1234567 -> 1.2M
+        notation: "compact",
+        maximumFractionDigits: 1
+      });
 
-    // Utility: performance emoji for past seasons table
-    function performanceEmoji(p) {
-      if (p === null) return "–";
-      if (p > 70) return "💩";
-      if (p > 60) return "😭";
-      if (p > 50) return "😢";
-      if (p > 40) return "☹️";
-      if (p > 30) return "🙁";
-      if (p > 20) return "😐";
-      if (p > 15) return "😌";
-      if (p > 10) return "🙂";
-      if (p > 5) return "😁";
-      if (p > 1) return "😎";
-      if (p === 1) return "🥰";
-      if (p > 0.5) return "😍";
-      if (p > 0.1) return "🤩";
-      return "🤯";
-    }
-
-    // 1️⃣ Current Season config
     window.pageConfigs = {
+    
       currentSeason: {
         tableContainerId: "current-season-table-container",
         chartId: "currentSeasonChart",
-        ajaxRoute: "/get-sorted-current-season",
-        columns: ["GW", "OR", "#", "OP", "GWR", "GWP", "PB", "TM", "TC", "£"],
-        chartType: "line",
+        ajaxRoute: "/api/current-season",
+        columns: [
+          { label: "GW", key: "gw" },
+          { label: "OR", key: "or", formatter: v => compact.format(v) },
+          { label: "#", key: "#:" },
+          { label: "OP", key: "op" },
+          { label: "GWR", key: "gwr", formatter: v => compact.format(v) },
+          { label: "PB", key: "pb" },
+          { label: "TM", key: "tm" },
+          { label: "TC", key: "tc" },
+          { label: "£", key: "£" },
+        ],
         dataKey: "gw",
-      }
-    };
+        sortBy: "gw",
+        sortOrder: "asc",
+        toggleBtns: ["current-linear-btn", "current-log-btn"],
+        hoverDs: "Overall Rank",
+        buildDatasets: (data) => {
+          const gw = data.map(d => d.gw),
+            or = data.map(d => d.or),
+            gwr = data.map(d => d.gwr);
 
-  if (typeof initManagerPage === "function") initManagerPage(window.pageConfigs);
-
-  // 🟢🔴 Build the Current Season chart once data is ready
-    if (typeof buildCurrentSeasonChart === "undefined") {
-      window.buildCurrentSeasonChart = function (gwData, orData, gwrData, gwpData) {
-        const barColors = gwpData.map((_, i) =>
-          i === 0 ? "rgba(128, 128, 128, 0.6)" : orData[i] < orData[i - 1] ? "rgba(76, 175, 80, 0.8)" : "rgba(244, 67, 54, 0.8)" // red or green
-        );
-
-        const ctx = document.getElementById("currentSeasonChart").getContext("2d");
-
-        return new Chart(ctx, {
-          data: {
-            labels: gwData,
-            datasets: [
-              // Bars: Gameweek Points
-              {
-                type: "bar",
-                label: "GW Points",
-                data: gwpData,
-                backgroundColor: barColors,
-                yAxisID: "yBars",
-                order: 3,
-              },
-              // OR line
-              {
-                type: "line",
-                label: "Overall Rank",
-                data: orData,
-                borderColor: "purple",
-                backgroundColor: "purple",
-                tension: 0.3,
-                pointRadius: 6,
-                yAxisID: "y",
-                order: 1,
-              },
-              // GWR line
-              {
-                type: "line",
-                label: "GW Rank",
-                data: gwrData,
-                borderColor: "lightPink",
-                backgroundColor: "lightPink",
-                tension: 0.3,
-                pointRadius: 6,
-                yAxisID: "y",
-                order: 2,
-              },
-              {
-                type: "bar",
-                label: "Points (OR ▲)",
-                backgroundColor: "rgba(76, 175, 80, 0.8)",
-                borderColor: "green",
-                order: 4,
-              },
-              {
-                type: "bar",
-                label: "Points (OR ▼)",
-                backgroundColor: "rgba(244, 67, 54, 0.8)",
-                order: 4,
-              },
-            ],
+          return [
+            {
+              type: "line",
+              label: "Overall Rank",
+              data: or,
+              borderColor: "purple",
+              backgroundColor: "purple",
+              tension: .3,
+              pointRadius: 5,
+              yAxisID: "y",
+              order: 1,
+            },
+            {
+              type: "line",
+              pointStyle: "rectRounded",
+              label: "GW Rank",
+              data: gwr,
+              borderColor: "green",
+              backgroundColor: "green",
+              borderWidth: 0,
+              tension: 0.3,
+              pointRadius: 5,
+              yAxisID: "y",
+              order: 2,
+            },
+          ];
+        },
+        scales: {
+          x: {
+            title: { display: true, text: "Gameweek" },
+            grid: {
+              drawTicks: true,
+              drawBorder: false,
+              drawOnChartArea: false,
+            },
           },
-         options: {
-          onHover: (event, elements) => {
-            const rows = document.querySelectorAll('#current-season-table-container table tbody tr');
-            rows.forEach(r => r.classList.remove('table-active'));
-            if (elements.length) {
-              const idx = elements[0].index;
-              if (rows[idx]) rows[idx].classList.add('table-active');
-              event.native.target.style.cursor = 'pointer';
-            } else {
-              event.native.target.style.cursor = 'default';
+          y: {
+            position: "left",
+            type: "logarithmic",
+            reverse: true,
+            title: { display: true, text: "Rank" },
+            grid: {
+              drawTicks: true,
+              drawBorder: false,
+              drawOnChartArea: true,
+            },
+            ticks: {
+              maxTicksLimit: 6,
+              callback: (value) =>
+                typeof value === "number" ? compact.format(value) : value
             }
-           },
-            maintainAspectRatio: false,
+          },
+        },
+        options: {
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: {
+                filter: (legendItem) => legendItem.text !== "GW Points"
+              }
+            },
+            tooltip: {
+              callbacks: {
+                title: (items) => `GW ${items[0].label}`,
+                label: ({ dataset, parsed }) =>
+                  `${dataset.label}: ${nf.format(parsed.y)}`
+              }
+            }
+          }
+        },
+      },
+
+
+        pastSeasons: {
+          tableContainerId: "previous-seasons-table-container",
+          chartId: "previousSeasonsChart",
+          ajaxRoute: null,
+          initialData: {{ history.past | tojson }},
+          columns: [
+              { label: "Season", key: "season_name" },
+              { label: `<span class="d-lg-none">🟡</span><span class="d-none d-lg-inline">Vibes</span>`, key: "percentile", formatter: (v) => performanceEmoji(v) },
+              { label: `
+                        <span class="d-lg-none" data-bs-toggle="tooltip" title="Your Percentile">%</span>
+                        <span class="d-none d-lg-inline" data-bs-toggle="tooltip" title="Your Percentile">Percentile</span>`, key: "percentile", formatter: (v) => v+"%" },
+              { label: `<span class="d-lg-none" data-bs-toggle="tooltip" title="Overall Rank">OR</span><span class="d-none d-lg-inline">Overall Rank</span>`, key: "rank", formatter: v => nf.format(v) },
+              { label: "Managers", key: "total_managers", formatter: v => compact.format(v) },
+              { label: "Total Points", key: "total_points" },
+            ],
+          dataKey: "season_name",
+          sortBy: "season_name",
+          sortOrder: "desc",
+          toggleBtns: ["past-linear-btn", "past-log-btn"],
+          hoverDs: 0,   // dataset index
+          buildDatasets: (data) => {
+            const labels = data.map(r => r.season_name),
+              percentiles = data.map(r => r.percentile);
+            return [
+              { type: "line", label: "You (%)", data: percentiles, fill: false, backgroundColor: "purple", borderColor: "purple", pointRadius: 6 },
+              { type: 'line', label: 'Top 1%', data: [], borderColor: '#2e7d32', borderDash: [6, 6] },
+              { type: 'line', label: 'Top 10%', data: [], borderColor: '#fbc02d', borderDash: [6, 6] }
+        ];
+      },
+      scales: {
+          y: {
+            type: "logarithmic",
+              min: 0.08,
+                max: 100,
+                  reverse: true,
+                    ticks: {
+              maxTicksLimit: 6,
+                callback: v => `${v}%`,
+                  font: { size: 10 }
+            }
+          },
+          x: {
+            reverse: true,
+              title: { display: true, text: "Season" },
+            ticks: { font: { size: 10 } }
+          }
+        },
+        // ← **NEW**: your entire custom options block
+        options: {
+          maintainAspectRatio: false,
             plugins: {
-              legend: {
-                labels: {
-                  filter: (legendItem) => legendItem.text !== "GW Points" // hide bars dataset from legend
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  const percentile = context.parsed.y;
+                  const rank = "test";
+                  return [
+                    percentile != null ? `Percentile: ${percentile}%` : "No data",
+                    rank != null ? `Rank: ${rank.toLocaleString()}` : ""
+                  ];
                 }
               }
             },
-            scales: {
-              x: {
-                title: { display: true, text: "Gameweek" },
-                grid: {
-                  drawTicks: true,
-                  drawBorder: false,
-                  drawOnChartArea: false,
+            annotation: {
+              annotations: {
+                top1: {
+                  type: "line",
+                    yMin: 1,
+                      yMax: 1,
+                        borderColor: "#2e7d32",
+                          borderWidth: 2,
+                            borderDash: [6, 6]
                 },
-              },
-              // Main y-axis (some horizontal lines + more ticks)
-              y: {
-                position: "left",
-                reverse: true,
-                title: { display: true, text: "Rank" },
-                grid: {
-                  drawTicks: true,
-                  drawBorder: false,
-                  drawOnChartArea: true, // ✅ show horizontal lines
-                },
-                ticks: {
-                  maxTicksLimit: 6, // ✅ enough tick marks now
-                },
-              },
-              // Hidden axis for bars
-              yBars: {
-                position: "left",
-                weight: 0,
-                grid: { display: false },
-                ticks: { display: false },
-                border: { display: false },
-                beginAtZero: true,
-                suggestedMin: 0,
-                suggestedMax: Math.max(...gwpData) + 220,
-              },
-            },
-          }
-
-        });
-      };
-    }
-
-  // 2️⃣ Past Seasons data
-  const rawData = {{ history.past | tojson }};
-  
-  let sortBy = "season_name";
-  let sortOrder = "desc";
-
-  // Prepare chart data with padding
-  const ranksBySeason = {}, percentilesBySeason = {};
-  rawData.forEach(s => {
-    const [st, en] = s.season_name.split("/");
-    const shortName = `${st.slice(2)}/${en}`;
-    ranksBySeason[shortName] = s.rank;
-    percentilesBySeason[shortName] = s.percentile;
-  });
-  const required = ['24/25', '23/24', '22/23'];
-  const allSeasons = Array.from(new Set([...required, ...Object.keys(percentilesBySeason)])).sort().reverse();
-  const labels = allSeasons;
-  const percentiles = labels.map(s => percentilesBySeason[s] ?? null);
-  const ranks = labels.map(s => ranksBySeason[s] ?? null);
-
-  // Build chart with annotation lines
-  Chart.register(window['chartjs-plugin-annotation']);
-  const ctx = document.getElementById('previousSeasonsChart').getContext('2d');
-  const pastChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels, datasets: [
-      {
-        label: '{{ manager.first_name }} {{ manager.last_name }} (%)',
-        data: percentiles,
-        fill: false, tension: 0.2, pointRadius: 6,
-        borderColor: 'purple', backgroundColor: 'purple'
-      },
-      {
-        label: 'Top 1%',
-        borderColor: '#2e7d32',
-        backgroundColor: '#2e7d32'
-      },
-      {
-        label: 'Top 10%',
-        borderColor: '#fbc02d',
-        backgroundColor: '#fbc02d'
-      }
-    ]
-    },
-    options: {
-      maintainAspectRatio: false,
-      scales: {
-        y: {
-          type: 'logarithmic', min: 0.08, max: 100, reverse: true,
-          ticks: { maxTicksLimit: 6, callback: v => `${v}%`, font: { size: 10 } },
-          title: { display: false }
-        },
-        x: { reverse: true, title: { display: true, text: 'Season' }, ticks: { font: { size: 10 } } }
-      },
-      plugins: {
-        tooltip: {
-          callbacks: {
-            label: (context) => {
-              const percentile = context.parsed.y;
-              const rank = ranks[context.dataIndex];
-              return [percentile != null ? `Percentile: ${percentile}%` : 'No data', rank != null ? `Rank: ${rank.toLocaleString()}` : ''];
-            }
-          }
-        },
-        annotation: {
-          annotations: {
-            top1: {
-              type: 'line',
-              yMin: 1,
-              yMax: 1,
-              borderColor: '#2e7d32', // deep green
-              borderWidth: 2,
-              borderDash: [6, 6],     // dashed line
-            },
-            top10: {
-              type: 'line',
-              yMin: 10,
-              yMax: 10,
-              borderColor: '#fbc02d', // golden yellow
-              borderWidth: 2,
-              borderDash: [6, 6],
+                top10: {
+                  type: "line",
+                    yMin: 10,
+                      yMax: 10,
+                        borderColor: "#fbc02d",
+                          borderWidth: 2,
+                            borderDash: [6, 6]
+                }
+              }
             }
           }
         }
-
-      },
-      // Highlight corresponding table row on chart hover
-      onHover: (event, elements) => {
-        const rows = document.querySelectorAll('#previous-seasons-table tbody tr');
-        rows.forEach(r => r.classList.remove('table-active'));
-        if (elements.length) {
-          const idx = elements[0].index;
-          if (rows[idx]) rows[idx].classList.add('table-active');
-          event.native.target.style.cursor = 'pointer';
-        } else {
-          event.native.target.style.cursor = 'default';
-        }
       }
+    };
+
+    // 2️⃣ Kick everything off
+    console.log('[inline] pageConfigs is', window.pageConfigs);
+    if (typeof initManagerPage === 'function') {
+      console.log('[inline] calling initManagerPage()');
+      initManagerPage(window.pageConfigs);
+    } else {
+      console.warn('[inline] initManagerPage is not a function, skipping');
     }
-  });
 
-  // Render table (Past Seasons table)
-  function renderPastSeasonsTable() {
-    const tbody = document.querySelector('#previous-seasons-table tbody');
-    tbody.innerHTML = '';
 
-    // 1) Sort rawData into `sorted`
-    const sorted = [...rawData].sort((a, b) => {
-      const A = a[sortBy] ?? '';
-      const B = b[sortBy] ?? '';
-      if (typeof A === 'number' && typeof B === 'number') {
-        return sortOrder === 'asc' ? A - B : B - A;
-      }
-      return sortOrder === 'asc'
-        ? String(A).localeCompare(String(B))
-        : String(B).localeCompare(String(A));
-    });
 
-    // 2) Build rows
-    sorted.forEach((s, i) => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-    <td>${s.season_name}</td>
-    <td>${performanceEmoji(s.percentile)}</td>
-    <td>${s.percentile != null ? s.percentile + '%' : '–'}</td>
-    <td>${s.rank.toLocaleString()}</td>
-    <td>${s.total_managers?.toLocaleString() || '–'}</td>
-    <td>${s.total_points}</td>
-  `;
-
-      row.addEventListener('mouseenter', (e) => {
-        // 1️⃣ highlight the table row
-        row.classList.add('table-active');
-
-        // 2️⃣ activate the point on the chart
-        const active = [{ datasetIndex: 0, index: i }];
-        pastChart.setActiveElements(active);
-
-        // 3️⃣ show the tooltip at the mouse position
-        pastChart.tooltip.setActiveElements(active, {
-          x: e.offsetX,
-          y: e.offsetY
-        });
-
-        pastChart.update();
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+        new bootstrap.Tooltip(el);
       });
 
-      row.addEventListener('mouseleave', () => {
-        // remove highlight
-        row.classList.remove('table-active');
+  </script>
 
-        // clear chart active & tooltip
-        pastChart.setActiveElements([]);
-        pastChart.tooltip.setActiveElements([], { x: 0, y: 0 });
-        pastChart.update();
-      });
-
-      tbody.appendChild(row);
-    });
-
-
-    // 3) Sync chart data
-    pastChart.data.labels = sorted.map(s => s.season_name);
-    pastChart.data.datasets[0].data = sorted.map(s => s.percentile);
-    pastChart.update();
-
-    // 4) Global sort‑arrow logic
-    updateSortIndicator(sortBy, sortOrder);
-  }
-
-  // Event
-  document.querySelectorAll('#previous-seasons-table th[data-sort]').forEach(th => {
-    th.addEventListener('click', e => {
-      e.stopPropagation();
-      const col = th.dataset.sort;          // ← use dataset.sort
-      if (sortBy === col) sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'; else { sortBy = col; sortOrder = 'asc'; }
-      renderPastSeasonsTable();
-    });
-  });
-  
-  // ❶ do the very first render
-  renderPastSeasonsTable();
-
-  });
-</script>
-  {% endblock %}x
+{% endblock %}

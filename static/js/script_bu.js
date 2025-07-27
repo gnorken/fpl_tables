@@ -1,4 +1,28 @@
-// 1) Helpers for filters
+window.initTooltips = () => {
+  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => {
+    // Avoid double-initialising the same tooltip
+    if (!el.getAttribute("data-bs-original-title")) {
+      new bootstrap.Tooltip(el);
+    }
+  });
+};
+
+// ─────────────── 1) Header update ──────────────────
+function updateHeader(mgr) {
+  console.groupCollapsed("🔔 updateHeader called");
+  console.trace();
+  console.groupEnd();
+
+  const flagEl = document.querySelector("#flag");
+  if (flagEl)
+    flagEl.innerHTML = `<span class="fi fi-${mgr.country_code}"></span>`;
+  const nameEls = document.querySelectorAll("#header-team-name h1.mb-0");
+  if (nameEls[0])
+    nameEls[0].textContent = `${mgr.first_name} ${mgr.last_name}'s `;
+  if (nameEls[1]) nameEls[1].textContent = mgr.team_name;
+}
+
+// ─────────────── 2) Filter helpers ─────────────────
 window.getSelectedPositions = () =>
   Array.from(
     document.querySelectorAll('#checkboxForm input[type="checkbox"]:checked')
@@ -15,315 +39,389 @@ window.getSelectedPriceRange = () => {
   return { minCost: min, maxCost: max };
 };
 
-// 2) Sort indicator
+// ─────────────── 3) Sort‐arrow indicator ─────────────────
 window.updateSortIndicator = (sortBy, sortOrder) => {
-  console.log("🔔 updateSortIndicator", sortBy, sortOrder);
+  // only these table‐IDs get the rounded‐corner “sorted” class
+  const roundedTables = [
+    "defence-table",
+    "offence-table",
+    "points-table",
+    "per-90-table",
+    "teams-table",
+  ];
+
   document.querySelectorAll("th[data-sort]").forEach((th) => {
+    const table = th.closest("table");
     const isCurrent = th.dataset.sort === sortBy;
-    th.classList.toggle("sorted", isCurrent);
+
+    // only toggle `sorted` if this <th> lives in one of the roundedTables
+    if (table && roundedTables.includes(table.id)) {
+      th.classList.toggle("sorted", isCurrent);
+    } else {
+      // ensure it's removed on non‑rounded tables
+      th.classList.remove("sorted");
+    }
+
+    // still toggle asc/desc everywhere
     th.classList.toggle("asc", isCurrent && sortOrder === "asc");
     th.classList.toggle("desc", isCurrent && sortOrder === "desc");
 
-    // remove old arrow if present
+    // arrow logic stays global
     const old = th.querySelector(".sort-arrow");
     if (old) old.remove();
-
-    // if this is the active column, append a <span> arrow
     if (isCurrent) {
       const arrow = document.createElement("span");
       arrow.className = "sort-arrow";
-      arrow.textContent = sortOrder === "asc" ? "↑" : "↓";
+      arrow.textContent = sortOrder === "asc" ? "▲" : "▼";
       th.appendChild(arrow);
     }
   });
 };
 
-// 3) Top-players text
+// ─────────────── 4) Top-players text ─────────────────
 window.updateTopPlayersText = (entryCount) => {
   let text;
-  if (entryCount === 0) {
-    text = "Nothing to display";
-  } else if (entryCount === 1) {
-    text = "↑ Only one";
-  } else if (entryCount < 5) {
+  if (entryCount === 0) text = "Nothing to display";
+  else if (entryCount === 1) text = "↑ Only one";
+  else if (entryCount < 5) {
     const words = { 2: "Two", 3: "Three", 4: "Four" }[entryCount];
     text = `↑ Top ${words}`;
-  } else {
-    text = "↑ Top Five";
-  }
+  } else text = "↑ Top Five";
   const el = document.getElementById("top-players");
   if (el) el.textContent = text;
 };
 
-// 4) Image & badge updaters
+// ─────────────── 5) Image & badge updaters ───────────
 window.updatePlayerImages = (data) => {
-  const imagesContainer = document.getElementById("player-images");
-  imagesContainer.innerHTML = "";
-  const playersImages = data.players_images || [];
-  if (playersImages.length === 0) {
-    document.getElementById("loading").textContent = "0 entries";
-    return;
-  }
-  playersImages.forEach((pi, idx) => {
-    const div = document.createElement("div");
+  const container = document.getElementById("player-images");
+  container.innerHTML = "";
+  (data.players_images || []).forEach((pi, idx) => {
+    const div = document.createElement("div"),
+      img = document.createElement("img");
     div.className = `player-image-${idx + 1}`;
-    const img = document.createElement("img");
     img.classList.add("img-fluid", "overlap-img");
     img.loading = "lazy";
     img.alt = "Player Photo";
     img.src = `https://resources.premierleague.com/premierleague/photos/players/110x140/${pi.photo}`;
-    img.onerror = function () {
-      this.onerror = null;
-      this.src =
+    img.onerror = () => {
+      img.onerror = null;
+      img.src =
         "https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png";
     };
     div.appendChild(img);
-    imagesContainer.appendChild(div);
+    container.appendChild(div);
   });
 };
 
 window.updateBadges = (data) => {
-  const imagesContainer = document.getElementById("player-images");
-  imagesContainer.innerHTML = "";
-  const playersImages = data.players_images || [];
-  if (playersImages.length === 0) {
-    document.getElementById("loading").textContent = "0 entries";
-    return;
-  }
-  playersImages.forEach((pi, idx) => {
-    const div = document.createElement("div");
+  const container = document.getElementById("player-images");
+  container.innerHTML = "";
+  (data.players_images || []).forEach((pi, idx) => {
+    const div = document.createElement("div"),
+      img = document.createElement("img");
     div.className = `badge-image-${idx + 1}`;
-    const img = document.createElement("img");
     img.classList.add("img-fluid", "overlap-badge");
     img.loading = "lazy";
     img.alt = "Club Badge";
     img.src = `https://resources.premierleague.com/premierleague/badges/100/t${pi.team_code}@x2.png`;
-    img.onerror = function () {
-      this.onerror = null;
-      this.src =
+    img.onerror = () => {
+      img.onerror = null;
+      img.src =
         "https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png";
     };
     div.appendChild(img);
-    imagesContainer.appendChild(div);
+    container.appendChild(div);
   });
 };
 
-// ─────────────── Mini-League Branch ───────────────
+// ─────────────── 6) Mini-league branch ───────────────
 async function fetchMiniLeague(sortBy, sortOrder) {
   const cfg = window.tableConfig;
-  if (!cfg) return false;
+  if (!cfg || cfg.table !== "mini_league") return false;
 
-  const tbodyEl = document.querySelector(cfg.tbodySelector);
-  const loadingEl = document.querySelector(cfg.loadingSelector);
-  if (!tbodyEl) return false;
+  const tbody = document.querySelector(cfg.tbodySelector);
+  const loading = document.querySelector(cfg.loadingSelector);
+  if (!tbody) return false;
 
-  // 1) Update sort-info bar
-  const sortEl = document.getElementById("current-sort");
-  const orderEl = document.getElementById("current-order");
-  if (sortEl) sortEl.textContent = cfg.lookup[sortBy] || sortBy;
-  if (orderEl) orderEl.textContent = sortOrder === "desc" ? "" : "(ascending)";
+  // 1) Show spinner, hide table
+  if (loading) loading.style.display = "block";
+  tbody.style.display = "none";
 
-  // 2) Show spinner, hide table
-  loadingEl && (loadingEl.style.display = "block");
-  tbodyEl.style.display = "none";
+  // 2) Fire the request
+  const url = `${cfg.url}&sort_by=${sortBy}&order=${sortOrder}&max_show=${cfg.maxShow}`;
+  console.log("📡 fetchMiniLeague →", url);
+  let res, data;
+  try {
+    res = await fetch(url);
+    data = await res.json();
+  } catch (e) {
+    console.error("⚠️ mini-league fetch failed", e);
+    if (loading) loading.style.display = "none";
+    return true; // bail out to prevent the generic fetch from running
+  }
 
-  // 3) Build URL + Fetch mini-league data (including max_show)
-  const fetchUrl = [
-    cfg.url,
-    `sort_by=${sortBy}`,
-    `order=${sortOrder}`,
-    `max_show=${cfg.maxShow}`,
-  ].join("&");
-  const res = await fetch(fetchUrl);
-  const data = await res.json();
+  // 3) Grab the players array (and manager, if you care)
   const players = data.players || [];
+  console.log("🎉 mini-league players:", players);
 
-  // 4) Compute max/min for highlights
+  // 4) Build a quick map of max/min for each stat (for highlighting)
   const maxVals = {},
     minVals = {};
-  cfg.statsKeys.forEach((k) => {
-    const vals = players.map((p) => p[k] || 0);
-    maxVals[k] = Math.max(...vals);
-    minVals[k] = Math.min(...vals);
+  cfg.statsKeys.forEach((key) => {
+    const vals = players.map((p) => p[key] || 0);
+    maxVals[key] = Math.max(...vals);
+    minVals[key] = Math.min(...vals);
   });
 
-  // 4.5) “Top N + current team” logic
+  // 5) “Top N + current” logic
   let toRender = players;
   if (typeof cfg.maxShow === "number") {
     const topN = players.slice(0, cfg.maxShow);
     if (!topN.some((p) => p.team_id === cfg.currentEntry)) {
       const me = players.find((p) => p.team_id === cfg.currentEntry);
-      if (me) {
-        me.isCurrent = true; // for any special styling
-        topN.push(me);
-      }
+      if (me) topN.push(me);
     }
     toRender = topN;
   }
 
-  // 5) Render rows
-  tbodyEl.innerHTML = "";
+  // 6) Render rows
+  tbody.innerHTML = "";
   toRender.forEach((team) => {
     const tr = document.createElement("tr");
-    tr.classList.add("vert-border", "text-center", "align-middle");
-
-    // ✅ Highlight by matching IDs directly
+    tr.classList.add("text-center", "align-middle");
     if (team.team_id === cfg.currentEntry) {
       tr.classList.add("highlight-current");
     }
 
     cfg.columns.forEach((col) => {
+      let cellHtml;
       if (col.render) {
-        // custom cell renderer
-        tr.insertAdjacentHTML("beforeend", col.render(team));
+        cellHtml = col.render(team);
       } else {
-        // standard key→cell
         const raw = team[col.key] ?? 0;
         const disp = col.formatter ? col.formatter(raw) : raw;
-        const classes = [];
-
-        // highlight logic
-        const isBest = cfg.invertKeys.includes(col.key)
+        const classes = [col.className || ""].filter(Boolean);
+        // mark best/ worst if desired
+        const best = cfg.invertKeys.includes(col.key)
           ? raw === minVals[col.key]
           : raw === maxVals[col.key];
-        if (isBest) classes.push("highlight");
+        if (best) classes.push("highlight");
 
-        if (col.extraClass) classes.push(col.extraClass);
-        if (col.className) classes.push(col.className);
-
-        const td = document.createElement("td");
-        td.className = classes.join(" ");
-        td.textContent = disp;
-        tr.appendChild(td);
+        cellHtml = `<td class="${classes.join(" ").trim()}">${disp}</td>`;
       }
+      tr.insertAdjacentHTML("beforeend", cellHtml);
     });
 
-    tbodyEl.appendChild(tr);
+    tbody.appendChild(tr);
   });
 
-  // 6) Hide spinner & show table
-  loadingEl && (loadingEl.style.display = "none");
-  tbodyEl.style.display = "";
+  updateSortIndicator(cfg.sortBy, cfg.sortOrder);
+  // 7) Hide spinner, show table
+  if (loading) loading.style.display = "none";
+  tbody.style.display = "";
 
   return true;
 }
 
-// 5) Unified fetcher
-window.fetchData = async (sortBy, sortOrder) => {
-  // Mini-League shortcut
-  if (await fetchMiniLeague(sortBy, sortOrder)) {
-    return;
-  }
+// ─────────────── 7) Generic data fetch ─────────────
+async function fetchData(sortBy, sortOrder) {
+  if (await fetchMiniLeague(sortBy, sortOrder)) return;
 
-  // Teams / AM / default logic
-  const teamId = window.teamId;
-  const table = window.tableType;
+  // 1) update sort‐info bar
+  const sortEl = document.getElementById("current-sort");
+  const orderEl = document.getElementById("current-order");
+  if (sortEl)
+    sortEl.textContent = window.tableConfig.lookup?.[sortBy] || sortBy;
+  if (orderEl) orderEl.textContent = sortOrder === "desc" ? "" : "(ascending)";
 
-  // Base params
+  const cfg = window.tableConfig;
+  const tbody = document.querySelector(cfg.tbodySelector);
+  const loading = document.querySelector(cfg.loadingSelector);
+
+  // 2) Always include sort & order
   const params = {
-    team_id: teamId,
-    table: table,
     sort_by: sortBy,
     order: sortOrder,
-    max_show: window.tableConfig.maxShow,
   };
 
-  if (table !== "am") {
-    const { minCost, maxCost } = window.getSelectedPriceRange();
-    const selectedPositions = window.getSelectedPositions();
-    params.selected_positions = selectedPositions;
+  // 3) Only add filters if we're NOT on the Assistant Managers page. Could use this for other pages without slider.
+  if (cfg.table !== "am") {
+    const { minCost, maxCost } = getSelectedPriceRange();
+    const selectedPositions = getSelectedPositions();
+
+    if (selectedPositions && selectedPositions.length > 0) {
+      params.selected_positions = selectedPositions;
+    }
+
     params.min_cost = minCost;
     params.max_cost = maxCost;
   }
 
-  document.getElementById("loading").style.display = "block";
-  document.getElementById("player-table-body").style.display = "none";
-
+  // 4) Build the query string and fetch
   const qs = new URLSearchParams(params);
-  const url = `/get-sorted-players?${qs}`;
+  const resp = await fetch(`${cfg.url}&${qs}`);
 
-  try {
-    const res = await fetch(url);
-    const payload = await res.json();
+  const { players, players_images, manager } = await resp.json();
 
-    // ←―――――――― Capture the full payload so handleUrlChange can see it
-    window._lastFetchedData = payload;
+  console.log("AJAX manager:", manager);
+  console.log("currentManagerId:", window.currentManagerId);
+  // only redraw header if manager really changed
+  // if (manager && manager.id !== window.currentManagerId) {
+  //   updateHeader(manager);
+  //   window.currentManagerId = manager.id;
+  // }
 
-    const { players, players_images, manager } = payload;
+  document.getElementById("entries").textContent =
+    players.length === 1 ? "1 entry" : `${players.length} entries`;
+  updateTopPlayersText(players.length);
 
-    document.getElementById("entries").textContent =
-      players.length === 1 ? "1 entry" : `${players.length} entries`;
-    window.updateTopPlayersText(players.length);
+  // 5) clear out old rows
+  tbody.innerHTML = "";
 
-    const body = document.getElementById("player-table-body");
-    body.innerHTML = "";
-    if (table === "teams") {
-      window.updateBadges({ players_images });
-    } else if (table === "am") {
-      window.updatePlayerImages({ players_images });
-    } else {
-      players.forEach((p) => {
-        const tr = document.createElement("tr");
-        body.appendChild(tr);
-      });
-      window.updatePlayerImages({ players_images });
-    }
+  // 6) for each player, build a <tr>…
+  players.forEach((p, idx) => {
+    const tr = document.createElement("tr");
+    tr.classList.add(
+      "vert-border",
+      "align-middle",
+      `team-${p.team_code}`,
+      `element-type-${p.element_type}`
+    );
 
-    updateSortIndicator(sortBy, sortOrder);
-  } catch (err) {
-    console.error("Error fetching data:", err);
-  } finally {
-    document.getElementById("loading").style.display = "none";
-    document.getElementById("player-table-body").style.display = "";
-  }
-};
+    cfg.columns.forEach((col) => {
+      if (col.render) {
+        // your custom renderer (rank + name, etc.)
+        tr.insertAdjacentHTML("beforeend", col.render(p, idx));
+      } else {
+        let val = p[col.key] ?? "";
+        if (col.formatter) val = col.formatter(val);
 
-// 6) Sorting helper
-window.sortTable = (sortBy) => {
-  if (window.tableConfig) {
-    // Mini-league path
-    if (window.tableConfig.sortBy === sortBy) {
-      window.tableConfig.sortOrder =
-        window.tableConfig.sortOrder === "desc" ? "asc" : "desc";
-    } else {
-      window.tableConfig.sortBy = sortBy;
-      window.tableConfig.sortOrder = "desc";
-    }
-    window.fetchData(window.tableConfig.sortBy, window.tableConfig.sortOrder);
-    return;
-  }
+        // build the data-attributes
+        // use either col.dataColumn (if you set one) or fall back to col.key
+        const dataColName = col.dataColumn || col.key;
+        const dataColumnAttr = ` data-column="${dataColName}"`;
 
-  // Legacy path
-  if (window.currentSortColumn === sortBy) {
-    window.currentSortOrder =
-      window.currentSortOrder === "desc" ? "asc" : "desc";
+        // emit sortLevel if defined
+        const sortLevelAttr = col.sortLevel
+          ? ` data-sort-level="${col.sortLevel}"`
+          : "";
+
+        // put it all together
+        tr.insertAdjacentHTML(
+          "beforeend",
+          `<td class="${
+            col.className || ""
+          }"${dataColumnAttr}${sortLevelAttr}>${val}</td>`
+        );
+      }
+    });
+
+    tbody.appendChild(tr);
+
+    // 🪛 Initialise tooltips on new rows
+    window.initTooltips();
+  });
+
+  if (window.tableConfig.table === "teams") {
+    updateBadges({ players_images });
   } else {
-    window.currentSortColumn = sortBy;
-    window.currentSortOrder = "desc";
+    updatePlayerImages({ players_images });
   }
-  window.fetchData(window.currentSortColumn, window.currentSortOrder);
-};
+  updateSortIndicator(sortBy, sortOrder);
 
-// 7) DOM ready
+  if (loading) loading.style.display = "none";
+  tbody.style.display = "";
+}
+// expose globally
+window.fetchData = fetchData;
+
+// ─────────────── 8) DOMContentLoaded ─────────────────
 document.addEventListener("DOMContentLoaded", () => {
-  // ─── hover helpers for sort‐info on any page ────────────────────────
+  // 8.1) Pull sort/order from URL if present
+  const params = new URLSearchParams(location.search);
+  if (window.tableConfig) {
+    if (params.has("sort_by")) tableConfig.sortBy = params.get("sort_by");
+    if (params.has("order")) tableConfig.sortOrder = params.get("order");
+  }
+
+  // 8.1.1) Immediately reflect that in the headers
+  // only run the *global* arrow logic for pages with tableConfig.url
+  if (window.tableConfig && window.tableConfig.url) {
+    updateSortIndicator(
+      window.tableConfig.sortBy,
+      window.tableConfig.sortOrder
+    );
+  }
+
+  // 8.2) Header-hover descriptions
   const hoverEl = document.getElementById("current-hover");
   if (hoverEl) {
     const defaultText = hoverEl.textContent;
     document.querySelectorAll("th[data-sort]").forEach((th) => {
       const key = th.dataset.sort;
-      const tip = window.tableConfig?.lookup?.[key] || th.textContent.trim();
-      th.addEventListener("mouseenter", () => {
-        hoverEl.textContent = tip;
-      });
-      th.addEventListener("mouseleave", () => {
-        hoverEl.textContent = defaultText;
-      });
+      const tip = window.tableConfig.lookup?.[key] || th.textContent.trim();
+      th.addEventListener("mouseenter", () => (hoverEl.textContent = tip));
+      th.addEventListener(
+        "mouseleave",
+        () => (hoverEl.textContent = defaultText)
+      );
     });
   }
 
+  // 8.3) Cell-hover highlighting
+  document.querySelectorAll("table.interactive-table").forEach((table) => {
+    table.addEventListener("mouseover", (e) => {
+      //console.log("🐭 hover event on", e.target);
+      const td = e.target.closest("td[data-column][data-sort-level]");
+      if (!td) return;
+      //console.log("→ matched a td:", td);
+      const col = td.dataset.column;
+      const sortLevel = td.dataset.sortLevel;
+      const row = td.closest("tr");
+      const primaryBg = sortLevel === "primary" ? "#e90052" : "#38003c";
+      const matchBg = sortLevel === "primary" ? "#38003c" : "#e90052";
+
+      // highlight hovered
+      td.dataset.origBg = td.style.backgroundColor;
+      td.dataset.origColor = td.style.color;
+      td.style.backgroundColor = primaryBg;
+      td.style.color = "#fff";
+      td.style.borderRadius = "3px";
+
+      // highlight partner(s)
+      row.querySelectorAll(`td[data-column="${col}"]`).forEach((other) => {
+        if (other === td) return;
+        other.dataset.origBg = other.style.backgroundColor;
+        other.dataset.origColor = other.style.color;
+        other.style.backgroundColor = matchBg;
+        other.style.color = "#fff";
+        other.style.borderRadius = "3px";
+      });
+    });
+
+    table.addEventListener("mouseout", (e) => {
+      const td = e.target.closest("td[data-column]");
+      if (!td) return;
+      const col = td.dataset.column;
+      const row = td.closest("tr");
+
+      // restore hovered
+      td.style.backgroundColor = td.dataset.origBg || "";
+      td.style.color = td.dataset.origColor || "";
+      td.style.borderRadius = "";
+
+      // restore partner(s)
+      row.querySelectorAll(`td[data-column="${col}"]`).forEach((other) => {
+        other.style.backgroundColor = other.dataset.origBg || "";
+        other.style.color = other.dataset.origColor || "";
+        other.style.borderRadius = "";
+      });
+    });
+  });
+
+  // 8.4) Price-slider hookup
   const slider = document.getElementById("price-slider");
-  if (slider && window.noUiSlider) {
+  if (slider && window.noUiSlider && !slider.noUiSlider) {
     noUiSlider.create(slider, {
       start: [3, 15],
       connect: true,
@@ -333,15 +431,287 @@ document.addEventListener("DOMContentLoaded", () => {
       format: wNumb({ decimals: 1, prefix: "£" }),
     });
     slider.noUiSlider.on("change", () =>
-      window.fetchData(window.currentSortColumn, window.currentSortOrder)
+      window.fetchData(tableConfig.sortBy, tableConfig.sortOrder)
     );
   }
 
+  // 8.5) Position-checkbox hookup
   document
     .querySelectorAll('#checkboxForm input[type="checkbox"]')
     .forEach((cb) =>
       cb.addEventListener("change", () =>
-        window.fetchData(window.currentSortColumn, window.currentSortOrder)
+        window.fetchData(tableConfig.sortBy, tableConfig.sortOrder)
       )
     );
+
+  // 8.6) Initial AJAX load
+  if (window.tableConfig && window.tableConfig.url) {
+    window.fetchData(tableConfig.sortBy, tableConfig.sortOrder);
+  }
+
+  // 🆕 Manager page initialiser
+  // if (window.pageConfigs) {
+  //   initManagerPage(window.pageConfigs);
+  // }
 });
+
+// Tooltip for table headers (only for AJAX-driven tables with tableConfig)
+if (window.tableConfig && window.tableConfig.lookup) {
+  document.querySelectorAll("table thead th").forEach((th) => {
+    const sortKey = th.getAttribute("data-sort");
+    if (sortKey && window.tableConfig.lookup[sortKey]) {
+      th.setAttribute("title", window.tableConfig.lookup[sortKey]);
+      th.setAttribute("data-bs-toggle", "tooltip");
+    }
+  });
+}
+
+// ──────────── 9) popstate (back/forward) ─────────────
+window.addEventListener("popstate", () => {
+  const p = new URLSearchParams(location.search);
+  const s = p.get("sort_by") || tableConfig.sortBy;
+  const o = p.get("order") || tableConfig.sortOrder;
+  tableConfig.sortBy = s;
+  tableConfig.sortOrder = o;
+  window.fetchData(s, o);
+});
+
+// ─────────── 10) Header‐click sorting ────────────────
+// only fire on THEAD <th> elements
+document.body.addEventListener("click", (e) => {
+  const th = e.target.closest("thead th[data-sort]");
+  if (!th || !window.tableConfig) return;
+
+  const key = th.dataset.sort;
+  const dir =
+    window.tableConfig.sortBy === key && window.tableConfig.sortOrder === "desc"
+      ? "asc"
+      : "desc";
+
+  window.tableConfig.sortBy = key;
+  window.tableConfig.sortOrder = dir;
+
+  // update URL
+  const u = new URL(location);
+  u.searchParams.set("sort_by", key);
+  u.searchParams.set("order", dir);
+  history.pushState(null, "", u);
+
+  // re-fetch
+  window.fetchData(key, dir);
+});
+
+//─────────── 11) Table and Graph ────────────────
+
+// Given a Chart.js instance and two button IDs, wire up a linear/log toggle.
+function addScaleToggle(chart, linearBtnId, logBtnId) {
+  const linearBtn = document.getElementById(linearBtnId);
+  const logBtn = document.getElementById(logBtnId);
+  if (!linearBtn || !logBtn) return;
+
+  linearBtn.addEventListener("click", () => {
+    chart.options.scales.y.type = "linear";
+    chart.update();
+    linearBtn.classList.add("active");
+    logBtn.classList.remove("active");
+  });
+
+  logBtn.addEventListener("click", () => {
+    chart.options.scales.y.type = "logarithmic";
+    chart.update();
+    logBtn.classList.add("active");
+    linearBtn.classList.remove("active");
+  });
+}
+
+// Kick off loading each table + chart pair
+function initManagerPage(configs) {
+  Object.values(configs).forEach(loadTableAndChart);
+}
+
+async function loadTableAndChart(config) {
+  console.log(
+    "🖐 container element:",
+    document.getElementById(config.tableContainerId),
+    document.getElementById(config.chartId)
+  );
+
+  // Fetch data
+  console.log("🔄 Loading", config.ajaxRoute);
+
+  // build a URL with ?sort_by & ?order if present:
+  const url = new URL(config.ajaxRoute, window.location.origin);
+  if (config.sortBy) url.searchParams.set("sort_by", config.sortBy);
+  if (config.sortOrder) url.searchParams.set("order", config.sortOrder);
+
+  const res = await fetch(url);
+  const data = await res.json();
+  console.log("✅ Got data for", config.ajaxRoute, data);
+
+  // Build & insert table
+  const tableHtml = buildSortableTable(data, config.columns, config.dataKey);
+  document.getElementById(config.tableContainerId).innerHTML = tableHtml;
+
+  // if this is the Current Season table, wire up its sort headers
+  if (config.chartId === "currentSeasonChart") {
+    document
+      .querySelectorAll(`#${config.tableContainerId} table th[data-sort]`)
+      .forEach((th) => {
+        th.addEventListener("click", () => {
+          const col = th.dataset.sort;
+          // flip or reset sort order on the config
+          if (config.sortBy === col) {
+            config.sortOrder = config.sortOrder === "asc" ? "desc" : "asc";
+          } else {
+            config.sortBy = col;
+            config.sortOrder = "desc";
+          }
+          // now re-fetch & redraw
+          loadTableAndChart(config);
+        });
+      });
+  }
+
+  // Special‐case: Current Season
+  if (config.chartId === "currentSeasonChart") {
+    const gwData = data.map((d) => d.gw);
+    const orData = data.map((d) => d.or);
+    const gwrData = data.map((d) => d.gwr);
+    const gwpData = data.map((d) => d.gwp);
+
+    // Draw chart and capture its instance
+    const currentChart = buildCurrentSeasonChart(
+      gwData,
+      orData,
+      gwrData,
+      gwpData
+    );
+
+    // Wire up the two toggle buttons
+    addScaleToggle(currentChart, "current-linear-btn", "current-log-btn");
+  } else {
+    // Fallback for other charts
+    const ctx = document.getElementById(config.chartId);
+    renderChart(ctx, data, config);
+  }
+
+  // Attach hover‐sync for table ↔ chart
+  attachTableGraphHover(
+    config.chartId,
+    `#${config.tableContainerId}`,
+    "Overall Rank"
+  );
+}
+
+// Hover logic for all table/graph combos
+function attachTableGraphHover(
+  chartId,
+  tableSelector,
+  datasetLabelOrIndex = 0
+) {
+  const chart = Chart.getChart(chartId);
+  if (!chart) return;
+
+  // Determine which dataset to highlight
+  const datasetIndex =
+    typeof datasetLabelOrIndex === "string"
+      ? chart.data.datasets.findIndex((ds) => ds.label === datasetLabelOrIndex)
+      : datasetLabelOrIndex;
+  if (datasetIndex < 0) return;
+
+  const rows = document.querySelectorAll(`${tableSelector} table tbody tr`);
+
+  // Table → Chart
+  rows.forEach((row, i) => {
+    row.addEventListener("mouseenter", (e) => {
+      row.classList.add("table-active");
+      const active = [{ datasetIndex, index: i }];
+      chart.setActiveElements(active);
+      chart.tooltip.setActiveElements(active, { x: e.offsetX, y: e.offsetY });
+      chart.update();
+    });
+    row.addEventListener("mouseleave", () => {
+      row.classList.remove("table-active");
+      chart.setActiveElements([]);
+      chart.tooltip.setActiveElements([], { x: 0, y: 0 });
+      chart.update();
+    });
+  });
+
+  // Chart → Table
+  chart.options.onHover = (event, elements) => {
+    rows.forEach((r) => r.classList.remove("table-active"));
+    if (elements.length) {
+      const idx = elements[0].index;
+      if (rows[idx]) rows[idx].classList.add("table-active");
+      event.native.target.style.cursor = "pointer";
+    } else {
+      event.native.target.style.cursor = "default";
+    }
+  };
+}
+
+//─────────── Build the graph and table for manager.html ────────────────
+function buildSortableTable(data, columns, dataKey) {
+  if (!data || data.length === 0) return "<p>No data</p>";
+
+  let html = `<table class="table table-striped table-sm text-center">
+    <thead><tr>`;
+
+  // headers
+  columns.forEach((col) => {
+    const sortKey = col.toLowerCase().replace(/[^a-z0-9]/g, "");
+    html += `<th data-sort="${sortKey}">${col}</th>`;
+  });
+
+  html += `</tr></thead><tbody>`;
+
+  // rows
+  data.forEach((row) => {
+    html += `<tr>`;
+    columns.forEach((colLabel) => {
+      // default mapping: lowercase & strip non-alphanumerics
+      let key = colLabel.toLowerCase().replace(/[^a-z0-9]/g, "");
+      // special case: "#" header maps to "#:" in your JSON
+      if (colLabel === "#") key = "#:";
+      else if (colLabel === "£") key = "£"; // squad value column
+      const val = row[key];
+      html += `<td>${val != null ? val : ""}</td>`;
+    });
+    html += `</tr>`;
+  });
+
+  html += `</tbody></table>`;
+  return html;
+}
+
+//─────────── Generic chart render fallback ────────────────
+function renderChart(ctx, data, config) {
+  if (!ctx || !data) return;
+
+  const labels = data.map((row) => row[config.dataKey]);
+  const values = data.map((row) => {
+    // pick one numeric column to graph; adapt later
+    return row.points || row.percentile || row.gwp || 0;
+  });
+
+  new Chart(ctx, {
+    type: config.chartType,
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: "Data",
+          data: values,
+          borderColor: "purple",
+          backgroundColor: "rgba(128,0,128,0.4)",
+          fill: false,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+    },
+  });
+}

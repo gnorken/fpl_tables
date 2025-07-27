@@ -312,7 +312,6 @@ td {
 .table-responsive {
   position: relative; /* Ensure it creates a stacking context */
   z-index: 20;         /* Higher than the player images */
-
 }
 
 /* Overlap effect with different left offsets and stacking orders */
@@ -598,4 +597,42 @@ th.sorted {
   .chart-container {
     height: 500px;
   }
+}
+
+
+/* log/linear scale buttons */
+.toggle-group {
+  position: absolute;
+  bottom: -5%;
+  /* 5% up from the bottom of the container */
+  right: 2%;
+  /* 2% in from the right edge */
+
+}
+
+/* scroll box for manager history and gameweek history */
+.manager-scrollable-table {
+  max-height: 500px; 
+  overflow-y: auto;
+  border: 1px solid gray;
+  border-radius: 5px;
+}
+/* Media query for small screens */
+@media (max-width: 576px) {
+  .manager-scrollable-table {
+    max-height: 300px;
+  }
+}
+
+
+/* make the table header stick to the top of that scrollable box */
+.manager-scrollable-table thead th {
+  position: sticky;
+  top: 0;
+  background: white;
+  /* or whatever your table’s bg is */
+  z-index: 2;
+  /* sit above the body rows */
+  /* optional: add a little shadow so you see the separation */
+  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
 }

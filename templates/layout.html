@@ -53,10 +53,9 @@
   {% include "nav.html" %}
 
   <main class="flex-fill">
-    {% block scripts %}{% endblock %}
     {% block body %}{% endblock %}
   </main>
-
+  
   <footer class="text-center py-3 bg-light border-top">
     <a href="/about">
       <div class="container">
@@ -64,9 +63,10 @@
       </div>
     </a>
   </footer>
-
+  
   <!-- Load script.js last so functions are available everywhere -->
   <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  {% block scripts %}{% endblock %}
 </body>
 
 </html>

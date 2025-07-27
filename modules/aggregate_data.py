@@ -69,3 +69,11 @@ def filter_and_sort_players(player_info, request_args):
                        "team_code": player["team_code"]} for player in players[:5]]
 
     return players, players_images
+
+
+# Sort for simple tables. I use it for graph/tabls combo on manager page
+def sort_table_data(data, sort_by, order, allowed_fields):
+    if sort_by in allowed_fields:
+        reverse = (order.lower() == 'desc')
+        return sorted(data, key=lambda row: row.get(sort_by, 0), reverse=reverse)
+    return data
