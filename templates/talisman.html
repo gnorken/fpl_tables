@@ -1,0 +1,166 @@
+{% extends "info.html" %}
+{% block title %}Talisman{% endblock %}
+
+{% block page_content %}
+<div class="table-responsive">
+    <table id="talisman-table" class="interactive-table table table-borderless table-striped text-nowrap">
+        <thead class="th-purple text-center">
+            <tr>
+                <th id="top-players" data-sort="top-players" class="sticky-col align-middle round-border-top">↑ Top Five
+                </th>
+                <th colspan="22" data-sort="overall-data" class="round-border-top">Talisman - Only one player per team</th>
+            </tr>
+            <tr>
+                <th id="entries" data-sort="entries" class="sticky-col"></th>
+
+                {# --- Overall columns (secondary) --- #}
+                <th data-sort="total_points" class="sort">P</th>
+                <th data-sort="starts" class="sort">S</th>
+                <th data-sort="minutes" class="sort">M</th>
+                <th data-sort="defcon" class="sort">DC</th>
+                <th data-sort="clean_sheets" class="sort">CS</th>
+
+                <th data-sort="dreamteam_count" class="sort">DT</th>
+                <th data-sort="bps" class="sort">BPS</th>
+                <th data-sort="penalties_saved" class="sort">PS</th>
+                <th data-sort="yellow_cards" class="sort">YC</th>
+                <th data-sort="red_cards" class="sort">RC</th>
+                <th data-sort="goals_conceded" class="sort">GC</th>
+                <th data-sort="own_goals" class="sort">OG</th>
+                <th data-sort="penalties_missed" class="sort">PM</th>
+
+                <th data-sort="goals_scored" class="sort">G</th>
+                <th data-sort="expected_goals" class="sort">xG</th>
+                <th data-sort="goals_performance" class="sort">+/−</th>
+                <th data-sort="assists" class="sort">A</th>
+                <th data-sort="expected_assists" class="sort">xA</th>
+                <th data-sort="assists_performance" class="sort">+/−</th>
+                <th data-sort="goals_assists" class="sort">GA</th>
+                <th data-sort="expected_goal_involvements" class="sort">xGA</th>
+                <th data-sort="goals_assists_performance" class="sort">+/−</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <!-- rows injected by script.js -->
+        </tbody>
+
+        <tfoot>
+            <tr class="th-purple text-center">
+                <th class="sticky-col round-border-btm">.</th>
+                <th colspan="22" class="round-border-btm">
+                    <div id="loading" style="display:none;">Loading…</div>
+                </th>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 1) Page‐specific lookup for header‐hover tooltips:
+    const managerName = {{ manager.team_name | tojson }};
+    const lookup = {
+
+        "total_points": "Total points",
+        "starts": "Total starts",
+        "minutes": "Total minutes",
+        "defcon": "Total defensive contributions",
+        "clean_sheets": "Total clean sheets",
+        "dreamteam_count": "Total Dreamteam appearances",
+        "bps": "Total BPS",
+        "penalties_saved": "Total penalties saved",
+        "yellow_cards": "Total yellow cards",
+        "red_cards": "Total red cards",
+        "goals_conceded": "Total goals conceded",
+        "own_goals": "Total own goals",
+        "penalties_missed": "Total penalties missed",
+        "top-players": "Pictures of the top players for this category",
+        "entries": "Number of entries",
+        "overall-data": "Overall stats",
+
+        "goals_scored": `Total goals scored`,
+        "expected_goals": `Total expected goals`,
+        "goals_performance": `Goals scored vs expected goals`,
+        "assists": `Total assists`,
+        "expected_assists": `Expected assists`,
+        "assists_performance": `Assists vs expected assists`,
+        "goals_assists": `Total goals + assists`,
+        "expected_goal_involvements": `Total xG+xA`,
+        "goals_assists_performance": `G+A vs xG+xA`,
+        "top-players": `Top player pictures`,
+        "entries": `Number of players`,
+        "team-data": `Team stats`,
+        "overall-data": `Overall stats`
+    };
+
+    // 2) Now inject the shared tableConfig for `script.js` to pick up:
+    window.tableConfig = {
+        table: "talisman",
+        url: `/get-sorted-players?table=talisman&team_id={{ team_id }}`,
+        tbodySelector: "#talisman-table tbody",
+        loadingSelector: "#talisman-loading",
+        sortBy: "{{ sort_by }}",
+        sortOrder: "{{ order }}",
+        lookup: lookup,
+        // columns tells script.js what to render, in order:
+        columns: [
+            // rank + name
+            {
+                render: (p, idx) => {
+                    const short = p.web_name.length > 11 ? p.web_name.slice(0, 13) + '…' : p.web_name;
+                    const badgeUrl = `https://resources.premierleague.com/premierleague/badges/100/t${p.team_code}@x2.png`;
+
+                    return `
+
+                    <td class="sticky-col vert-border-end vert-border">
+                    <div class="d-flex align-items-center">
+                        <div class="text-center" style="width:2ch; flex:0 0 auto;">${idx + 1}</div>
+                        <img 
+                            src="${badgeUrl}"
+                            alt="${p.team_name} badge"
+                            class="img-fluid overlap-badge ms-1"
+                            data-bs-toggle="tooltip"
+                            title="${p.team_name}"
+                            style="width: 20px; height: 20px; flex:0 0 auto;"
+                            onerror="this.onerror=null;this.src='https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png';"
+                        >
+                        <div class="ms-1 text-truncate" style="max-width: 12ch;">${short}</div>
+                    </div>
+                    </td>`;
+                }
+            },
+
+
+            // columns:
+            { key: "total_points", className: "sort vert-border", dataColumn: "starts" },
+            { key: "starts", className: "sort vert-border", dataColumn: "starts" },
+            { key: "minutes", className: "sort", dataColumn: "minutes" },
+            { key: "defcon", className: "sort", dataColumn: "defcon" },
+            { key: "clean_sheets", className: "sort", dataColumn: "clean_sheets" },
+            { key: "dreamteam_count", className: "sort", dataColumn: "dreamteam_count" },
+            { key: "bps", className: "sort", dataColumn: "bps" },
+            { key: "penalties_saved", className: "sort", dataColumn: "penalties_saved" },
+            // Negatives
+            { key: "yellow_cards", className: "sort text-danger", dataColumn: "yellow_cards" },
+            { key: "red_cards", className: "sort text-danger", dataColumn: "red_cards" },
+            { key: "goals_conceded", className: "sort text-danger", dataColumn: "goals_conceded" },
+            { key: "own_goals", className: "sort text-danger", dataColumn: "own_goals" },
+            { key: "penalties_missed", className: "sort text-danger", dataColumn: "penalties_missed" },
+
+            { key: 'goals_scored', dataColumn: "goals_scored", className: 'sort vert-border' },
+            { key: 'expected_goals', dataColumn: "expected_goals", className: 'sort', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'goals_performance', dataColumn: "goals_performance", className: 'sort', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'assists', dataColumn: "assists", className: 'sort vert-border' },
+            { key: 'expected_assists', dataColumn: "expected_assists", className: 'sort', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'assists_performance', dataColumn: "assists_performance", className: 'sort', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'goals_assists', dataColumn: "goals_assists", className: 'sort vert-border' },
+            { key: 'expected_goal_involvements', dataColumn: "expected_goal_involvements", className: 'sort', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'goals_assists_performance', dataColumn: "goals_assists_performance", className: 'sort vert-border-end', formatter: v => (Math.round(v * 10) / 10).toFixed(1) }
+        ]
+    };
+</script>
+
+
+{% endblock %}

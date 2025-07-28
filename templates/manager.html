@@ -345,7 +345,7 @@
         columns: [
           { label: "GW", key: "gw", thAttrs: 'data-bs-toggle="tooltip" title="Gameweek"' },
           { label: "OR", key: "or", thAttrs: 'data-bs-toggle="tooltip" title="Overall Rank"', formatter: v => compact.format(v) },
-          { label: "#", key: "#:", thAttrs: 'data-bs-toggle="tooltip" title="Movement"' },
+          { label: "#", key: "rank_change", thAttrs: 'data-bs-toggle="tooltip" title="Movement"' },
           { label: "OP", key: "op", thAttrs: 'data-bs-toggle="tooltip" title="Overall Points"' },
           { label: "GWR", key: "gwr", thAttrs: 'data-bs-toggle="tooltip" title="Gameweek Rank"', formatter: v => compact.format(v) },
           { label: "PB", key: "pb", thAttrs: 'data-bs-toggle="tooltip" title="Points Benched"' },
@@ -538,10 +538,6 @@
     } else {
       console.warn('[inline] initManagerPage is not a function, skipping');
     }
-
-    if (typeof initComponents === "function") {
-        initComponents();
-      }
 
   </script>
 

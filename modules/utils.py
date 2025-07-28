@@ -181,8 +181,8 @@ TEAM_EMOJIS = {
 }
 
 LEAGUE_EMOJIS = {
-    "top 10% 24/25 league": "Need an emoji here",
-    "top 1% 24/25 league": "Need an even more exclusive emoji here",
+    "top 10% 24/25 league": "🏆",
+    "top 1% 24/25 league": "🏆👏",
     ".com": "🧑‍💻",
     "ai": "🤖",
     "algorithm": "🤖",

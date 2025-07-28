@@ -1,16 +1,16 @@
-# Filter and sort top_scorers table
+# Filter and sort table
 def filter_and_sort_players(player_info, request_args):
-    players_filtered = {}
 
     # Determine which table is being sorted
     table = request_args.get("table", "goals_scored_team")
 
     # Set default sort_by based on the table
     default_sort_by = {
-        "goals_scorers": "goals_scored_team",
-        "starts": "starts_team",
+        "defence": "starts_team",
+        "offence": "goals_scored_team",
         "points": "minutes_points_team",
         "am": "total_points",
+        "talisman": "total_points",
     }.get(table, "goals_scored_team")
 
     # Sort by query parameters
