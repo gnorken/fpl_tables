@@ -605,8 +605,9 @@ function buildSortableTable(data, columns, dataKey) {
 
   // headers
   columns.forEach((col) => {
-    // use the key for sorting
-    html += `<th data-sort="${col.key}">${col.label}</th>`;
+    // add thAttrs if provided
+    const extraAttrs = col.thAttrs || "";
+    html += `<th data-sort="${col.key}" ${extraAttrs}>${col.label}</th>`;
   });
 
   html += `</tr></thead><tbody>`;
@@ -627,7 +628,7 @@ function buildSortableTable(data, columns, dataKey) {
   return html;
 }
 
-// YOLO
+// I need a decripton fo this function
 async function loadTableAndChart(cfg) {
   console.log(
     "▶️ loadTableAndChart()",
@@ -661,13 +662,16 @@ async function loadTableAndChart(cfg) {
   }
 
   // 2) render one unified table
+  // 2) handle tooltips around table replacement
   const container = document.getElementById(cfg.tableContainerId);
+  disposeTooltips(container);
   container.innerHTML = buildSortableTable(data, cfg.columns, cfg.dataKey);
+  initTooltips(container);
 
-  // 2.1) update ▲/▼ arrows just within this table
+  // 2.2) update ▲/▼ arrows just within this table
   updateSortIndicator(cfg.sortBy, cfg.sortOrder, `#${cfg.tableContainerId}`);
 
-  // 2.2) re‑bind header clicks for sorting
+  // 2.3) re‑bind header clicks for sorting
   document
     .querySelectorAll(`#${cfg.tableContainerId} table th[data-sort]`)
     .forEach((th) => {
@@ -731,6 +735,49 @@ function buildOrUpdateChart(data, cfg) {
       : `#${cfg.tableContainerId}`,
     cfg.hoverDs
   );
+}
+
+// Global tooltip dispsoser
+function disposeTooltips(context = document) {
+  context.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => {
+    const instance = bootstrap.Tooltip.getInstance(el);
+    if (instance) instance.dispose();
+  });
+}
+
+function disposeComponents(context = document) {
+  // Dispose tooltips
+  context.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => {
+    const tooltip = bootstrap.Tooltip.getInstance(el);
+    if (tooltip) tooltip.dispose();
+  });
+
+  // Dispose popovers
+  context.querySelectorAll('[data-bs-toggle="popover"]').forEach((el) => {
+    const popover = bootstrap.Popover.getInstance(el);
+    if (popover) popover.dispose();
+  });
+}
+
+function initComponents(context = document) {
+  // Init tooltips
+  context.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => {
+    new bootstrap.Tooltip(el, {
+      html: true,
+      boundary: "window",
+      sanitize: true,
+    });
+  });
+
+  // Init popovers
+  context.querySelectorAll('[data-bs-toggle="popover"]').forEach((el) => {
+    new bootstrap.Popover(el, {
+      html: true,
+      boundary: "window",
+      sanitize: false,
+      trigger: "focus", // closes when clicking elsewhere
+    });
+  });
 }
 
 function initManagerPage(configs) {

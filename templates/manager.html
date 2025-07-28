@@ -4,8 +4,6 @@
 <div class="container">
   <!-- <h1>Manager stats</h1> -->
 
-
-
   <!-- Past Seasons -->
   {% if history.past %}
 
@@ -27,6 +25,7 @@
       </div>
       
       <!-- Past Seasons Table -->
+      <h3 class="mb-2">Past Seasons Table</h3>
       <div class="col-12 col-lg-6">
         <div class="table-responsive manager-scrollable-table">
           <div id="previous-seasons-table-container">
@@ -40,7 +39,7 @@
   <!-- Current Season -->
   <section id="current-season-section">
     <h2 class="mt-3">Current Season</h2>
-    <i>Mock data. Season not yet started.</i>
+
     <div class="row">
       <!-- Current Season Chart -->
       <div class="col-12 col-lg-9">
@@ -55,6 +54,30 @@
   
       <!-- Current Season Table  -->
       <div class="col-12 col-lg-3">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <h3 class="mb-0">Current Season Table</h3>
+
+          <button type="button" class="btn btn-sm btn-outline-secondary info-btn" data-bs-toggle="popover" data-bs-trigger="focus"
+            data-bs-html="true" title="Column Explanations" data-bs-content="
+                    <table class='table table-borderless table-sm mb-0 align-middle'>
+                      <tbody>
+                        <tr><td><strong>GW</strong></td><td>Gameweek</td></tr>
+                        <tr><td><strong>OR</strong></td><td>Overall Rank</td></tr>
+                        <tr><td><strong>#</strong></td><td>Movement</td></tr>
+                        <tr><td><strong>OP</strong></td><td>Overall Points</td></tr>
+                        <tr><td><strong>GWR</strong></td><td>Gameweek Rank</td></tr>
+                        <tr><td><strong>PB</strong></td><td>Points Benched</td></tr>
+                        <tr><td><strong>TM</strong></td><td>Transfers Made</td></tr>
+                        <tr><td><strong>TC</strong></td><td>Transfers Cost</td></tr>
+                        <tr><td><strong>£</strong></td><td>Team Value</td></tr>
+                      </tbody>
+                    </table>
+                  ">
+            <i class="bi bi-info-circle"></i> Info
+          </button>
+
+        </div>
+
         <div class="table-responsive manager-scrollable-table">
           <div id="current-season-table-container"></div>
         </div>
@@ -320,15 +343,15 @@
         chartId: "currentSeasonChart",
         ajaxRoute: "/api/current-season",
         columns: [
-          { label: "GW", key: "gw" },
-          { label: "OR", key: "or", formatter: v => compact.format(v) },
-          { label: "#", key: "#:" },
-          { label: "OP", key: "op" },
-          { label: "GWR", key: "gwr", formatter: v => compact.format(v) },
-          { label: "PB", key: "pb" },
-          { label: "TM", key: "tm" },
-          { label: "TC", key: "tc" },
-          { label: "£", key: "£" },
+          { label: "GW", key: "gw", thAttrs: 'data-bs-toggle="tooltip" title="Gameweek"' },
+          { label: "OR", key: "or", thAttrs: 'data-bs-toggle="tooltip" title="Overall Rank"', formatter: v => compact.format(v) },
+          { label: "#", key: "#:", thAttrs: 'data-bs-toggle="tooltip" title="Movement"' },
+          { label: "OP", key: "op", thAttrs: 'data-bs-toggle="tooltip" title="Overall Points"' },
+          { label: "GWR", key: "gwr", thAttrs: 'data-bs-toggle="tooltip" title="Gameweek Rank"', formatter: v => compact.format(v) },
+          { label: "PB", key: "pb", thAttrs: 'data-bs-toggle="tooltip" title="Points Benched"' },
+          { label: "TM", key: "tm", thAttrs: 'data-bs-toggle="tooltip" title="Transfers Made"', },
+          { label: "TC", key: "tc", thAttrs: 'data-bs-toggle="tooltip" title="Transfers Cost"', },
+          { label: "£", key: "£", thAttrs: 'data-bs-toggle="tooltip" title="Team Value"' },
         ],
         dataKey: "gw",
         sortBy: "gw",
@@ -419,14 +442,20 @@
           ajaxRoute: null,
           initialData: {{ history.past | tojson }},
           columns: [
-              { label: "Season", key: "season_name" },
-              { label: `<span class="d-lg-none">🟡</span><span class="d-none d-lg-inline">Vibes</span>`, key: "percentile", formatter: (v) => performanceEmoji(v) },
+              { label: "Season", key: "season_name", thAttrs: 'title="Year"' },
+              { label: `<span class="d-lg-none"></span>
+                        <span class="d-none d-lg-inline">Vibes</span>`, 
+                key: "percentile", thAttrs: 'title="Emojis"', formatter: (v) => performanceEmoji(v) },
               { label: `
-                        <span class="d-lg-none" data-bs-toggle="tooltip" title="Your Percentile">%</span>
-                        <span class="d-none d-lg-inline" data-bs-toggle="tooltip" title="Your Percentile">Percentile</span>`, key: "percentile", formatter: (v) => v+"%" },
-              { label: `<span class="d-lg-none" data-bs-toggle="tooltip" title="Overall Rank">OR</span><span class="d-none d-lg-inline">Overall Rank</span>`, key: "rank", formatter: v => nf.format(v) },
-              { label: "Managers", key: "total_managers", formatter: v => compact.format(v) },
-              { label: "Total Points", key: "total_points" },
+                        <span class="d-lg-none">%</span>
+                        <span class="d-none d-lg-inline">Percentile</span>`, 
+                thAttrs: 'data-bs-html="true" data-bs-toggle="tooltip" title="Percentile finish <br> Lower is better"',
+                key: "percentile", formatter: (v) => v+"%" },
+              { label: `<span class="d-lg-none">OR</span>
+                        <span class="d-none d-lg-inline">Overall Rank</span>`,
+                key: "rank",  thAttrs: 'data-bs-toggle="tooltip" title="Overall Rank"', formatter: v => nf.format(v) },
+              { label: "Managers", key: "total_managers", thAttrs: 'data-bs-toggle="tooltip" title="Total Managers"', formatter: v => compact.format(v) },
+              { label: "Total Points", key: "total_points", thAttrs: 'data-bs-toggle="tooltip" title="Total points for the season"' },
             ],
           dataKey: "season_name",
           sortBy: "season_name",
@@ -510,11 +539,9 @@
       console.warn('[inline] initManagerPage is not a function, skipping');
     }
 
-
-
-    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
-        new bootstrap.Tooltip(el);
-      });
+    if (typeof initComponents === "function") {
+        initComponents();
+      }
 
   </script>
 
