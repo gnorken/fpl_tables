@@ -20,6 +20,16 @@
                 <th data-sort="defcon" class="sort">DC</th>
                 <th data-sort="clean_sheets" class="sort">CS</th>
 
+                <th data-sort="goals_scored" class="sort">G</th>
+                <th data-sort="expected_goals" class="sort">xG</th>
+                <th data-sort="goals_performance" class="sort">+/−</th>
+                <th data-sort="assists" class="sort">A</th>
+                <th data-sort="expected_assists" class="sort">xA</th>
+                <th data-sort="assists_performance" class="sort">+/−</th>
+                <th data-sort="goals_assists" class="sort">GI</th>
+                <th data-sort="expected_goal_involvements" class="sort">xGI</th>
+                <th data-sort="goals_assists_performance" class="sort">+/−</th>
+
                 <th data-sort="dreamteam_count" class="sort">DT</th>
                 <th data-sort="bps" class="sort">BPS</th>
                 <th data-sort="penalties_saved" class="sort">PS</th>
@@ -29,15 +39,6 @@
                 <th data-sort="own_goals" class="sort">OG</th>
                 <th data-sort="penalties_missed" class="sort">PM</th>
 
-                <th data-sort="goals_scored" class="sort">G</th>
-                <th data-sort="expected_goals" class="sort">xG</th>
-                <th data-sort="goals_performance" class="sort">+/−</th>
-                <th data-sort="assists" class="sort">A</th>
-                <th data-sort="expected_assists" class="sort">xA</th>
-                <th data-sort="assists_performance" class="sort">+/−</th>
-                <th data-sort="goals_assists" class="sort">GA</th>
-                <th data-sort="expected_goal_involvements" class="sort">xGA</th>
-                <th data-sort="goals_assists_performance" class="sort">+/−</th>
             </tr>
         </thead>
 
@@ -139,17 +140,8 @@
             { key: "minutes", className: "sort", dataColumn: "minutes" },
             { key: "defcon", className: "sort", dataColumn: "defcon" },
             { key: "clean_sheets", className: "sort", dataColumn: "clean_sheets" },
-            { key: "dreamteam_count", className: "sort", dataColumn: "dreamteam_count" },
-            { key: "bps", className: "sort", dataColumn: "bps" },
-            { key: "penalties_saved", className: "sort", dataColumn: "penalties_saved" },
-            // Negatives
-            { key: "yellow_cards", className: "sort text-danger", dataColumn: "yellow_cards" },
-            { key: "red_cards", className: "sort text-danger", dataColumn: "red_cards" },
-            { key: "goals_conceded", className: "sort text-danger", dataColumn: "goals_conceded" },
-            { key: "own_goals", className: "sort text-danger", dataColumn: "own_goals" },
-            { key: "penalties_missed", className: "sort text-danger", dataColumn: "penalties_missed" },
 
-            { key: 'goals_scored', dataColumn: "goals_scored", className: 'sort vert-border' },
+            { key: 'goals_scored', dataColumn: "goals_scored ", className: 'sort vert-border' },
             { key: 'expected_goals', dataColumn: "expected_goals", className: 'sort', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
             { key: 'goals_performance', dataColumn: "goals_performance", className: 'sort', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
             { key: 'assists', dataColumn: "assists", className: 'sort vert-border' },
@@ -157,7 +149,17 @@
             { key: 'assists_performance', dataColumn: "assists_performance", className: 'sort', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
             { key: 'goals_assists', dataColumn: "goals_assists", className: 'sort vert-border' },
             { key: 'expected_goal_involvements', dataColumn: "expected_goal_involvements", className: 'sort', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
-            { key: 'goals_assists_performance', dataColumn: "goals_assists_performance", className: 'sort vert-border-end', formatter: v => (Math.round(v * 10) / 10).toFixed(1) }
+            { key: 'goals_assists_performance', dataColumn: "goals_assists_performance", className: 'sort vert-border-end', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            
+            { key: "dreamteam_count", className: "sort", dataColumn: "dreamteam_count" },
+            { key: "bps", className: "sort", dataColumn: "bps" },
+            { key: "penalties_saved", className: "sort", dataColumn: "penalties_saved" },
+            // Negatives
+            { key: "yellow_cards", className: "sort text-danger vert-border", dataColumn: "yellow_cards" },
+            { key: "red_cards", className: "sort text-danger", dataColumn: "red_cards" },
+            { key: "goals_conceded", className: "sort text-danger", dataColumn: "goals_conceded" },
+            { key: "own_goals", className: "sort text-danger", dataColumn: "own_goals" },
+            { key: "penalties_missed", className: "sort text-danger vert-border-end", dataColumn: "penalties_missed" },
         ]
     };
 </script>

@@ -371,7 +371,7 @@ def talisman(team_id):
                            team_id=team_id,
                            current_gw=session.get('current_gw'),
                            manager=g.manager,
-                           sort_by=request.args.get('sort_by', 'starts'),
+                           sort_by=request.args.get('sort_by', 'total_points'),
                            order=request.args.get('order', 'desc'),
                            current_page='talisman')
 
