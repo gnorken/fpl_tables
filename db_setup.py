@@ -10,23 +10,25 @@ cursor.execute(
     CREATE TABLE IF NOT EXISTS static_data (
         key TEXT PRIMARY KEY,
         data TEXT,
-        timestamp TEXT
+        last_fetched TEXT    NOT NULL
     )
     """
 )
 
 cursor.execute("""
     CREATE TABLE IF NOT EXISTS static_player_info(
-        gameweek   INTEGER PRIMARY KEY,
-        data       TEXT    NOT NULL
+        gameweek     INTEGER PRIMARY KEY,
+        data         TEXT    NOT NULL,
+        last_fetched TEXT    NOT NULL
     )
-    """)
+""")
 
 cursor.execute("""
     CREATE TABLE IF NOT EXISTS team_player_info(
         team_id    INTEGER,
         gameweek   INTEGER,
         data       TEXT    NOT NULL,
+        last_fetched TEXT    NOT NULL,
         PRIMARY KEY(team_id, gameweek)
     )
     """)
@@ -39,6 +41,7 @@ cursor.execute("""
         team_id     INTEGER,
         max_show     INTEGER NOT NULL,
         data        TEXT    NOT NULL,
+        last_fetched TEXT    NOT NULL,
         PRIMARY KEY (league_id, gameweek, team_id, max_show)
     );
     """)
@@ -49,7 +52,7 @@ cursor.execute(
     CREATE TABLE IF NOT EXISTS managers (
         team_id      INTEGER PRIMARY KEY,
         data         TEXT NOT NULL,
-        fetched_gw   INTEGER
+        last_fetched TEXT    NOT NULL
     )
     """
 )

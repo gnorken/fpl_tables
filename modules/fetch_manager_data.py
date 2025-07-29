@@ -1,3 +1,5 @@
+from modules.utils import get_event_status_last_update, territory_icon
+from datetime import datetime, timezone
 import requests
 import sqlite3
 import json
@@ -44,49 +46,52 @@ DB_PATH = "page_views.db"
 def get_manager_data(team_id):
     """
     Fetch manager data and cache it as a single JSON blob in SQLite.
-    Returns the cached data if it's already up-to-date for the current GW.
+    Returns the cached data if it's already up-to-date based on event-status.
     """
-    current_gw = session.get("current_gw")
-
-    # Ensure the table exists
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     cursor = conn.cursor()
+
+    # Ensure the table exists
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS managers (
-            team_id    INTEGER PRIMARY KEY,
-            data       TEXT    NOT NULL,
-            fetched_gw INTEGER
+            team_id      INTEGER PRIMARY KEY,
+            data         TEXT    NOT NULL,
+            last_fetched TEXT    NOT NULL
         )
     """)
     conn.commit()
 
-    # 1) Try to load from cache
-    cursor.execute("SELECT data, fetched_gw FROM managers WHERE team_id = ?",
-                   (team_id,))
+    # 1️⃣ Check cache
+    cursor.execute(
+        "SELECT data, last_fetched FROM managers WHERE team_id = ?", (team_id,))
     row = cursor.fetchone()
-    if row and row[1] == current_gw:
-        # Cache hit
-        manager = json.loads(row[0])
-        conn.close()
-        return manager
 
-    # 2) Cache miss → fetch from API
+    if row:
+        data, last_fetched = row
+        cached_time = datetime.fromisoformat(last_fetched)
+        event_updated = get_event_status_last_update()
+
+        if cached_time >= event_updated:
+            # Cache is fresh → return it
+            manager = json.loads(data)
+            conn.close()
+            return manager
+
+    # 2️⃣ Cache miss or stale → fetch from API
     response = requests.get(
         f"{FPL_API_BASE}/entry/{team_id}/", headers=HEADERS)
     api_data = response.json()
-    # print(json.dumps(api_data, indent=2))
 
     manager = {
-        "first_name":       api_data.get("player_first_name"),
-        "last_name":        api_data.get("player_last_name"),
-        "team_name":        api_data.get("name"),
-        "country_code":     api_data.get("player_region_iso_code_short", "").lower(),
-        "classic_leagues":  api_data.get("leagues", {}).get("classic", []),
-        "flag_html":        territory_icon(api_data.get("player_region_iso_code_short", "")),
-        # "club_badge_src":   api_data.get("club_badge_data"),
+        "first_name":      api_data.get("player_first_name"),
+        "last_name":       api_data.get("player_last_name"),
+        "team_name":       api_data.get("name"),
+        "country_code":    api_data.get("player_region_iso_code_short", "").lower(),
+        "classic_leagues": api_data.get("leagues", {}).get("classic", []),
+        "flag_html":       territory_icon(api_data.get("player_region_iso_code_short", "")),
     }
 
-    # After building manager["classic_leagues"]
+    # Build national league URL if applicable
     national_league_url = None
     country_name = api_data.get("player_region_name", "")
     for league in manager["classic_leagues"]:
@@ -97,15 +102,18 @@ def get_manager_data(team_id):
 
     manager["national_league_url"] = national_league_url
 
-    # 3) Upsert the JSON blob
+    # 3️⃣ Upsert the data
+    last_fetched = datetime.now(timezone.utc).isoformat()
     data_json = json.dumps(manager)
+
     cursor.execute("""
-        INSERT INTO managers (team_id, data, fetched_gw)
+        INSERT INTO managers (team_id, data, last_fetched)
         VALUES (?, ?, ?)
         ON CONFLICT(team_id) DO UPDATE SET
-          data       = excluded.data,
-          fetched_gw = excluded.fetched_gw
-    """, (team_id, data_json, current_gw))
+            data = excluded.data,
+            last_fetched = excluded.last_fetched
+    """, (team_id, data_json, last_fetched))
+
     conn.commit()
     conn.close()
 

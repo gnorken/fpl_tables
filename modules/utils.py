@@ -1,16 +1,18 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from flask import flash, request
 import json
 import pycountry
 from markupsafe import Markup
+from modules.fetch_all_tables import build_player_info
 import requests
 import sqlite3
 
-DB_PATH = "page_views.db"
+DATABASE = "page_views.db"
 
 
 FPL_API_BASE = "https://fantasy.premierleague.com/api"
 FPL_STATIC_URL = f"{FPL_API_BASE}/bootstrap-static/"
+FPL_EVENT_STATUS_URL = "https://fantasy.premierleague.com/api/event-status/"
 
 headers = {
     # This header identifies the client making the request. By setting it to a typical browser string, you're making your server-side request appear as though it's coming from a regular browser. Some APIs might behave differently or restrict requests that don't look like they're coming from a browser.
@@ -63,48 +65,206 @@ def get_max_users():
 
 
 def get_current_gw():
-    static_data = get_static_data()
-    events = static_data["events"]
-    current_gw = next((event["id"]
-                      for event in events if event["is_current"]), None)
-    return current_gw
-
-# Fetch static player data
-
-
-def get_static_data(force_refresh=False, max_age_hours=6):
-    static_url = FPL_STATIC_URL
-
-    # Connect to the database
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn = sqlite3.connect(DATABASE, check_same_thread=False)
     cursor = conn.cursor()
 
-    # Try to fetch cached static data
+    # If we already have bootstrap-static cached, read it
+    cursor.execute("SELECT data FROM static_data WHERE key='bootstrap'")
+    row = cursor.fetchone()
+    conn.close()
+
+    if row:
+        data = json.loads(row[0])
+    else:
+        # Fetch fresh bootstrap-static directly
+        resp = requests.get(FPL_STATIC_URL)
+        resp.raise_for_status()
+        data = resp.json()
+
+    # Determine current GW
+    for event in data.get("events", []):
+        if event.get("is_current"):
+            return event["id"]
+
+    # Fallback pre-season
+    return None
+
+
+# Check latest entry in database
+_last_event_updated = None
+
+
+def init_last_event_updated():
+    """Initialize _last_event_updated from the DB on startup."""
+    global _last_event_updated
+    with sqlite3.connect(DATABASE, check_same_thread=False) as conn:
+        cursor = conn.cursor()
+        # Look for the newest last_fetched across all tables
+        cursor.execute("""
+            SELECT MAX(last_fetched) FROM (
+                SELECT last_fetched FROM static_data
+                UNION ALL
+                SELECT last_fetched FROM static_player_info
+                UNION ALL
+                SELECT last_fetched FROM team_player_info
+                UNION ALL
+                SELECT last_fetched FROM mini_league_cache
+                UNION ALL
+                SELECT last_fetched FROM managers
+            )
+        """)
+        row = cursor.fetchone()
+        if row and row[0]:
+            _last_event_updated = datetime.fromisoformat(row[0])
+        else:
+            _last_event_updated = datetime.now(timezone.utc)
+
+    print(f"✅ Initialized _last_event_updated={_last_event_updated}")
+
+
+def get_static_data(force_refresh=False, current_gw=-1):
+    """Fetch bootstrap-static data and sync static_player_info, pruning stale data."""
+    print("🔄 [get_static_data] called")
+
+    # Trigger event-status check + pruning
+    event_updated = get_event_status_last_update()
+    print(f"🕒 [get_static_data] event_updated: {event_updated}")
+
+    static_url = FPL_STATIC_URL
+    conn = sqlite3.connect(DATABASE, check_same_thread=False)
+    cursor = conn.cursor()
+
+    # 1️⃣ Check cache
     cursor.execute(
-        "SELECT data, timestamp FROM static_data WHERE key = 'bootstrap'")
+        "SELECT data, last_fetched FROM static_data WHERE key = 'bootstrap'")
     row = cursor.fetchone()
 
     if row:
         data_str, timestamp = row
         cached_time = datetime.fromisoformat(timestamp)
-        if not force_refresh and datetime.now() - cached_time < timedelta(hours=max_age_hours):
+        print(f"📦 [get_static_data] cached_time: {cached_time}")
+
+        # Use event-status freshness check only
+        if not force_refresh and cached_time >= event_updated:
+            print("✅ [get_static_data] Cache is fresh, returning cached data")
             conn.close()
             return json.loads(data_str)
+        else:
+            print("⚠️ [get_static_data] Cache is stale, fetching fresh data")
 
-    # Fetch new data from FPL
+    else:
+        print("❌ [get_static_data] No cache row found, fetching fresh data")
+
+    # 2️⃣ Fetch fresh data from FPL API
+    print("🌐 [get_static_data] Fetching bootstrap-static from API...")
     response = requests.get(static_url, headers=headers)
     response.raise_for_status()
     static_data = response.json()
 
-    # Store the new data in the database
+    timestamp = datetime.now(timezone.utc).isoformat()
+
+    # 3️⃣ Update static_data table
     cursor.execute(
-        "REPLACE INTO static_data (key, data, timestamp) VALUES (?, ?, ?)",
-        ("bootstrap", json.dumps(static_data), datetime.now().isoformat())
+        "REPLACE INTO static_data (key, data, last_fetched) VALUES (?, ?, ?)",
+        ("bootstrap", json.dumps(static_data), timestamp)
     )
+    print("💾 [get_static_data] Updated static_data table")
+
+    # 4️⃣ Rebuild static_player_info (keep only 1 row)
+    static_blob = build_player_info(static_data)
+    cursor.execute("""
+        INSERT OR REPLACE INTO static_player_info (gameweek, data, last_fetched)
+        VALUES (?, ?, ?)
+    """, (current_gw, json.dumps(static_blob), timestamp))
+    print("💾 [get_static_data] Updated static_player_info table")
+
     conn.commit()
     conn.close()
 
+    print("🔚 [get_static_data] finished")
     return static_data
+
+# Check if I have the latest data
+
+
+def get_event_status_last_update():
+    """Fetch the last event update timestamp and prune stale data if needed."""
+    global _last_event_updated
+    if _last_event_updated is None:
+        init_last_event_updated()  # Initialize from DB
+
+    print("🔄 get_event_status_last_update called")
+
+    response = requests.get(FPL_EVENT_STATUS_URL)
+    response.raise_for_status()
+    status_data = response.json()
+
+    timestamps = []
+    for event in status_data.get("status", []):
+        for key in ["points", "bonus_added"]:
+            if event.get(key):
+                timestamps.append(
+                    datetime.fromisoformat(event[key].replace("Z", "+00:00"))
+                )
+
+    if timestamps:
+        _last_event_updated = max(timestamps)
+
+    # print(f"⏩ Faking new event_updated: {_last_event_updated}")
+    # _last_event_updated = datetime.now(timezone.utc) + timedelta(minutes=5)
+
+    print(f"🧹 Pruning with event_updated={_last_event_updated}")
+
+    with sqlite3.connect(DATABASE, check_same_thread=False) as conn:
+        prune_stale_data(conn, _last_event_updated)
+        print(f"🗑️ Deleting stale rows older than {_last_event_updated}")
+
+    return _last_event_updated
+
+
+# Delete old rows in db when new data available on server
+
+
+# def prune_stale_data(conn, event_updated):
+#     """Delete all stale rows from user-generated tables."""
+#     tables = ["team_player_info", "mini_league_cache", "managers"]
+#     for table in tables:
+#         conn.execute(
+#             f"DELETE FROM {table} WHERE last_fetched < ?", (event_updated.isoformat(),))
+#     conn.commit()
+
+# Prune with backend logs
+def prune_stale_data(conn, event_updated):
+    """
+    Delete stale rows from key tables and print comparisons for debugging.
+    """
+    tables = ["team_player_info", "mini_league_cache", "managers"]
+
+    for table in tables:
+        print(f"🧹 [prune_stale_data] Checking table: {table}")
+
+        # Show all rows with their timestamps before pruning
+        rows = conn.execute(f"SELECT rowid, * FROM {table}").fetchall()
+        for row in rows:
+            # assuming last_fetched is always last column
+            last_fetched = row[-1]
+            print(
+                f"   ➡️ Row {row[0]}: last_fetched={last_fetched} vs event_updated={event_updated}")
+
+            # Show whether this row will be deleted
+            if datetime.fromisoformat(last_fetched) < event_updated:
+                print("      ❌ Will be deleted (older than event_updated)")
+            else:
+                print("      ✅ Will be kept (fresh enough)")
+
+        # Perform actual deletion
+        deleted = conn.execute(
+            f"DELETE FROM {table} WHERE last_fetched < ?", (event_updated.isoformat(
+            ),)
+        ).rowcount
+        print(
+            f"🗑️ [prune_stale_data] Deleted {deleted} stale rows from {table}")
+
 
 # Fetch static Player’s Detailed Data
 
@@ -260,7 +420,7 @@ def territory_icon(key: str) -> Markup:
     # Emit the Lipis v7.3.2 classes
     return Markup(f"<span class='fi fi-{code}' aria-hidden='true'></span>")
 
-# Get OR leader
+# Get OR leader (to have the trailing behind leader col)
 
 
 def get_overall_league_leader_total():
