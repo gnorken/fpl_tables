@@ -614,13 +614,13 @@ th.sorted {
 .manager-scrollable-table {
   max-height: 500px; 
   overflow-y: auto;
-  border: 1px solid gray;
+  /* border: 1px solid gray; */
   border-radius: 5px;
 }
 /* Media query for small screens */
 @media (max-width: 576px) {
   .manager-scrollable-table {
-    max-height: 300px;
+    max-height: 200px;
   }
 }
 

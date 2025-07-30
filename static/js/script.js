@@ -337,41 +337,106 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // 8.3) Cell-hover highlighting (text-danger handling)
+  // document.querySelectorAll("table.interactive-table").forEach((table) => {
+  //   let activeCells = [];
+  //   table.addEventListener("mouseover", (e) => {
+  //     const td = e.target.closest("td[data-column][data-sort-level]");
+  //     if (!td) return;
+
+  //     const col = td.dataset.column;
+  //     const sortLevel = td.dataset.sortLevel;
+  //     const row = td.closest("tr");
+
+  //     if (activeCells.length) {
+  //       activeCells.forEach((cell) => {
+  //         cell.style.backgroundColor = "";
+  //         cell.style.color = "";
+  //         if (cell.dataset.wasTextDanger === "true") {
+  //           cell.classList.add("text-danger");
+  //           delete cell.dataset.wasTextDanger;
+  //         }
+  //         cell.style.borderRadius = "";
+  //       });
+  //       activeCells = [];
+  //     }
+
+  //     const primaryBg = sortLevel === "primary" ? "#e90052" : "#38003c";
+  //     const matchBg = sortLevel === "primary" ? "#38003c" : "#e90052";
+
+  //     if (td.classList.contains("text-danger")) {
+  //       td.dataset.wasTextDanger = "true";
+  //       td.classList.remove("text-danger");
+  //     }
+  //     td.style.backgroundColor = primaryBg;
+  //     td.style.color = "#fff";
+  //     td.style.borderRadius = "3px";
+  //     activeCells.push(td);
+
+  //     row.querySelectorAll(`td[data-column="${col}"]`).forEach((other) => {
+  //       if (other === td) return;
+  //       if (other.classList.contains("text-danger")) {
+  //         other.dataset.wasTextDanger = "true";
+  //         other.classList.remove("text-danger");
+  //       }
+  //       other.style.backgroundColor = matchBg;
+  //       other.style.color = "#fff";
+  //       other.style.borderRadius = "3px";
+  //       activeCells.push(other);
+  //     });
+  //   });
+
+  //   table.addEventListener("mouseleave", () => {
+  //     if (activeCells.length) {
+  //       activeCells.forEach((cell) => {
+  //         cell.style.backgroundColor = "";
+  //         cell.style.color = "";
+  //         if (cell.dataset.wasTextDanger === "true") {
+  //           cell.classList.add("text-danger");
+  //           delete cell.dataset.wasTextDanger;
+  //         }
+  //         cell.style.borderRadius = "";
+  //       });
+  //       activeCells = [];
+  //     }
+  //   });
+  // });
+
+  // 8.3) New cell-hover highlighting
   document.querySelectorAll("table.interactive-table").forEach((table) => {
     let activeCells = [];
-    table.addEventListener("mouseover", (e) => {
-      const td = e.target.closest("td[data-column][data-sort-level]");
-      if (!td) return;
 
+    function clearHighlights() {
+      activeCells.forEach((cell) => {
+        cell.style.backgroundColor = "";
+        cell.style.color = "";
+        if (cell.dataset.wasTextDanger === "true") {
+          cell.classList.add("text-danger");
+          delete cell.dataset.wasTextDanger;
+        }
+        cell.style.borderRadius = "";
+      });
+      activeCells = [];
+    }
+
+    function highlightCells(td) {
+      clearHighlights();
       const col = td.dataset.column;
       const sortLevel = td.dataset.sortLevel;
-      const row = td.closest("tr");
-
-      if (activeCells.length) {
-        activeCells.forEach((cell) => {
-          cell.style.backgroundColor = "";
-          cell.style.color = "";
-          if (cell.dataset.wasTextDanger === "true") {
-            cell.classList.add("text-danger");
-            delete cell.dataset.wasTextDanger;
-          }
-          cell.style.borderRadius = "";
-        });
-        activeCells = [];
-      }
 
       const primaryBg = sortLevel === "primary" ? "#e90052" : "#38003c";
       const matchBg = sortLevel === "primary" ? "#38003c" : "#e90052";
 
+      // Current cell
       if (td.classList.contains("text-danger")) {
         td.dataset.wasTextDanger = "true";
         td.classList.remove("text-danger");
       }
       td.style.backgroundColor = primaryBg;
       td.style.color = "#fff";
-      td.style.borderRadius = "3px";
       activeCells.push(td);
 
+      // Partner cells: only in the same row
+      const row = td.closest("tr");
       row.querySelectorAll(`td[data-column="${col}"]`).forEach((other) => {
         if (other === td) return;
         if (other.classList.contains("text-danger")) {
@@ -380,25 +445,41 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         other.style.backgroundColor = matchBg;
         other.style.color = "#fff";
-        other.style.borderRadius = "3px";
         activeCells.push(other);
       });
-    });
+    }
 
-    table.addEventListener("mouseleave", () => {
-      if (activeCells.length) {
-        activeCells.forEach((cell) => {
-          cell.style.backgroundColor = "";
-          cell.style.color = "";
-          if (cell.dataset.wasTextDanger === "true") {
-            cell.classList.add("text-danger");
-            delete cell.dataset.wasTextDanger;
-          }
-          cell.style.borderRadius = "";
-        });
-        activeCells = [];
+    function clearHighlights() {
+      activeCells.forEach((cell) => {
+        cell.style.backgroundColor = "";
+        cell.style.color = "";
+        if (cell.dataset.wasTextDanger === "true") {
+          cell.classList.add("text-danger");
+          delete cell.dataset.wasTextDanger;
+        }
+      });
+      activeCells = [];
+    }
+
+    table.addEventListener("mouseover", (e) => {
+      const cell = e.target.closest("td, th");
+
+      // If not hovering a cell, or hovering a header <th> → clear
+      if (!cell || cell.tagName === "TH") {
+        clearHighlights();
+        return;
+      }
+
+      // Only highlight if the cell is in the highlightable set
+      if (cell.matches("td[data-column][data-sort-level]")) {
+        highlightCells(cell);
+      } else {
+        clearHighlights();
       }
     });
+
+    // Optional: reset when leaving the table entirely
+    table.addEventListener("mouseleave", clearHighlights);
   });
 
   // Slider hookup
@@ -511,7 +592,7 @@ window.initManagerPage = function (configs) {
 function buildSortableTable(data, columns, dataKey) {
   if (!data || data.length === 0) return "<p>No data</p>";
 
-  let html = `<table class="table table-striped table-sm text-center">
+  let html = `<table class="table text-center">
     <thead><tr>`;
 
   // Build table headers

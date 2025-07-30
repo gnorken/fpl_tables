@@ -104,6 +104,8 @@ def inject_manager():
     }
 
 
+# session['current_gw'] = None  # force reset
+
 # Ensure current_gw in session
 
 
@@ -111,6 +113,8 @@ def inject_manager():
 def initialize_session():
     if 'current_gw' not in session or session['current_gw'] is None:
         gw = get_current_gw()
+        # gw = 33
+        print(f"gw is {gw}")
         if gw is None:
             session['current_gw'] = None
         else:

@@ -3,19 +3,19 @@
 
 {% block page_content %}
 <div class="table-responsive">
-    <table id="defence-table" class="interactive-table table table-borderless table-striped text-nowrap">
+    <table id="defence-table" class="interactive-table table table-borderless table-striped text-center text-nowrap">
         <thead class="th-purple text-center">
             <tr>
-                <th id="top-players" data-sort="top-players" class="sticky-col align-middle round-border-top">↑ Top Five
+                <th id="top-players" class="sticky-col align-middle round-border-top">↑ Top Five
                 </th>
-                <th colspan="15" data-sort="team-data" class="bg-team round-border-top"
+                <th colspan="15" class="bg-team round-border-top"
                     title="Players that are or have been in {{ manager.team_name }} this season">
                     Stats for {{ manager.team_name }}
                 </th>
-                <th colspan="15" data-sort="overall-data" class="round-border-top">Player Totals</th>
+                <th colspan="15"  class="round-border-top">Player Totals</th>
             </tr>
             <tr>
-                <th id="entries" data-sort="entries" class="sticky-col"></th>
+                <th id="entries" class="sticky-col"></th>
 
                 {# --- Team-specific columns (primary) --- #}
                 <th data-sort="starts_team" class="sort-team bg-team">S</th>
@@ -149,12 +149,12 @@
             { key: "minutes_team", className: "sort-team", sortLevel: "primary", dataColumn: "minutes" },
             { key: "defcon_team", className: "sort-team", sortLevel: "primary", dataColumn: "defcon" },
             { key: "clean_sheets_team", className: "sort-team", sortLevel: "primary", dataColumn: "clean_sheets" },
-            { key: "captained_team", className: "sort-team", sortLevel: "primary", dataColumn: "captained" },
+            { key: "captained_team", dataColumn: "captained" },
             { key: "dreamteam_count_team", className: "sort-team", sortLevel: "primary", dataColumn: "dreamteam_count" },
             { key: "bps_team", className: "sort-team", sortLevel: "primary", dataColumn: "bps" },
             { key: "penalties_saved_team", className: "sort-team", sortLevel: "primary", dataColumn: "penalties_saved" },
-            { key: "starts_benched_team", className: "sort-team", sortLevel: "primary" },
-            { key: "minutes_benched_team", className: "sort-team", sortLevel: "primary" },
+            { key: "starts_benched_team", className: "vert-border", dataColumn: "starts_benched_team" },
+            { key: "minutes_benched_team", dataColumn: "minutes_benched_team" },
             // Negatives
             { key: "yellow_cards_team", className: "sort-team text-danger vert-border", sortLevel: "primary", dataColumn: "yellow_cards" },
             { key: "red_cards_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "red_cards" },
