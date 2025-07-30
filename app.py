@@ -104,16 +104,21 @@ def inject_manager():
     }
 
 
-# session['current_gw'] = None  # force reset
+# Go to this URL to reset session
+@app.route('/reset-session')
+def reset_session():
+    session.clear()
+    return "Session cleared!"
 
-# Ensure current_gw in session
 
-
+# Ensure current_gw in sessio
 @app.before_request
 def initialize_session():
     if 'current_gw' not in session or session['current_gw'] is None:
         gw = get_current_gw()
-        # gw = 33
+        # # 👇 TEMP override for testing
+        # gw = 23  # Fake current GW
+
         print(f"gw is {gw}")
         if gw is None:
             session['current_gw'] = None

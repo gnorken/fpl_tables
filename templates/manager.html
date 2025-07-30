@@ -60,11 +60,13 @@
           </div>
           <canvas id="currentSeasonGraphFirstHalf"></canvas>
         </div>
-  
+        {% if current_gw is not none and current_gw >= 20 %}
         <div class="chart-container position-relative d-lg-none" id="second-half-wrapper">
           <canvas id="currentSeasonGraphSecondHalf"></canvas>
         </div>
+        {% endif %}
       </div>
+
   
       <!-- TABLE column -->
       <div class="col-12 col-lg-3">
@@ -522,7 +524,7 @@
           maintainAspectRatio: false,
           plugins: {
           title: {
-            display: true,          // 👈 enables title
+            display: false, // 👈 Only show if second half will show too
             text: "First Half",  // 👈 title text
             font: { size: 16, weight: 'bold' },   // optional styling
             color: '#38003c',       // optional (use your purple?)
@@ -568,6 +570,7 @@
         buildDatasets: (data) => {
           // slice the data for GW 20–38
           const secondHalf = data.slice(19);
+          console.log('secondHalf data array:', secondHalf); // 👈 LOG HERE
 
           const gw = secondHalf.map(d => d.gw),
             or = secondHalf.map(d => d.or),
@@ -632,7 +635,7 @@
           maintainAspectRatio: false,
           plugins: {
           title: {
-            display: true,          // 👈 enables title
+            display: false,          // 👈 enables title
             text: "Second Half",  // 👈 title text
             font: { size: 16, weight: 'bold' },   // optional styling
             color: '#38003c',       // optional (use your purple?)
@@ -754,20 +757,20 @@
       }
     };
 
-    // 2️⃣ Kick everything off
     console.log('[inline] pageConfigs is', window.pageConfigs);
-    if (typeof initManagerPage === 'function') {
-      console.log('[inline] calling initManagerPage()');
-      initManagerPage(window.pageConfigs);
-    } else {
-      console.warn('[inline] initManagerPage is not a function, skipping');
-    }
+    console.log('pageConfigs.currentSeasonSecondHalf', window.pageConfigs.currentSeasonSecondHalf);
 
-  if (window.tableConfig?.currentGameweek >= 20) {
-    window.pageConfigs.currentSeasonSecondHalf = {
-      
-    };
+
+
+  // ✅ THEN call initManagerPage
+  if (typeof initManagerPage === 'function') {
+    console.log('[inline] calling initManagerPage()');
+    initManagerPage(window.pageConfigs);
+  } else {
+    console.warn('[inline] initManagerPage is not a function, skipping');
   }
+
+
   </script>
 
 {% endblock %}
