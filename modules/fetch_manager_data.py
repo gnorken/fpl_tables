@@ -1,3 +1,4 @@
+from flask import url_for
 from modules.utils import get_event_status_last_update, territory_icon
 from datetime import datetime, timezone
 import requests
@@ -36,9 +37,22 @@ TOTAL_MANAGERS_BY_SEASON = {
 
 FPL_API_BASE = "https://fantasy.premierleague.com/api"
 HEADERS = {
+    "User-Agent":      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:40.0) "
+    "Gecko/20100101 Firefox/40.0",
+    "Accept":          "application/json",
+    "Accept-Encoding": "gzip",
+}
+
+
+DB_PATH = "page_views.db"
+
+
+FPL_API_BASE = "https://fantasy.premierleague.com/api"
+HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:40.0) "
                   "Gecko/20100101 Firefox/40.0",
-    "Accept-Encoding": "gzip"
+    "Accept-Encoding": "gzip",
+    "Accept": "application/json"
 }
 DB_PATH = "page_views.db"
 
@@ -65,23 +79,52 @@ def get_manager_data(team_id):
     cursor.execute(
         "SELECT data, last_fetched FROM managers WHERE team_id = ?", (team_id,))
     row = cursor.fetchone()
-
     if row:
         data, last_fetched = row
         cached_time = datetime.fromisoformat(last_fetched)
         event_updated = get_event_status_last_update()
-
         if cached_time >= event_updated:
-            # Cache is fresh → return it
             manager = json.loads(data)
             conn.close()
             return manager
 
     # 2️⃣ Cache miss or stale → fetch from API
-    response = requests.get(
-        f"{FPL_API_BASE}/entry/{team_id}/", headers=HEADERS)
+    url = f"{FPL_API_BASE}/entry/{team_id}/"
+    response = requests.get(url, headers=HEADERS)
+
+    # dump exactly what went out...
+    print("▶ REQUEST URL:", response.request.url)
+    print("▶ REQUEST HEADERS:", response.request.headers)
+    # ...and exactly what came back
+    print("◀ RESPONSE STATUS:", response.status_code)
+    print("◀ RESPONSE HEADERS:", response.headers)
+    print(f"◀ RESPONSE BODY PREVIEW: {response.text[:200]!r}")
+
+    # Retry if HTML response
+    content_type = response.headers.get("Content-Type", "")
+    body_start = response.text.strip()[:15]
+    if "text/html" in content_type or body_start.lower().startswith("<!doctype html>"):
+        print(f"⚠️ Got HTML for team_id={team_id}. Retrying with '?' suffix…")
+        response = requests.get(url + "?", headers=HEADERS)
+        # log the retry
+        print("▶ RETRY REQUEST URL:", response.request.url)
+        print("▶ RETRY REQUEST HEADERS:", response.request.headers)
+        print("◀ RETRY RESPONSE STATUS:", response.status_code)
+        print("◀ RETRY RESPONSE HEADERS:", response.headers)
+        print(f"◀ RETRY RESPONSE BODY PREVIEW: {response.text[:200]!r}")
+
+    # If still HTML, soft-fail
+    content_type = response.headers.get("Content-Type", "")
+    body_start = response.text.strip()[:15]
+    if "text/html" in content_type or body_start.lower().startswith("<!doctype html>"):
+        print(f"❌ Still HTML for team_id={team_id}, returning None")
+        conn.close()
+        return None
+
+    # parse JSON
     api_data = response.json()
 
+    # build our manager dict
     manager = {
         "first_name":      api_data.get("player_first_name"),
         "last_name":       api_data.get("player_last_name"),
@@ -99,13 +142,11 @@ def get_manager_data(team_id):
             national_league_url = url_for(
                 'mini_leagues', league_id=league['id'])
             break
-
     manager["national_league_url"] = national_league_url
 
-    # 3️⃣ Upsert the data
+    # 3️⃣ Upsert into DB
     last_fetched = datetime.now(timezone.utc).isoformat()
     data_json = json.dumps(manager)
-
     cursor.execute("""
         INSERT INTO managers (team_id, data, last_fetched)
         VALUES (?, ?, ?)
