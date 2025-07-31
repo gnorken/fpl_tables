@@ -375,18 +375,18 @@ td {
   border-radius: 5px;
 }
 
-#header-team-name h1 {
+#header-team-name h2 {
   font-size: 1rem;
 }
 
-#tables-btn {
+/* #tables-btn {
   background-color: var(--red);
   color: white;
 }
 #tables-btn:hover {
   background-color: var(--red);
   color: black;
-}
+} */
 #tables-btn.show {
   background-color: yellow;
   color: black;

@@ -1,16 +1,11 @@
-import time
-from flask import url_for
-import json
 from modules.utils import get_event_status_last_update, territory_icon
 from datetime import datetime, timezone
-import logging
 import requests
 import sqlite3
+import json
 from flask import session, url_for
 from modules.utils import (territory_icon)
 
-
-logger = logging.getLogger(__name__)
 
 TOTAL_MANAGERS_BY_SEASON = {
     "2002/03": 76_284,
@@ -41,12 +36,9 @@ TOTAL_MANAGERS_BY_SEASON = {
 
 FPL_API_BASE = "https://fantasy.premierleague.com/api"
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:40.0) "
-                  "Gecko/20100101 Firefox/40.0",
-    "Accept-Encoding": "gzip",
-    "Accept": "application/json"
+    "User-Agent": "Mozilla/5.0",
+    "Accept": "application/json",
 }
-
 DB_PATH = "page_views.db"
 
 
@@ -57,6 +49,8 @@ def get_manager_data(team_id):
     """
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     cursor = conn.cursor()
+
+    # Ensure the table exists
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS managers (
             team_id      INTEGER PRIMARY KEY,
@@ -70,81 +64,63 @@ def get_manager_data(team_id):
     cursor.execute(
         "SELECT data, last_fetched FROM managers WHERE team_id = ?", (team_id,))
     row = cursor.fetchone()
+
     if row:
-        data_json, last_fetched = row
+        data, last_fetched = row
         cached_time = datetime.fromisoformat(last_fetched)
         event_updated = get_event_status_last_update()
+
         if cached_time >= event_updated:
+            # Cache is fresh → return it
+            manager = json.loads(data)
             conn.close()
-            return json.loads(data_json)
+            return manager
 
     # 2️⃣ Cache miss or stale → fetch from API
-    def try_fetch(url):
-        logger.info("hei på deg")
-        resp = requests.get(url, headers=HEADERS, timeout=10)
-        logger.debug("REQUEST %s HEADERS: %s", url, resp.request.headers)
-        logger.debug("RESPONSE STATUS: %s", resp.status_code)
-        logger.debug("RESPONSE CONTENT-TYPE: %s",
-                     resp.headers.get("Content-Type"))
-        snippet = resp.text[:200].replace("\n", "\\n")
-        logger.debug("BODY PREVIEW: %r", snippet)
-        return resp
+    print(f"🔍 Fetching manager data for team_id={team_id}")
+    response = requests.get(
+        f"{FPL_API_BASE}/entry/{team_id}/", headers=HEADERS)
+    print(f"🔍 URL={response.url} status={response.status_code}")
+    print(f"🔍 Response preview: {response.text[:200]!r}")
+    if "text/html" in response.headers.get("Content-Type", ""):
+        print(f"❌ Unexpected HTML response for team_id={team_id}")
+        print(response.text[:200])
+        raise RuntimeError("FPL API returned HTML instead of JSON")
 
-    base_url = f"{FPL_API_BASE}/entry/{team_id}/"
-    resp = try_fetch(base_url)
+    api_data = response.json()
 
-    # detect HTML or parse errors
-    def is_html(r):
-        ct = r.headers.get("Content-Type", "")
-        return "text/html" in ct or r.text.lstrip().startswith("<!DOCTYPE html>")
-
-    if is_html(resp):
-        # retry once with cache-bust
-        bust_url = f"{base_url}?_={int(time.time())}"
-        logger.warning(
-            "Got HTML back for %s, retrying with cache-bust → %s", team_id, bust_url)
-        resp = try_fetch(bust_url)
-
-    # final check
-    try:
-        api_data = resp.json()
-    except ValueError:
-        logger.error("Still not JSON for team_id=%s, giving up", team_id)
-        conn.close()
-        return None
-
-    # extract the bits we care about
     manager = {
-        "first_name":   api_data.get("player_first_name"),
-        "last_name":    api_data.get("player_last_name"),
-        "team_name":    api_data.get("name"),
-        "country_code": api_data.get("player_region_iso_code_short", "").lower(),
+        "first_name":      api_data.get("player_first_name"),
+        "last_name":       api_data.get("player_last_name"),
+        "team_name":       api_data.get("name"),
+        "country_code":    api_data.get("player_region_iso_code_short", "").lower(),
         "classic_leagues": api_data.get("leagues", {}).get("classic", []),
-        "flag_html":    territory_icon(api_data.get("player_region_iso_code_short", "")),
+        "flag_html":       territory_icon(api_data.get("player_region_iso_code_short", "")),
     }
 
-    # build national league URL
+    # Build national league URL if applicable
+    national_league_url = None
     country_name = api_data.get("player_region_name", "")
     for league in manager["classic_leagues"]:
         if league.get("name", "").lower() == country_name.lower():
-            manager["national_league_url"] = url_for(
+            national_league_url = url_for(
                 'mini_leagues', league_id=league['id'])
             break
-    else:
-        manager["national_league_url"] = None
 
-    # 3️⃣ Upsert into DB
+    manager["national_league_url"] = national_league_url
+
+    # 3️⃣ Upsert the data
+    last_fetched = datetime.now(timezone.utc).isoformat()
+    data_json = json.dumps(manager)
+
     cursor.execute("""
         INSERT INTO managers (team_id, data, last_fetched)
         VALUES (?, ?, ?)
         ON CONFLICT(team_id) DO UPDATE SET
             data = excluded.data,
             last_fetched = excluded.last_fetched
-    """, (
-        team_id,
-        json.dumps(manager),
-        datetime.now(timezone.utc).isoformat()
-    ))
+    """, (team_id, data_json, last_fetched))
+
     conn.commit()
     conn.close()
 

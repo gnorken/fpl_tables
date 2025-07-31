@@ -120,10 +120,13 @@ logger = logging.getLogger(__name__)
 
 def populate_player_info_all_with_live_data(team_id, player_info, static_data):
     """
-    Build team_player_info for a specific team_id:
-    - Only players that were in the user's picks at least once.
-    - Aggregate team-specific stats across all GWs up to current GW.
+    Populate both global points breakdown and team-specific aggregates
+    in one pass per GW, fetching HTTP in parallel to speed up loads.
+    This function now clones its input so the original static blob
+    remains untouched.
     """
+    # 0️⃣ Clone the static blob to avoid mutating original data
+    player_info = {pid: info.copy() for pid, info in player_info.items()}
 
     FPL_API = "https://fantasy.premierleague.com/api"
     session_req = requests.Session()
@@ -132,23 +135,21 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
         "Accept-Encoding": "gzip"
     })
 
-    # 1️⃣ Determine current GW
+    # Determine current GW
     try:
         current_gw = next(e["id"] for e in static_data.get(
             "events", []) if e.get("is_current"))
     except StopIteration:
         logger.error("No current gameweek found in static_data.events")
-        return {}
+        return player_info
 
-    # 2️⃣ Prepare URLs for live data and picks (1..current_gw)
+    # Prepare URLs
     live_urls = {
-        gw: f"{FPL_API}/event/{gw}/live/" for gw in range(1, current_gw + 1)
-    }
+        gw: f"{FPL_API}/event/{gw}/live/" for gw in range(1, current_gw + 1)}
     pick_urls = {
-        gw: f"{FPL_API}/entry/{team_id}/event/{gw}/picks/" for gw in range(1, current_gw + 1)
-    }
+        gw: f"{FPL_API}/entry/{team_id}/event/{gw}/picks/" for gw in range(1, current_gw + 1)}
 
-    # 3️⃣ Fetch all live data and picks concurrently
+    # Fetch live + pick data in parallel
     live_data_map, picks_data_map = {}, {}
     with ThreadPoolExecutor(max_workers=8) as executor:
         future_to_info = {}
@@ -167,7 +168,6 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
             except Exception as e:
                 logger.warning(f"Failed fetch {kind} for GW {gw}: {e}")
                 continue
-
             if kind == 'live':
                 live_data_map[gw] = data.get('elements', [])
             else:
@@ -178,44 +178,42 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
     logger.debug(f"Fetched live_data for GWs: {sorted(live_data_map.keys())}")
     logger.debug(f"Fetched pick_data for GWs: {sorted(picks_data_map.keys())}")
 
-    # 4️⃣ Find all players ever picked across GWs
-    all_picked_pids = set()
-    for picks in picks_data_map.values():
-        all_picked_pids.update(picks.keys())
-
-    # 5️⃣ Initialize ONLY those players from player_info (static snapshot)
-    team_info = {
-        pid: player_info[pid].copy()
-        for pid in all_picked_pids
-        if pid in player_info  # skip if missing in static_data
-    }
-
-    # 6️⃣ Process each GW for team-specific stats
+    # Process each GW
     for gw in range(1, current_gw + 1):
         live_elements = live_data_map.get(gw, [])
         multipliers = picks_data_map.get(gw, {})
-
+        applied = sum(1 for m in multipliers.values() if m > 0)
         logger.debug(
-            f"GW {gw}: picks={len(multipliers)}, live_elements={len(live_elements)}")
+            f"GW {gw}: using {applied} picks; live_elements={len(live_elements)}; multipliers={len(multipliers)}")
 
         for element in live_elements:
             pid = element.get('id')
-            if pid not in multipliers or pid not in team_info:
-                continue  # skip players not picked
-
-            pi = team_info[pid]
+            if pid not in player_info:
+                continue
+            pi = player_info[pid]
             stats = element.get('stats', {})
-            mult = multipliers[pid]
+            mult = multipliers.get(pid)
 
-            # Bench stats
+            # 1) Global points breakdown
+            for block in element.get('explain', []):
+                for s in block.get('stats', []):
+                    key = f"{s['identifier']}_points"
+                    if key in pi:
+                        pi[key] += s.get('points', 0)
+
+            # Skip team-specific logic if not in picks
+            if mult is None:
+                continue
+
+            # 2) Bench stats
             if mult == 0:
                 pi['goals_benched_team'] += stats.get('goals_scored', 0)
                 pi['assists_benched_team'] += stats.get('assists', 0)
                 pi['starts_benched_team'] += stats.get('starts', 0)
                 pi['minutes_benched_team'] += stats.get('minutes', 0)
 
-            # Starter (or captain/triple) stats
-            if mult > 0:
+            # 3) Starter (and possibly captain) stats
+            if mult in (1, 2, 3):
                 xg = float(stats.get('expected_goals', 0))
                 xa = float(stats.get('expected_assists', 0))
                 goals = stats.get('goals_scored', 0)
@@ -226,12 +224,13 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
                 rc = stats.get('red_cards', 0)
                 ic = stats.get('in_dreamteam', False)
 
+                # accumulate
                 pi['expected_goals_team'] += xg
                 pi['expected_assists_team'] += xa
                 pi['goals_scored_team'] += goals
                 pi['assists_team'] += assists
-                pi['goals_assists_team'] += goals + assists
-                pi['expected_goal_involvements_team'] += xg + xa
+                pi['goals_assists_team'] += (goals + assists)
+                pi['expected_goal_involvements_team'] += (xg + xa)
                 pi['starts_team'] += stats.get('starts', 0)
                 pi['minutes_team'] += stats.get('minutes', 0)
                 pi['clean_sheets_team'] += cs
@@ -251,20 +250,21 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
                     pi['expected_goal_involvements_team'], 2
                 )
 
-                # Captain extra
-                if mult in (2, 3):
-                    pi['goals_captained_team'] += stats.get('goals_scored', 0)
-                    pi['assists_captained_team'] += stats.get('assists', 0)
-                    pi['captained_team'] += 1
+            # 4) Captain extra
+            if mult in (2, 3):
+                pi['goals_captained_team'] += stats.get('goals_scored', 0)
+                pi['assists_captained_team'] += stats.get('assists', 0)
+                pi['captained_team'] += 1
 
-                # Points from explain
-                for block in element.get('explain', []):
-                    for s in block.get('stats', []):
-                        key = f"{s['identifier']}_points_team"
-                        if key in pi:
-                            pi[key] += s['points'] * mult
+            # 5) Team points from explain
+            for block in element.get('explain', []):
+                for s in block.get('stats', []):
+                    key = f"{s['identifier']}_points_team"
+                    if key in pi and mult > 0:
+                        pi[key] += s['points'] * mult
 
-                # Total points & ppm
+            # 6) Total points & ppm
+            if mult and mult > 0:
                 total_pts = stats.get('total_points', 0)
                 pi['total_points_team'] += total_pts
                 cost = pi.get('now_cost', 0)
@@ -272,5 +272,4 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
                     pi['ppm_team'] = round(
                         pi['total_points_team'] / (cost / 10), 1)
 
-    # 7️⃣ Return ONLY picked players
-    return team_info
+    return player_info

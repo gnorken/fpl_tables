@@ -1,37 +1,3 @@
-import copy
-from datetime import datetime, timezone
-import json
-import logging
-import os
-import requests
-import sqlite3
-
-from flask import (
-    Flask,
-    g,
-    flash,
-    jsonify,
-    redirect,
-    render_template,
-    request,
-    session,
-    url_for,
-    current_app as app,
-)
-
-from modules.fetch_manager_data import get_manager_data, get_manager_history
-from modules.fetch_all_tables import (
-    build_player_info,
-    populate_player_info_all_with_live_data,
-)
-from modules.fetch_teams_table import aggregate_team_stats
-from modules.fetch_mini_leagues import (
-    get_league_name,
-    get_team_ids_from_league,
-    get_team_mini_league_summary,
-    append_current_manager,
-)
-from modules.aggregate_data import filter_and_sort_players, sort_table_data
 from modules.utils import (
     validate_team_id,
     get_max_users,
@@ -46,12 +12,78 @@ from modules.utils import (
     get_overall_league_leader_total,
     performance_emoji,
 )
+from modules.aggregate_data import merge_team_and_global, filter_and_sort_players, sort_table_data
+from modules.fetch_mini_leagues import (
+    get_league_name,
+    get_team_ids_from_league,
+    get_team_mini_league_summary,
+    append_current_manager,
+)
+from modules.fetch_teams_table import aggregate_team_stats
+from modules.fetch_all_tables import (
+    build_player_info,
+    populate_player_info_all_with_live_data,
+)
+from modules.fetch_manager_data import get_manager_data, get_manager_history
+from flask import (
+    Flask,
+    g,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+    current_app as app,
+)
+
+import sqlite3
+import requests
+import os
+import json
+from datetime import datetime, timezone
+import copy
+import flask
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)-8s %(name)s: %(message)s"
+    # format="%(asctime)s %(levelname)-8s %(name)s: %(message)s"
+)
+
+
+# Create your Flask app
+app = Flask(__name__)
+
+# pull from env, default to INFO
+log_level_name = os.environ.get("LOG_LEVEL", "INFO").upper()
+level = getattr(logging, log_level_name, logging.INFO)
+
+logging.basicConfig(
+    level=level,
+    format="%(levelname)-8s %(name)s: %(message)s",
+    # format="%(asctime)s %(levelname)-8s %(name)s: %(message)s",
+)
+
+# root logger (so your modules inherit this)
+logging.getLogger().setLevel(level)
+logging.getLogger('werkzeug').setLevel(level)
+app.logger.setLevel(level)
+
+# alias for convenience
+logger = app.logger
+
+# Also make the built-in Werkzeug request-logger DEBUG
+logging.getLogger('werkzeug').setLevel(logging.DEBUG)
+
+
+# ... your routes, blueprints, etc. go here ...
 
 FPL_API = "https://fantasy.premierleague.com/api"
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
-app = Flask(__name__)
-app.logger.setLevel(logging.DEBUG)
 # app.secret_key = os.urandom(24)  # For deployment
 app.secret_key = os.environ.get(
     "FLASK_SECRET", "dev-secret-for-local")  # Development only
@@ -73,34 +105,51 @@ init_last_event_updated()
 
 @app.before_request
 def load_manager_into_g():
-    # 1) try path param
+    """
+    1) If the route has a team_id param, use it AND save it to session.
+    2) Else if there’s one in session, use that.
+    3) Else clear everything.
+    """
+    # grab from URL first
     tid = (request.view_args or {}).get("team_id")
-    # 2) else fall back to whatever’s in session
-    if tid is None:
-        tid = session.get("team_id")
+
+    if tid is not None:
+        # user is explicitly choosing a manager in the URL
+        session["team_id"] = tid
+        logger.debug("Session team_id set to %s", tid)
+    else:
+        # no param → clear old selection
+        session.pop("team_id", None)
+
+    # now fallback to session if we didn’t get it from URL
+    tid = tid or session.get("team_id")
 
     if tid:
-        m = get_manager_data(tid)
-        m["id"] = tid
-        g.manager = m
+        try:
+            m = get_manager_data(tid)
+            m["id"] = tid
+            g.manager = m or {
+                "id": tid, "first_name": "Unknown", "team_name": f"Manager {tid}"}
+        except Exception as e:
+            logger.error("Failed to load manager %s: %s", tid, e)
+            g.manager = {"id": tid, "first_name": "Unknown",
+                         "team_name": f"Manager {tid}"}
     else:
         g.manager = None
 
 
 @app.context_processor
 def inject_manager():
-    # 1) Try URL param
-    tid = (request.view_args or {}).get("team_id")
-    # 2) Otherwise fall back to session
-    if not tid:
-        tid = session.get("team_id")
-    if not tid:
+    """
+    Makes `manager` and `team_id` available to all templates via Jinja.
+    Uses g.manager set in before_request.
+    """
+    if not getattr(g, "manager", None):
         return {}
-    m = get_manager_data(tid)
-    m["id"] = tid
+
     return {
-        "team_id": tid,
-        "manager": m
+        "team_id": g.manager["id"],
+        "manager": g.manager
     }
 
 
@@ -114,16 +163,25 @@ def reset_session():
 # Ensure current_gw in sessio
 @app.before_request
 def initialize_session():
-    if 'current_gw' not in session or session['current_gw'] is None:
+    if 'current_gw' not in session:
+        # first time in this session
         gw = get_current_gw()
-        # # 👇 TEMP override for testing
-        # gw = 23  # Fake current GW
+        logger.info(
+            f"[initialize_session] first init, get_current_gw() → {gw!r}")
+        session['current_gw'] = gw  # even if None, key now exists
+    else:
+        # subsequent requests
+        logger.debug(
+            f"[initialize_session] already set, current_gw={session['current_gw']!r}")
 
-        print(f"gw is {gw}")
-        if gw is None:
-            session['current_gw'] = None
-        else:
-            session['current_gw'] = gw
+
+@app.before_request
+def initialize_session():
+    if 'current_gw' not in session:
+        gw = get_current_gw()
+        logger.info(f"initialize_session: gw is {gw}")
+        session['current_gw'] = gw  # even if None, key now exists
+
 
 # --- Flash preseason ---
 
@@ -138,11 +196,13 @@ def flash_if_preseason():
 
 @app.route("/", methods=["GET", "POST"])
 def index():
+    logger.info("test info at index")
+    logger.debug("test debug at index")
     MAX_USERS = get_max_users()
     current_gw = session.get('current_gw', '__')
     # GET
     if request.method == "GET":
-        session.pop("team_id", None)
+        # session.pop("team_id", None)
         return render_template("index.html",
                                max_users=MAX_USERS,
                                current_gw=current_gw)
@@ -171,9 +231,9 @@ def manager(team_id):
     try:
         manager_history = get_manager_history(team_id)
 
-        # print(json.dumps(g.manager, indent=2))
+        # logger.info(json.dumps(g.manager, indent=2))
         m = g.manager
-        print(
+        logger.info(
             f"{m['id']} - {m['first_name']} {m['last_name']} - {m['team_name']} - {m['country_code']}")
 
         return render_template(
@@ -518,7 +578,7 @@ def get_sorted_players():
     league_id = request.args.get("league_id", type=int)
     sort_by = request.args.get("sort_by", default=None)
     order = request.args.get("order", default="desc")
-    current_gw = session.get("current_gw") or -1  # Pre-season as -1
+    current_gw = session.get("current_gw") or -1
     max_show = request.args.get("max_show", 2, type=int)
 
     # 2️⃣ Validate required params
@@ -527,76 +587,61 @@ def get_sorted_players():
     if table != "mini_league" and team_id is None:
         return jsonify({"error": "Missing team_id"}), 400
 
-    # 3️⃣ Always fetch static_data, it updates both caches if stale
+    # 3️⃣ Always fetch static_data (refreshes cache if stale)
+    logger.info("🔄 [get_static_data] CALLED")
     static_data = get_static_data(current_gw=current_gw)
 
-    # 4️⃣ Open DB connection (keep open for the whole route)
+    # 4️⃣ Fetch static player info
     conn = sqlite3.connect(DATABASE, check_same_thread=False)
     cur = conn.cursor()
-
-    # Get static_player_info for this GW
     cur.execute(
-        "SELECT data FROM static_player_info WHERE gameweek = ?", (current_gw,)
-    )
+        "SELECT data FROM static_player_info WHERE gameweek = ?", (current_gw,))
     row = cur.fetchone()
     if not row:
         conn.close()
         return jsonify({"error": f"No static_player_info for gameweek {current_gw}"}), 500
-
     static_blob = {int(pid): blob for pid, blob in json.loads(row[0]).items()}
 
-    # 5️⃣ Handle mini-league branch
+    # 5️⃣ Mini-league branch (unchanged, no team_blob)
     if table == "mini_league":
-        # a) Try cache
         cur.execute("""
             SELECT data, last_fetched FROM mini_league_cache 
             WHERE league_id=? AND gameweek=? AND team_id=? AND max_show=?
         """, (league_id, current_gw, team_id, max_show))
         row = cur.fetchone()
-
         if row:
             data, last_fetched = row
-            cached_time = datetime.fromisoformat(last_fetched)
-            event_updated = get_event_status_last_update()
-
-            if cached_time >= event_updated:
-                # Cache is fresh → use it
+            if datetime.fromisoformat(last_fetched) >= get_event_status_last_update():
                 players = json.loads(data)
                 players.sort(key=lambda o: o.get(sort_by, 0),
-                             reverse=(order.lower() == "desc"))
+                             reverse=(order == "desc"))
                 conn.close()
                 return jsonify(players=players, manager=g.manager)
 
-        # b) Cache miss or stale → fetch managers
         managers = get_team_ids_from_league(league_id, max_show)
         append_current_manager(managers, team_id, league_id, logger=app.logger)
 
-        # c) Build summaries and merge metadata
         players = []
         for m in managers:
             summary = get_team_mini_league_summary(m["entry"], static_data)
-            meta = {**m, "team_id": m["entry"]}
-            summary.update(meta)
+            summary.update({"team_id": m["entry"], **m})
             players.append(summary)
 
-        # d) Sort players and annotate
-        rev = (order.lower() == "desc")
-        players.sort(key=lambda o: o.get(sort_by, 0), reverse=rev)
+        players.sort(key=lambda o: o.get(sort_by, 0),
+                     reverse=(order == "desc"))
 
-        leader_pts = get_overall_league_leader_total()
         league_leader_pts = max((p.get("total_points", 0)
-                                 for p in players), default=0)
-
+                                for p in players), default=0)
+        leader_pts = get_overall_league_leader_total()
         for p in players:
             p["pts_behind_league_leader"] = p.get(
                 "total_points", 0) - league_leader_pts
             p["pts_behind_overall"] = p.get("total_points", 0) - leader_pts
             p["years_active_label"] = ordinalformat(p.get("years_active", 0))
 
-        # e) Cache and return
         cur.execute("""
             INSERT OR REPLACE INTO mini_league_cache 
-            (league_id, gameweek, team_id, max_show, data, last_fetched) 
+            (league_id, gameweek, team_id, max_show, data, last_fetched)
             VALUES (?,?,?,?,?,?)
         """, (league_id, current_gw, team_id, max_show,
               json.dumps(players), datetime.now(timezone.utc).isoformat()))
@@ -604,56 +649,47 @@ def get_sorted_players():
         conn.close()
         return jsonify(players=players, manager=g.manager)
 
-    # 6️⃣ Non-mini-league branches: freshness check for team_player_info
-    cur.execute("""
-        SELECT data, last_fetched FROM team_player_info 
-        WHERE team_id=? AND gameweek=?
-    """, (team_id, current_gw))
+    # 6️⃣ Load or refresh team_player_info
+    cur.execute("SELECT data, last_fetched FROM team_player_info WHERE team_id=? AND gameweek=?",
+                (team_id, current_gw))
     row = cur.fetchone()
-
     if row:
         data, last_fetched = row
-        cached_time = datetime.fromisoformat(last_fetched)
-        event_updated = get_event_status_last_update()
-
-        if cached_time >= event_updated:
-            # Cache is fresh
+        if datetime.fromisoformat(last_fetched) >= get_event_status_last_update():
             team_blob = {int(pid): blob for pid,
                          blob in json.loads(data).items()}
         else:
-            # Cache is stale → refresh
             team_blob = populate_player_info_all_with_live_data(
                 team_id, static_blob, static_data)
-            cur.execute("""
-                INSERT OR REPLACE INTO team_player_info 
-                (team_id, gameweek, data, last_fetched) 
-                VALUES (?, ?, ?, ?)
-            """, (team_id, current_gw, json.dumps(team_blob),
-                  datetime.now(timezone.utc).isoformat()))
+            cur.execute("""INSERT OR REPLACE INTO team_player_info 
+                           (team_id, gameweek, data, last_fetched)
+                           VALUES (?, ?, ?, ?)""",
+                        (team_id, current_gw, json.dumps(team_blob),
+                         datetime.now(timezone.utc).isoformat()))
             conn.commit()
     else:
-        # Cache miss → refresh
         team_blob = populate_player_info_all_with_live_data(
             team_id, static_blob, static_data)
-        cur.execute("""
-            INSERT OR REPLACE INTO team_player_info 
-            (team_id, gameweek, data, last_fetched) 
-            VALUES (?, ?, ?, ?)
-        """, (team_id, current_gw, json.dumps(team_blob),
-              datetime.now(timezone.utc).isoformat()))
+        cur.execute("""INSERT OR REPLACE INTO team_player_info 
+                       (team_id, gameweek, data, last_fetched)
+                       VALUES (?, ?, ?, ?)""",
+                    (team_id, current_gw, json.dumps(team_blob),
+                     datetime.now(timezone.utc).isoformat()))
         conn.commit()
-
-    # 7️⃣ Close connection after DB operations are done
     conn.close()
 
-    # 8️⃣ Handle sub-branches
+    # 7️⃣ Merge global totals + team-specific info
+    merged_blob = merge_team_and_global(static_blob, team_blob)
+
+    # 8️⃣ Handle special tables
     if table == "talisman":
-        players, _ = filter_and_sort_players(team_blob, request.args)
-        seen_teams = set()
+        # filter and sort merges first and second argument. But no team_blob required for this route...
+        players, _ = filter_and_sort_players(static_blob, {}, request.args)
+        seen = set()
         talisman_list = []
         for p in players:
-            if p["team_code"] not in seen_teams:
-                seen_teams.add(p["team_code"])
+            if p["team_code"] not in seen:
+                seen.add(p["team_code"])
                 talisman_list.append(p)
         images = [{"photo": p["photo"], "team_code": p["team_code"]}
                   for p in talisman_list[:5]]
@@ -662,29 +698,38 @@ def get_sorted_players():
     if table == "teams":
         stats = aggregate_team_stats(team_blob)
         sorted_stats = sorted(
-            [team for team in stats.values() if team.get(sort_by, 0) != 0],
+            (team for team in stats.values() if team.get(sort_by, 0) != 0),
             key=lambda team: team.get(sort_by, 0),
             reverse=(order == "desc")
         )
         top5 = []
         seen = set()
         for club in sorted_stats:
-            code = club["team_code"]
-            if code not in seen:
-                seen.add(code)
+            if club["team_code"] not in seen:
+                seen.add(club["team_code"])
                 top5.append(
                     {"team_code": club["team_code"], "team_name": club["team_name"]})
                 if len(top5) == 5:
                     break
         return jsonify(players=sorted_stats, players_images=top5, manager=g.manager)
 
-    # 9️⃣ Default branch: offence, defence, points, per90
-    players, images = filter_and_sort_players(team_blob, request.args)
+    # 9️⃣ Default tables (offence, defence, points, per90)
+    players, images = filter_and_sort_players(
+        merged_blob, team_blob, request.args)
     return jsonify(players=players, players_images=images, manager=g.manager)
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    debug_flag = os.environ.get("FLASK_DEBUG", "0") in ("1", "true", "True")
+    app.run(debug=debug_flag)
+
+# no debug
+# export FLASK_DEBUG=0
+# python3 app.py
+
+# # debug on
+# export FLASK_DEBUG=1
+# python3 app.py
 
 # In the terminal:
 # export FLASK_ENV=development

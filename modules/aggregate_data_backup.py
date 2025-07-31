@@ -1,47 +1,16 @@
-# calculate_totals
-def calculate_totals(player_info, top_scorers):
-    totals = {
-        # Sum totals regardless of being picked (goals_scored from static data)
-        "goals_total": sum(player["goals_scored"] for player in top_scorers),
-        "assists_total": sum(player["assists"] for player in top_scorers),
-        # "total_points": sum(player["total_points"] for player in top_points_contributers),
-
-        # Sum totals that contributed to the team (picked players in all gameweeks)
-        "goals_team_total": sum(player["goals_scored_team"] for player in player_info.values()),
-        "assists_team_total": sum(player["assists_team"] for player in player_info.values()),
-        # "points_team_total": sum(player["points_team"] for player in player_info.values()),
-
-        # Sum benched totals when players were benched
-        "goals_benched": sum(player["goals_benched"] for player in player_info.values()),
-        "assists_benched": sum(player["assists_benched"] for player in player_info.values()),
-        # "points_benched": sum(player["points_benched"] for player in player_info.values()),
-
-        # Sum totals doubled by being captains
-        "goals_captained": sum(player["goals_captained"] for player in player_info.values()),
-        "assists_captained": sum(player["assists_captained"] for player in player_info.values()),
-        # "points_captained": sum(player["points_captained"] for player in player_info.values()),
-
-        # Sum goalscorers and assisters
-        "goalscorers": sum(1 for player in player_info.values() if player["goals_scored_team"] > 0),
-        "assisters": sum(1 for player in player_info.values() if player["assists_team"] > 0),
-        # "points_contributers": sum(1 for player in player_info.values() if player["points_team"] > 0),
-    }
-    print("Calculated Totals:", totals)  # Debug print to confirm totals
-    return totals
-
-
-# Filter and sort top_scorers table
+# Filter and sort table
 def filter_and_sort_players(player_info, request_args):
-    players_filtered = {}
 
     # Determine which table is being sorted
     table = request_args.get("table", "goals_scored_team")
 
     # Set default sort_by based on the table
     default_sort_by = {
-        "goals_scorers": "goals_scored_team",
-        "starts": "starts_team",
+        "defence": "starts_team",
+        "offence": "goals_scored_team",
         "points": "minutes_points_team",
+        "am": "total_points",
+        "talisman": "total_points",
     }.get(table, "goals_scored_team")
 
     # Sort by query parameters
@@ -70,11 +39,12 @@ def filter_and_sort_players(player_info, request_args):
         "starts_team", "total_points_team"
     }
 
-    # Filter players based on position, cost, and selected column
     players = [
         p for p in player_info.values()
-        if (min_cost <= p["now_cost"] <= max_cost)  # Cost filter
-        and str(p['element_type']) in selected_positions  # Position filter
+        # ✅ Ignores cost if not set
+        if (not min_cost or not max_cost or min_cost <= p["now_cost"] <= max_cost)
+        # ✅ Ignores positions if not set
+        and (not selected_positions or str(p['element_type']) in selected_positions)
     ]
 
     # Additional filtering based on the selected column
@@ -95,6 +65,15 @@ def filter_and_sort_players(player_info, request_args):
             x[sort_by]), reverse=reverse_order)
 
     # Get the top 5 images by slicing and extract only the 'photo' values
-    players_images = [{"photo": player["photo"]} for player in players[:5]]
+    players_images = [{"photo": player["photo"],
+                       "team_code": player["team_code"]} for player in players[:5]]
 
     return players, players_images
+
+
+# Sort for simple tables. I use it for graph/tabls combo on manager page
+def sort_table_data(data, sort_by, order, allowed_fields):
+    if sort_by in allowed_fields:
+        reverse = (order.lower() == 'desc')
+        return sorted(data, key=lambda row: row.get(sort_by, 0), reverse=reverse)
+    return data

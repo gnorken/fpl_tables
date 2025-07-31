@@ -31,7 +31,7 @@ from modules.fetch_mini_leagues import (
     get_team_mini_league_summary,
     append_current_manager,
 )
-from modules.aggregate_data import filter_and_sort_players, sort_table_data
+from modules.aggregate_data import merge_team_and_global, filter_and_sort_players, sort_table_data
 from modules.utils import (
     validate_team_id,
     get_max_users,
@@ -518,7 +518,7 @@ def get_sorted_players():
     league_id = request.args.get("league_id", type=int)
     sort_by = request.args.get("sort_by", default=None)
     order = request.args.get("order", default="desc")
-    current_gw = session.get("current_gw") or -1  # Pre-season as -1
+    current_gw = session.get("current_gw") or -1
     max_show = request.args.get("max_show", 2, type=int)
 
     # 2️⃣ Validate required params
@@ -527,76 +527,60 @@ def get_sorted_players():
     if table != "mini_league" and team_id is None:
         return jsonify({"error": "Missing team_id"}), 400
 
-    # 3️⃣ Always fetch static_data, it updates both caches if stale
+    # 3️⃣ Always fetch static_data (refreshes cache if stale)
     static_data = get_static_data(current_gw=current_gw)
 
-    # 4️⃣ Open DB connection (keep open for the whole route)
+    # 4️⃣ Fetch static player info
     conn = sqlite3.connect(DATABASE, check_same_thread=False)
     cur = conn.cursor()
-
-    # Get static_player_info for this GW
     cur.execute(
-        "SELECT data FROM static_player_info WHERE gameweek = ?", (current_gw,)
-    )
+        "SELECT data FROM static_player_info WHERE gameweek = ?", (current_gw,))
     row = cur.fetchone()
     if not row:
         conn.close()
         return jsonify({"error": f"No static_player_info for gameweek {current_gw}"}), 500
-
     static_blob = {int(pid): blob for pid, blob in json.loads(row[0]).items()}
 
-    # 5️⃣ Handle mini-league branch
+    # 5️⃣ Mini-league branch (unchanged, no team_blob)
     if table == "mini_league":
-        # a) Try cache
         cur.execute("""
             SELECT data, last_fetched FROM mini_league_cache 
             WHERE league_id=? AND gameweek=? AND team_id=? AND max_show=?
         """, (league_id, current_gw, team_id, max_show))
         row = cur.fetchone()
-
         if row:
             data, last_fetched = row
-            cached_time = datetime.fromisoformat(last_fetched)
-            event_updated = get_event_status_last_update()
-
-            if cached_time >= event_updated:
-                # Cache is fresh → use it
+            if datetime.fromisoformat(last_fetched) >= get_event_status_last_update():
                 players = json.loads(data)
                 players.sort(key=lambda o: o.get(sort_by, 0),
-                             reverse=(order.lower() == "desc"))
+                             reverse=(order == "desc"))
                 conn.close()
                 return jsonify(players=players, manager=g.manager)
 
-        # b) Cache miss or stale → fetch managers
         managers = get_team_ids_from_league(league_id, max_show)
         append_current_manager(managers, team_id, league_id, logger=app.logger)
 
-        # c) Build summaries and merge metadata
         players = []
         for m in managers:
             summary = get_team_mini_league_summary(m["entry"], static_data)
-            meta = {**m, "team_id": m["entry"]}
-            summary.update(meta)
+            summary.update({"team_id": m["entry"], **m})
             players.append(summary)
 
-        # d) Sort players and annotate
-        rev = (order.lower() == "desc")
-        players.sort(key=lambda o: o.get(sort_by, 0), reverse=rev)
+        players.sort(key=lambda o: o.get(sort_by, 0),
+                     reverse=(order == "desc"))
 
-        leader_pts = get_overall_league_leader_total()
         league_leader_pts = max((p.get("total_points", 0)
-                                 for p in players), default=0)
-
+                                for p in players), default=0)
+        leader_pts = get_overall_league_leader_total()
         for p in players:
             p["pts_behind_league_leader"] = p.get(
                 "total_points", 0) - league_leader_pts
             p["pts_behind_overall"] = p.get("total_points", 0) - leader_pts
             p["years_active_label"] = ordinalformat(p.get("years_active", 0))
 
-        # e) Cache and return
         cur.execute("""
             INSERT OR REPLACE INTO mini_league_cache 
-            (league_id, gameweek, team_id, max_show, data, last_fetched) 
+            (league_id, gameweek, team_id, max_show, data, last_fetched)
             VALUES (?,?,?,?,?,?)
         """, (league_id, current_gw, team_id, max_show,
               json.dumps(players), datetime.now(timezone.utc).isoformat()))
@@ -604,56 +588,46 @@ def get_sorted_players():
         conn.close()
         return jsonify(players=players, manager=g.manager)
 
-    # 6️⃣ Non-mini-league branches: freshness check for team_player_info
-    cur.execute("""
-        SELECT data, last_fetched FROM team_player_info 
-        WHERE team_id=? AND gameweek=?
-    """, (team_id, current_gw))
+    # 6️⃣ Load or refresh team_player_info
+    cur.execute("SELECT data, last_fetched FROM team_player_info WHERE team_id=? AND gameweek=?",
+                (team_id, current_gw))
     row = cur.fetchone()
-
     if row:
         data, last_fetched = row
-        cached_time = datetime.fromisoformat(last_fetched)
-        event_updated = get_event_status_last_update()
-
-        if cached_time >= event_updated:
-            # Cache is fresh
+        if datetime.fromisoformat(last_fetched) >= get_event_status_last_update():
             team_blob = {int(pid): blob for pid,
                          blob in json.loads(data).items()}
         else:
-            # Cache is stale → refresh
             team_blob = populate_player_info_all_with_live_data(
                 team_id, static_blob, static_data)
-            cur.execute("""
-                INSERT OR REPLACE INTO team_player_info 
-                (team_id, gameweek, data, last_fetched) 
-                VALUES (?, ?, ?, ?)
-            """, (team_id, current_gw, json.dumps(team_blob),
-                  datetime.now(timezone.utc).isoformat()))
+            cur.execute("""INSERT OR REPLACE INTO team_player_info 
+                           (team_id, gameweek, data, last_fetched)
+                           VALUES (?, ?, ?, ?)""",
+                        (team_id, current_gw, json.dumps(team_blob),
+                         datetime.now(timezone.utc).isoformat()))
             conn.commit()
     else:
-        # Cache miss → refresh
         team_blob = populate_player_info_all_with_live_data(
             team_id, static_blob, static_data)
-        cur.execute("""
-            INSERT OR REPLACE INTO team_player_info 
-            (team_id, gameweek, data, last_fetched) 
-            VALUES (?, ?, ?, ?)
-        """, (team_id, current_gw, json.dumps(team_blob),
-              datetime.now(timezone.utc).isoformat()))
+        cur.execute("""INSERT OR REPLACE INTO team_player_info 
+                       (team_id, gameweek, data, last_fetched)
+                       VALUES (?, ?, ?, ?)""",
+                    (team_id, current_gw, json.dumps(team_blob),
+                     datetime.now(timezone.utc).isoformat()))
         conn.commit()
-
-    # 7️⃣ Close connection after DB operations are done
     conn.close()
 
-    # 8️⃣ Handle sub-branches
+    # 7️⃣ Merge global totals + team-specific info
+    merged_blob = merge_team_and_global(static_blob, team_blob)
+
+    # 8️⃣ Handle special tables
     if table == "talisman":
-        players, _ = filter_and_sort_players(team_blob, request.args)
-        seen_teams = set()
+        players, _ = filter_and_sort_players(merged_blob, request.args)
+        seen = set()
         talisman_list = []
         for p in players:
-            if p["team_code"] not in seen_teams:
-                seen_teams.add(p["team_code"])
+            if p["team_code"] not in seen:
+                seen.add(p["team_code"])
                 talisman_list.append(p)
         images = [{"photo": p["photo"], "team_code": p["team_code"]}
                   for p in talisman_list[:5]]
@@ -662,24 +636,24 @@ def get_sorted_players():
     if table == "teams":
         stats = aggregate_team_stats(team_blob)
         sorted_stats = sorted(
-            [team for team in stats.values() if team.get(sort_by, 0) != 0],
+            (team for team in stats.values() if team.get(sort_by, 0) != 0),
             key=lambda team: team.get(sort_by, 0),
             reverse=(order == "desc")
         )
         top5 = []
         seen = set()
         for club in sorted_stats:
-            code = club["team_code"]
-            if code not in seen:
-                seen.add(code)
+            if club["team_code"] not in seen:
+                seen.add(club["team_code"])
                 top5.append(
                     {"team_code": club["team_code"], "team_name": club["team_name"]})
                 if len(top5) == 5:
                     break
         return jsonify(players=sorted_stats, players_images=top5, manager=g.manager)
 
-    # 9️⃣ Default branch: offence, defence, points, per90
-    players, images = filter_and_sort_players(team_blob, request.args)
+    # 9️⃣ Default tables (offence, defence, points, per90)
+    players, images = filter_and_sort_players(
+        merged_blob, team_blob, request.args)
     return jsonify(players=players, players_images=images, manager=g.manager)
 
 
