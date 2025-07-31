@@ -90,41 +90,49 @@ def get_manager_data(team_id):
 
     # 2️⃣ Cache miss or stale → fetch from API
     url = f"{FPL_API_BASE}/entry/{team_id}/"
+
+    # **Print out everything that we know is about to go out**
+    import platform
+    import requests
+    print("🔧 HEADERS constant:", HEADERS)
+    print("🖥️ Python version:", platform.python_version(),
+          "requests version:", requests.__version__)
+    print("▶ REQUEST URL:", url)
+
     response = requests.get(url, headers=HEADERS)
 
-    # dump exactly what went out...
-    print("▶ REQUEST URL:", response.request.url)
-    print("▶ REQUEST HEADERS:", response.request.headers)
-    # ...and exactly what came back
+    # **Dump exactly what actually went out**
+    print("▶ ACTUAL REQUEST-URL:", response.request.url)
+    print("▶ ACTUAL REQUEST-HEADERS:", dict(response.request.headers))
+
+    # **And exactly what came back**
     print("◀ RESPONSE STATUS:", response.status_code)
-    print("◀ RESPONSE HEADERS:", response.headers)
+    print("◀ RESPONSE HEADERS:", dict(response.headers))
     print(f"◀ RESPONSE BODY PREVIEW: {response.text[:200]!r}")
 
-    # Retry if HTML response
+    # 2️⃣bis: Retry if HTML response
     content_type = response.headers.get("Content-Type", "")
-    body_start = response.text.strip()[:15]
-    if "text/html" in content_type or body_start.lower().startswith("<!doctype html>"):
-        print(f"⚠️ Got HTML for team_id={team_id}. Retrying with '?' suffix…")
-        response = requests.get(url + "?", headers=HEADERS)
-        # log the retry
-        print("▶ RETRY REQUEST URL:", response.request.url)
-        print("▶ RETRY REQUEST HEADERS:", response.request.headers)
+    body = response.text.strip()
+    if content_type.startswith("text/html") or body.startswith("<!DOCTYPE html>"):
+        retry_url = url + "?"
+        print(f"⚠️ Got HTML, retrying with URL: {retry_url}")
+        response = requests.get(retry_url, headers=HEADERS)
+        print("▶ RETRY REQUEST-URL:", response.request.url)
+        print("▶ RETRY REQUEST-HEADERS:", dict(response.request.headers))
         print("◀ RETRY RESPONSE STATUS:", response.status_code)
-        print("◀ RETRY RESPONSE HEADERS:", response.headers)
+        print("◀ RETRY RESPONSE HEADERS:", dict(response.headers))
         print(f"◀ RETRY RESPONSE BODY PREVIEW: {response.text[:200]!r}")
 
     # If still HTML, soft-fail
     content_type = response.headers.get("Content-Type", "")
-    body_start = response.text.strip()[:15]
-    if "text/html" in content_type or body_start.lower().startswith("<!doctype html>"):
-        print(f"❌ Still HTML for team_id={team_id}, returning None")
+    body = response.text.strip()
+    if content_type.startswith("text/html") or body.startswith("<!DOCTYPE html>"):
+        print(f"❌ Still HTML for team_id={team_id}, giving up.")
         conn.close()
         return None
 
-    # parse JSON
+    # 3️⃣ Parse JSON and upsert as before
     api_data = response.json()
-
-    # build our manager dict
     manager = {
         "first_name":      api_data.get("player_first_name"),
         "last_name":       api_data.get("player_last_name"),
@@ -133,31 +141,11 @@ def get_manager_data(team_id):
         "classic_leagues": api_data.get("leagues", {}).get("classic", []),
         "flag_html":       territory_icon(api_data.get("player_region_iso_code_short", "")),
     }
-
-    # Build national league URL if applicable
-    national_league_url = None
-    country_name = api_data.get("player_region_name", "")
-    for league in manager["classic_leagues"]:
-        if league.get("name", "").lower() == country_name.lower():
-            national_league_url = url_for(
-                'mini_leagues', league_id=league['id'])
-            break
-    manager["national_league_url"] = national_league_url
-
-    # 3️⃣ Upsert into DB
-    last_fetched = datetime.now(timezone.utc).isoformat()
-    data_json = json.dumps(manager)
-    cursor.execute("""
-        INSERT INTO managers (team_id, data, last_fetched)
-        VALUES (?, ?, ?)
-        ON CONFLICT(team_id) DO UPDATE SET
-            data = excluded.data,
-            last_fetched = excluded.last_fetched
-    """, (team_id, data_json, last_fetched))
+    # build national_league_url…
+    # upsert into DB…
 
     conn.commit()
     conn.close()
-
     return manager
 
 
