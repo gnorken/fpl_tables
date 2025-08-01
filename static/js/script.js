@@ -1,10 +1,3 @@
-// script.js (very first lines)
-// if (window.location.hostname !== "localhost") {
-//   console.log = function () {};
-//   console.warn = function () {};
-//   // You could leave console.error active if you still want errors in production
-// }
-
 window.initTooltips = () => {
   document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => {
     // Avoid double-initialising the same tooltip
@@ -659,7 +652,7 @@ function disposeTooltips(context = document) {
 
 // Builder function for manager tables + charts
 async function buildManagerTableAndChart(cfg) {
-  console.log("▶️ Building table & chart for:", cfg.tableContainerId);
+  // print("▶️ Building table & chart for:", cfg.tableContainerId);
 
   const container = document.getElementById(cfg.tableContainerId);
   if (!container) return;
@@ -727,7 +720,15 @@ async function buildManagerTableAndChart(cfg) {
     const oldChart = Chart.getChart(cfg.chartId);
     if (oldChart) oldChart.destroy();
 
-    const ctx = document.getElementById(cfg.chartId).getContext("2d");
+    // Safely grab the canvas
+    const canvasEl = document.getElementById(cfg.chartId);
+    if (!canvasEl) {
+      console.warn(`⚠️ No <canvas> found with id="${cfg.chartId}"`);
+      return;
+    }
+
+    // Build new one
+    const ctx = canvasEl.getContext("2d");
     const chart = new Chart(ctx, {
       data: {
         labels: data.map((r) => r[cfg.dataKey]),

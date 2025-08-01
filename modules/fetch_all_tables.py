@@ -28,31 +28,35 @@ def build_player_info(static_data):
             "now_cost": p["now_cost"],
 
             # Season stats (so far)
-            "goals_scored": p["goals_scored"],
-            "expected_goals": round(float(p.get("expected_goals", 0)), 2),
             "assists": p["assists"],
+            "assists_performance": round(p["assists"] - float(p.get("expected_assists", 0)), 2),
+            "bps": p["bps"],
+            "clean_sheets": p["clean_sheets"],
+            "clean_sheets_per_90": p["clean_sheets_per_90"],
+            "dreamteam_count": p["dreamteam_count"],
             "expected_assists": round(float(p.get("expected_assists", 0)), 2),
             "expected_goal_involvements": round(float(p.get("expected_goal_involvements", 0)), 2),
-            "goals_assists": p["goals_scored"] + p["assists"],
-            "goals_performance": round(p["goals_scored"] - float(p.get("expected_goals", 0)), 2),
-            "assists_performance": round(p["assists"] - float(p.get("expected_assists", 0)), 2),
+            "expected_goals": round(float(p.get("expected_goals", 0)), 2),
+            "expected_goals_conceded": p["expected_goals_conceded"],
+            "expected_goals_per_90": p["expected_goals_per_90"],
             "goals_assists_performance": round((p["goals_scored"] + p["assists"]) - float(p.get("expected_goal_involvements", 0)), 2),
             "goals_assists_performance_team_vs_total": 0,
-            "starts": p["starts"],
-            "minutes": p["minutes"],
-            "clean_sheets": p["clean_sheets"],
-            "yellow_cards": p["yellow_cards"],
-            "red_cards": p["red_cards"],
-            "bps": p["bps"],
-            "own_goals": p["own_goals"],
+            "goals_scored": p["goals_scored"],
+            "goals_assists": p["goals_scored"] + p["assists"],
             "goals_conceded": p["goals_conceded"],
+            "goals_performance": round(p["goals_scored"] - float(p.get("expected_goals", 0)), 2),
+            "minutes": p["minutes"],
+            "own_goals": p["own_goals"],
+            "red_cards": p["red_cards"],
+            "starts": p["starts"],
+            "ppm": round(p["total_points"] / (p["now_cost"] / 10), 1) if p["now_cost"] else 0,
             "penalties_saved": p["penalties_saved"],
             "penalties_missed": p["penalties_missed"],
-            "dreamteam_count": p["dreamteam_count"],
+            "points_per_game": p["points_per_game"],
             "total_points": p["total_points"],
-            "ppm": round(p["total_points"] / (p["now_cost"] / 10), 1) if p["now_cost"] else 0,
+            "yellow_cards": p["yellow_cards"],
 
-            # Global points breakdown (populate later)
+            # Global points breakdown (populate later) Need to convert to points
             "minutes_points": 0,
             "clean_sheets_points": 0,
             "assists_points": 0,
@@ -63,53 +67,57 @@ def build_player_info(static_data):
             "goals_conceded_points": 0,
             "penalties_saved_points": 0,
             "penalties_missed_points": 0,
-            "yellow_cards_points": 0,
+            "yellow_cards_points": p["yellow_cards"] * 2,
             "red_cards_points": 0,
 
             # Team-specific aggregates (populate later)
-            "goals_scored_team": 0,
-            "expected_goals_team": 0,
-            "goals_performance_team": 0,
-            "goals_benched_team": 0,
-            "goals_captained_team": 0,
-            "assists_team": 0,
-            "expected_assists_team": 0,
             "assists_performance_team": 0,
             "assists_benched_team": 0,
             "assists_captained_team": 0,
-            "goals_assists_team": 0,
-            "expected_goal_involvements_team": 0,
-            "goals_assists_performance_team": 0,
-            "starts_team": 0,
-            "minutes_team": 0,
-            "clean_sheets_team": 0,
-            "captained_team": 0,
-            "yellow_cards_team": 0,
-            "red_cards_team": 0,
+            "assists_points_team": 0,
+            "assists_team": 0,
+            "benched_points_team": 0,
+            "bonus_points_team": 0,
             "bps_team": 0,
+            "clean_sheets_team": 0,
+            "clean_sheets_per_90_team": 0,
+            "clean_sheets_points_team": 0,
+            "captained_points_team": 0,
+            "captained_team": 0,
             "dreamteam_count_team": 0,
-            "starts_benched_team": 0,
-            "minutes_benched_team": 0,
-            "own_goals_team": 0,
+            "expected_assists_team": 0,
+            "expected_goals_team": 0,
+            "expected_goal_involvements_team": 0,
+            "expected_goals_conceded_team": 0,
+            "expected_goals_per_90_team": 0,
+            "goals_scored_team": 0,
+            "goals_performance_team": 0,
+            "goals_benched_team": 0,
+            "goals_captained_team": 0,
+            "goals_conceded_points_team": 0,
+            "goals_assists_team": 0,
+            "goals_points_team": 0,
             "goals_conceded_team": 0,
+            "goals_assists_performance_team": 0,
+            "minutes_team": 0,
+            "minutes_benched_team": 0,
+            "minutes_points_team": 0,
+            "own_goals_team": 0,
+            "own_goals_points_team": 0,
             "penalties_saved_team": 0,
             "penalties_missed_team": 0,
-            "total_points_team": 0,
+            "points_per_game_team": 0,
             "ppm_team": 0,
-            "minutes_points_team": 0,
-            "clean_sheets_points_team": 0,
-            "assists_points_team": 0,
-            "goals_points_team": 0,
-            "yellow_cards_points_team": 0,
-            "red_cards_points_team": 0,
-            "bonus_points_team": 0,
-            "save_points_team": 0,
-            "own_goals_points_team": 0,
-            "goals_conceded_points_team": 0,
             "penalties_saved_points_team": 0,
             "penalties_missed_points_team": 0,
-            "benched_points_team": 0,
-            "captained_points_team": 0
+            "save_points_team": 0,
+            "starts_benched_team": 0,
+            "starts_team": 0,
+            "total_points_team": 0,
+            "yellow_cards_team": 0,
+            "yellow_cards_points_team": 999,
+            "red_cards_team": 0,
+            "red_cards_points_team": 0,
         }
     return player_info
 
@@ -216,28 +224,36 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
 
             # Starter (or captain/triple) stats
             if mult > 0:
-                xg = float(stats.get('expected_goals', 0))
-                xa = float(stats.get('expected_assists', 0))
-                goals = stats.get('goals_scored', 0)
                 assists = stats.get('assists', 0)
-                cs = stats.get('clean_sheets', 0)
                 bps = stats.get('bps', 0)
-                yc = stats.get('yellow_cards', 0)
-                rc = stats.get('red_cards', 0)
+                cs = stats.get('clean_sheets', 0)
+                cs90 = stats.get('clean_sheets_per_90', 0)
                 ic = stats.get('in_dreamteam', False)
+                goals = stats.get('goals_scored', 0)
+                ppg = stats.get('points_per_game', 0)
+                rc = stats.get('red_cards', 0)
+                xg = float(stats.get('expected_goals', 0))
+                xgc = float(stats.get('expected_goals_conceded:', 0))
+                xg90 = float(stats.get('expected_goals_per_90:', 0))
+                xa = float(stats.get('expected_assists', 0))
+                yc = stats.get('yellow_cards', 0)
 
-                pi['expected_goals_team'] += xg
-                pi['expected_assists_team'] += xa
-                pi['goals_scored_team'] += goals
                 pi['assists_team'] += assists
-                pi['goals_assists_team'] += goals + assists
-                pi['expected_goal_involvements_team'] += xg + xa
-                pi['starts_team'] += stats.get('starts', 0)
-                pi['minutes_team'] += stats.get('minutes', 0)
-                pi['clean_sheets_team'] += cs
+                pi['expected_assists_team'] += xa
+                pi['expected_goals_team'] += xg
+                pi['expected_goals_conceded_team'] += xgc
                 pi['bps_team'] += bps
-                pi['yellow_cards_team'] += yc
+                pi['clean_sheets_team'] += cs
+                pi['clean_sheets_per_90_team'] += cs90
+                pi['expected_goal_involvements_team'] += xg + xa
+                pi['expected_goals_per_90_team'] += xg90
+                pi['goals_scored_team'] += goals
+                pi['goals_assists_team'] += goals + assists
+                pi['minutes_team'] += stats.get('minutes', 0)
+                pi['points_per_game'] += ppg
                 pi['red_cards_team'] += rc
+                pi['starts_team'] += stats.get('starts', 0)
+                pi['yellow_cards_team'] += yc
                 if ic:
                     pi['dreamteam_count_team'] += 1
 

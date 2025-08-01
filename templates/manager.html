@@ -60,11 +60,10 @@
           </div>
           <canvas id="currentSeasonGraphFirstHalf"></canvas>
         </div>
-        {% if current_gw is not none and current_gw >= 20 %}
-        <div class="chart-container position-relative d-lg-none" id="second-half-wrapper">
+        <div class="chart-container position-relative d-lg-none {% if current_gw is none or current_gw < 20 %}d-none{% endif %}" id="second-half-wrapper">
           <canvas id="currentSeasonGraphSecondHalf"></canvas>
         </div>
-        {% endif %}
+
       </div>
 
   
