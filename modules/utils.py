@@ -99,6 +99,9 @@ def get_current_gw():
         "[get_current_gw] no 'is_current' event found, returning None (pre-season or post-season)")
     return None
 
+# def get_current_gw():
+#     return 8
+
 
 # Check latest entry in database
 _last_event_updated = None

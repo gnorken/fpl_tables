@@ -1,4 +1,11 @@
+import logging
+from flask import session
+
+logger = logging.getLogger(__name__)
+
 # Merging static totals from player_info with team-specific data from team_player_info SQL table
+
+
 def merge_team_and_global(global_info, team_info):
     """
     Merge global player_info (totals) and team_info (team-specific stats).
@@ -60,6 +67,15 @@ def filter_and_sort_players(global_info, team_info, request_args):
     min_cost = float(request_args.get("min_cost", 0)) * 10
     max_cost = float(request_args.get("max_cost", 20)) * 10
 
+    # 1️⃣ Minutes filter
+    min_minutes = int(request_args.get("min_minutes", 0))
+    max_minutes = int(request_args.get(
+        "max_minutes", 38 * 90))
+    logger.info(
+        "  → inside filter: min_cost=%s–%s, min_minutes=%s–%s",
+        min_cost, max_cost, min_minutes, max_minutes
+    )
+
     # Columns to treat specially
     negative_columns = {
         "points_pm_team", "yellow_cards_points_team", "yellow_cards_points",
@@ -76,11 +92,29 @@ def filter_and_sort_players(global_info, team_info, request_args):
     }
 
     # 5️⃣ Apply filters
-    players = [
-        p for p in player_info.values()
-        if (not min_cost or not max_cost or min_cost <= p["now_cost"] <= max_cost)
-        and (not selected_positions or str(p['element_type']) in selected_positions)
-    ]
+    before = len(player_info)
+    kept, dropped = [], []
+
+    for p in player_info.values():
+        # existing tests
+        cost_ok = (min_cost <= p["now_cost"] <= max_cost)
+        pos_ok = (not selected_positions
+                  or str(p["element_type"]) in selected_positions)
+        # new minutes test
+        min_ok = (min_minutes <= p.get("minutes", 0) <= max_minutes)
+
+        # log a few sample failures
+        if not min_ok:
+            logger.info(
+                "Dropping %s: minutes=%s not in %s–%s",
+                p.get("web_name"), p.get("minutes"), min_minutes, max_minutes
+            )
+
+        if cost_ok and pos_ok and min_ok:
+            kept.append(p)
+
+    players = kept
+    logger.info("Kept %d/%d after minutes filter", len(kept), before)
 
     if sort_by in negative_columns:
         players = [p for p in players if float(p.get(sort_by, 0)) < 0]

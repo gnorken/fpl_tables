@@ -572,6 +572,11 @@ def mini_leagues(league_id):
 
 @app.route("/get-sorted-players")
 def get_sorted_players():
+    app.logger.debug(
+        "Received minutes filter: %s–%s",
+        request.args.get("min_minutes"),
+        request.args.get("max_minutes"),
+    )
     # 1️⃣ Parse query params
     table = request.args.get("table", default="goals")
     team_id = request.args.get("team_id", type=int)
@@ -723,13 +728,8 @@ if __name__ == "__main__":
     debug_flag = os.environ.get("FLASK_DEBUG", "0") in ("1", "true", "True")
     app.run(debug=debug_flag)
 
-# no debug
-# export FLASK_DEBUG=0
-# python3 app.py
-
-# # debug on
-# export FLASK_DEBUG=1
-# python3 app.py
+# LOG_LEVEL=DEBUG python3 app.py
+# LOG_LEVEL=INFO python3 app.py
 
 # In the terminal:
 # export FLASK_ENV=development

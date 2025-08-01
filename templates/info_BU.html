@@ -1,0 +1,92 @@
+{% extends "layout.html" %}
+
+{% block body %}
+<div class="row g-0">
+    <div class="col">
+        <div id="sort-info" class="d-flex bg-yellow p-1">
+            Current Sort:&nbsp;<span id="current-sort" class="fw-bold"></span>&nbsp;
+            <span id="current-order"></span>
+            <div class="d-none d-sm-inline ms-auto">
+                <span id="current-hover">Click table headers to change sort</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row gy-1">
+    <!-- FILTER COLUMN -->
+    <div class="col-12 col-lg-6 order-1 order-lg-2 {% if hide_element %}d-none{% endif %}">
+
+        <!-- Toggle button (mobile only) -->
+        <button class="btn btn-outline-primary d-lg-none w-100 mb-1" type="button" data-bs-toggle="collapse"
+            data-bs-target="#filterContent" aria-expanded="false" aria-controls="filterContent">
+            Filters
+        </button>
+
+        <!-- Collapsible filter content -->
+        <div id="filterContent" class="collapse d-lg-block">
+            <div id="filter" class="py-1">
+
+                <!-- Buttons (toggles) left / sliders right -->
+                <div class="d-flex flex-row align-items-stretch">
+
+                    <!-- Toggles (stacked vertically) -->
+                    <div class="d-flex flex-column justify-content-evenly"> <!--ps-1-->
+                        <div class="form-switch form-check mb-1">
+                            <input type="checkbox" id="checkbox1" class="form-check-input" value="1" checked>
+                            <label class="form-check-label" for="checkbox1">GK&nbsp;</label>
+                        </div>
+                        <div class="form-switch form-check mb-1">
+                            <input type="checkbox" id="checkbox2" class="form-check-input" value="2" checked>
+                            <label class="form-check-label" for="checkbox2">DEF&nbsp;</label>
+                        </div>
+                        <div class="form-switch form-check mb-1">
+                            <input type="checkbox" id="checkbox3" class="form-check-input" value="3" checked>
+                            <label class="form-check-label" for="checkbox3">MID&nbsp;</label>
+                        </div>
+                        <div class="form-switch form-check mb-1">
+                            <input type="checkbox" id="checkbox4" class="form-check-input" value="4" checked>
+                            <label class="form-check-label" for="checkbox4">FWD&nbsp;</label>
+                        </div>
+                    </div>
+
+                    <!-- Sliders (stacked rows) -->
+                    <div class="flex-grow-1 "> <!-- px-4-->
+                        <div class="d-flex flex-column justify-content-center h-100">
+
+                            <!-- Price slider row -->
+                            <div class="d-flex flex-column py-3">
+                                <label for="price-slider" class="form-labe">Price</label>
+                                <div id="price-slider" class="slider-narrow flex-grow-1"></div>
+                            </div>
+
+                            <!-- Minutes slider row -->
+                            <div class="d-flex flex-column py-3">
+                                <label for="minutes-slider" class="form-label">Minutes</label>
+                                <div id="minutes-slider" class="slider-narrow flex-grow-1"></div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div><!-- /#filterContent -->
+    </div>
+
+    <!-- PLAYER IMAGES COLUMN -->
+    <div class="col-12 col-lg-6 order-2 order-lg-1">
+        <div id="player-images" class="player-image-container d-flex">
+            <div class="skeleton-loader-container">
+                <div class="skeleton-loader"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    {% block page_content %}
+    <!-- Child templates (your table) goes here -->
+    {% endblock %}
+</div>
+{% endblock %}

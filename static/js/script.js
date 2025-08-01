@@ -39,6 +39,15 @@ window.getSelectedPriceRange = () => {
   return { minCost: min, maxCost: max };
 };
 
+window.getSelectedMinutesRange = () => {
+  const slider = document.getElementById("minutes-slider");
+  if (!slider || !slider.noUiSlider) return { minMin: 0, maxMin: 3420 };
+  const [min, max] = slider.noUiSlider
+    .get()
+    .map((v) => parseFloat(v.replace(" min", "")));
+  return { minMin: min, maxMin: max };
+};
+
 // ─────────────── 3) Sort‐arrow indicator ─────────────────
 window.updateSortIndicator = (sortBy, sortOrder, containerSelector = null) => {
   const root = containerSelector
@@ -243,6 +252,12 @@ async function fetchData(sortBy, sortOrder) {
     }
     params.min_cost = minCost;
     params.max_cost = maxCost;
+
+    // ← NEW: minutes filter
+    const { minMin, maxMin } = getSelectedMinutesRange();
+    console.log("🔍 Minutes slider values:", minMin, maxMin);
+    params.min_minutes = minMin;
+    params.max_minutes = maxMin;
   }
 
   const qs = new URLSearchParams(params);
@@ -315,6 +330,7 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   }
 
+  // Current hover
   const hoverEl = document.getElementById("current-hover");
   if (hoverEl) {
     const defaultText = hoverEl.textContent;
@@ -487,6 +503,25 @@ document.addEventListener("DOMContentLoaded", () => {
       format: wNumb({ decimals: 1, prefix: "£" }),
     });
     slider.noUiSlider.on("change", () =>
+      window.fetchData(tableConfig.sortBy, tableConfig.sortOrder)
+    );
+  }
+
+  // compute max minutes from currentGw
+  // const maxMinutes = (window.tableConfig.currentGw || 1) * 90;
+
+  // --- MINUTES SLIDER ---
+  const minSlider = document.getElementById("minutes-slider");
+  if (minSlider && window.noUiSlider && !minSlider.noUiSlider) {
+    noUiSlider.create(minSlider, {
+      start: [0, 3420],
+      connect: true,
+      range: { min: 0, max: 3420 },
+      step: 100,
+      tooltips: true,
+      format: wNumb({ decimals: 0 }),
+    });
+    minSlider.noUiSlider.on("change", () =>
       window.fetchData(tableConfig.sortBy, tableConfig.sortOrder)
     );
   }

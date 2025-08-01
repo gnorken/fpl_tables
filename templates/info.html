@@ -1,72 +1,92 @@
 {% extends "layout.html" %}
 
 {% block body %}
-  <div class="row">
-    <div class="col">
-
-        <div id="sort-info" class="d-flex bg-yellow p-1">
-          Current Sort:&nbsp;<span id="current-sort" class="fw-bold"></span>&nbsp;
-          <span id="current-order"></span>
-          <div class="d-none d-sm-inline ms-auto">
-            <span id="current-hover">Click table headers to change sort</span>
-          </div>
-        </div>
-    </div>
-  </div>
-
-  <!-- Reorder columns so filter (with checkboxes) comes before player images on mobile -->
-  <div class="row">
-    <!-- Filter section: order-1 on mobile, order-md-2 on md+ -->
-    <div id="filter"
-      class="col-12 col-lg-6 order-1 order-lg-2 d-flex flex-column flex-lg-row align-items-center py-2 {% if hide_element %}d-none{% endif %}">
-      <!-- Checkbox column -->
-      <div class="col-12 col-lg-3 ">
-        <form id="checkboxForm" class="d-flex flex-row flex-lg-column justify-content-around">
-          <div class="form-switch form-check">
-            <input type="checkbox" id="checkbox1" class="form-check-input" value="1" checked>
-            <label class="form-check-label" for="checkbox1">GK&nbsp;</label>
-          </div>
-          <div class="form-switch form-check">
-            <input type="checkbox" id="checkbox2" class="form-check-input" value="2" checked>
-            <label class="form-check-label" for="checkbox2">DEF&nbsp;</label>
-          </div>
-          <div class="form-switch form-check">
-            <input type="checkbox" id="checkbox3" class="form-check-input" value="3" checked>
-            <label class="form-check-label" for="checkbox3">MID&nbsp;</label>
-          </div>
-          <div class="form-switch form-check">
-            <input type="checkbox" id="checkbox4" class="form-check-input" value="4" checked>
-            <label class="form-check-label" for="checkbox4">FWD&nbsp;</label>
-          </div>
-        </form>
-      </div>
-  
-      <!-- Price slider column (optional; adjust as needed) -->
-      <div class="d-none d-lg-inline col-12 col-lg-5 py-5">
-        <div id="price">
-          <div id="price-slider-div" class="form-group">
-            <div id="price-slider"></div>
-            <label id="price-label" for="price-slider">Price</label>
-          </div>
-        </div>
-      </div>
-    </div>
-  
-    <!-- Player images section: order-2 on mobile, order-lg-1 on large screens -->
-    <div class="col-12 col-lg-6 order-2 order-lg-1">
-      <div id="player-images" class="player-image-container d-flex">
-        <!-- Skeleton Loader for entire container -->
-        <div class="skeleton-loader-container">
-          <div class="skeleton-loader"></div>
-        </div>
+<div class="row g-0">
+  <div class="col">
+    <div id="sort-info" class="d-flex bg-yellow p-1">
+      Current Sort:&nbsp;<span id="current-sort" class="fw-bold"></span>&nbsp;
+      <span id="current-order"></span>
+      <div class="d-none d-sm-inline ms-auto">
+        <span id="current-hover">Click table headers to change sort</span>
       </div>
     </div>
   </div>
+</div>
 
+<div class="row gy-1 gx-2"><!-- vertical gap 1, horizontal gap 2 -->
+  <!-- FILTER COLUMN -->
+  <div class="col-12 col-lg-6 order-1 order-lg-2 {% if hide_element %}d-none{% endif %} px-2"><!-- small padding -->
 
-  <div class="row">
-    {% block page_content %}
-      <!-- Child templates will fill this block -->
-    {% endblock %}
+    <!-- Toggle button (mobile only) -->
+    <button class="btn btn-outline-primary d-lg-none w-100 mb-1" type="button" data-bs-toggle="collapse"
+      data-bs-target="#filterContent" aria-expanded="false" aria-controls="filterContent">
+      Filters
+    </button>
+
+    <!-- Collapsible filter content -->
+    <div id="filterContent" class="collapse d-lg-block">
+      <div id="filter" class="py-1">
+
+        <!-- Buttons (toggles) left / sliders right -->
+        <div class="d-flex flex-row align-items-stretch">
+
+          <!-- Toggles (stacked vertically) -->
+          <form id="checkboxForm" class="d-flex flex-column justify-content-evenly">
+            <div class="form-switch form-check mb-1">
+              <input type="checkbox" name="position" id="checkbox1" class="form-check-input" value="1" checked>
+              <label class="form-check-label" for="checkbox1">GK&nbsp;</label>
+            </div>
+            <div class="form-switch form-check mb-1">
+              <input type="checkbox" name="position" id="checkbox2" class="form-check-input" value="2" checked>
+              <label class="form-check-label" for="checkbox2">DEF&nbsp;</label>
+            </div>
+            <div class="form-switch form-check mb-1">
+              <input type="checkbox" name="position" id="checkbox3" class="form-check-input" value="3" checked>
+              <label class="form-check-label" for="checkbox3">MID&nbsp;</label>
+            </div>
+            <div class="form-switch form-check mb-1">
+              <input type="checkbox" name="position" id="checkbox4" class="form-check-input" value="4" checked>
+              <label class="form-check-label" for="checkbox4">FWD&nbsp;</label>
+            </div>
+          </form>
+
+          <!-- Sliders (stacked rows) -->
+          <div class="flex-grow-1">
+            <div class="d-flex flex-column justify-content-center h-100">
+
+              <!-- Price slider row -->
+              <div class="d-flex flex-column py-2 align-items-center">
+                <label for="price-slider" class="form-label">Price</label>
+                <div id="price-slider" class="slider-narrow"></div>
+              </div>
+
+              <!-- Minutes slider row -->
+              <div class="d-flex flex-column py-2 align-items-center">
+                <label for="minutes-slider" class="form-label">Minutes</label>
+                <div id="minutes-slider" class="slider-narrow"></div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div><!-- /#filterContent -->
   </div>
+
+  <!-- PLAYER IMAGES COLUMN -->
+  <div class="col-12 col-lg-6 order-2 order-lg-1">
+    <div id="player-images" class="player-image-container d-flex">
+      <div class="skeleton-loader-container">
+        <div class="skeleton-loader"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  {% block page_content %}
+  <!-- Child templates (your table) goes here -->
+  {% endblock %}
+</div>
 {% endblock %}

@@ -407,22 +407,34 @@ td {
 }
 
 
+/* SLIDERS */
+/* make every form-label a full-width block and center its text */
 
-#price-slider-div {
-  position: relative;
+#filter .slider-narrow {
+  max-width: 85%;
+  width: 100%;
 }
 
-#price-label {
-  position: absolute;
-  margin-top: 5px;
-  left: 50%;
-  transform: translateX(-50%);
+.noUi-horizontal .noUi-tooltip {
+  transform: translateX(-50%) !important;
+  white-space: nowrap;
+  padding: 2px 4px;
+  font-size: 0.85rem;
 }
 
 /* Change the color of the "connect" section (the range between handles) */
 #price-slider .noUi-connect {
-  background: rgb(13, 110, 253); /* your desired color */
+  background: rgb(13, 110, 253); 
 }
+#minutes-slider .noUi-connect {
+  background: rgb(13, 110, 253); 
+}
+
+
+/* #filter {
+  padding-top: 4px;
+  padding-bottom: 4px;
+} */
 
 /* Chips page */
 .team-player { /* photo */

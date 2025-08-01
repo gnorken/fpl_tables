@@ -13,9 +13,9 @@
   <link href="/static/favicon.ico" rel="icon">
 
   <!-- Sliders -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.6.1/nouislider.min.css" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.6.1/nouislider.min.js"></script>
-
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.8.1/nouislider.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.8.1/nouislider.min.js"></script>
+  
   <!-- Number formatting -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/wnumb/1.1.0/wNumb.min.js"></script>
 
@@ -55,7 +55,9 @@
   {% include "nav.html" %}
 
   <main class="flex-fill">
-    {% block body %}{% endblock %}
+    <div class="container-fluid p-0 ">
+      {% block body %}{% endblock %}
+    </div>
   </main>
   
   <footer class="text-center py-3 bg-light border-top">
