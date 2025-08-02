@@ -5,6 +5,7 @@
 <div class="row p-1 gy-1 gx-2">
   <!-- FILTER COLUMN -->
   <div class="col-12 col-lg-6 order-1 order-lg-2 {% if hide_element %}d-none{% endif %} px-2"><!-- small padding -->
+    <!-- FILTER BUTTON AND CURRENT SORT ROW -->
     <div class="row g-0">
       <div class="d-flex flex-row align-items-center">
         <!-- Toggle button (mobile only) -->
@@ -12,10 +13,17 @@
           data-bs-target="#filterContent" aria-expanded="false" aria-controls="filterContent">
           Filters
         </button>
-        <div id="sort-info" class="d-flex flex-row mx-2">
-          Sorted by:&nbsp;<span id="current-sort" class="fw-bold"></span>&nbsp;
-          <span id="current-order"></span>
-          <div class="d-none d-sm-inline ms-auto">
+        <!-- SORT INFO -->
+        <div id="sort-info" class="mx-2">
+          <div class="d-flex flex-column flex-lg-row">
+            <div>
+              Sorted by:
+            </div>
+            <div>
+              <span id="current-sort" class="fw-bold"></span>&nbsp;<span id="current-order"></span>
+            </div>
+          </div>
+          <div class="d-none d-lg-block">
             <span id="current-hover">Click table headers to change sort</span>
           </div>
         </div>
