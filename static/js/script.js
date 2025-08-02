@@ -235,7 +235,7 @@ async function fetchData(sortBy, sortOrder) {
   const orderEl = document.getElementById("current-order");
   if (sortEl)
     sortEl.textContent = window.tableConfig.lookup?.[sortBy] || sortBy;
-  if (orderEl) orderEl.textContent = sortOrder === "desc" ? "" : "(ascending)";
+  if (orderEl) orderEl.textContent = sortOrder === "desc" ? "" : "(asc)";
 
   const cfg = window.tableConfig;
   const tbody = document.querySelector(cfg.tbodySelector);

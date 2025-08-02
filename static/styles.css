@@ -10,6 +10,7 @@ a:active {
 /* Define colors at the root level */
 :root {
   --purple: #38003c; /* Dark purple */
+  --purple-comp: #043C00; /* Complemantary to purple */
   --light-purple: #963cff; /* Light Purpe */
   --bright-green: #00ff85; /* Bright green */
   --turqouise: #04f5ff; /* Turqouise */
@@ -204,6 +205,10 @@ a:active {
 .bg-yellow {
   background-color: var(--yellow);
   color: black;
+}
+.bg-purple-comp {
+  background-color: var(--purple-comp);
+  color: white;
 }
 
 .th-yellow th {
@@ -648,3 +653,5 @@ th.sorted {
   /* optional: add a little shadow so you see the separation */
   box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
 }
+
+/* testing fixed sort bar at bottom of the page on small screens */

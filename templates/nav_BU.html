@@ -1,7 +1,6 @@
 <header class="bg-purple text-light p-2">
 
-    <nav class="d-flex align-items-center">
-        <!-- MANGER INFO SMALL-->
+    <nav class="d-flex align-items-center px-lg-5">
         <div id="header-logo-gw" class="d-none d-md-block">
             <a href="/" class="d-flex align-items-end text-light text-decoration-none btn-turqouise">
                 <h1 id="header-logo" class="m-0">FPL Tables</h1>
@@ -41,6 +40,11 @@
             <button id="tables-btn" class="btn btn-outline-light dropdown-toggle" data-bs-toggle="dropdown"
                 aria-expanded="false">
                 FPL Tables
+                {% if current_gw is none %}
+                preseason
+                {% else %}
+                GW{{ current_gw }}
+                {% endif %}
             </button>
             <ul class="dropdown-menu" aria-labelledby="tables-btn">
                 {% macro nav_item(label, endpoint, page_name) %}

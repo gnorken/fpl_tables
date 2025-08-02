@@ -442,7 +442,6 @@ def offence(team_id):
 
 @app.route("/<int:team_id>/team/defence")
 def defence(team_id):
-    flash_if_preseason()
     return render_template("defence.html",
                            team_id=team_id,
                            current_gw=session.get('current_gw'),
