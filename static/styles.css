@@ -420,6 +420,10 @@ td {
   width: 100%;
 }
 
+.slider-wrapper {
+  
+}
+
 .noUi-horizontal .noUi-tooltip {
   transform: translateX(-50%) !important;
   white-space: nowrap;
@@ -654,4 +658,4 @@ th.sorted {
   box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
 }
 
-/* testing fixed sort bar at bottom of the page on small screens */
+

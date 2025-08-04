@@ -691,8 +691,9 @@
           buildDatasets: (data) => {
             const labels = data.map(r => r.season_name),
               percentiles = data.map(r => r.percentile);
+              ranks = data.map(r => r.rank); 
             return [
-              { type: "line", label: "You (%)", data: percentiles, fill: false, backgroundColor: "purple", borderColor: "purple", pointRadius: 6 },
+              { type: "line", label: "You (%)", data: percentiles, rankData: ranks, fill: false, backgroundColor: "purple", borderColor: "purple", pointRadius: 6 },
               { type: 'line', label: 'Top 1%', data: [], borderColor: '#2e7d32', borderDash: [6, 6] },
               { type: 'line', label: 'Top 10%', data: [], borderColor: '#fbc02d', borderDash: [6, 6] }
         ];
@@ -722,8 +723,8 @@
             tooltip: {
               callbacks: {
                 label: (context) => {
-                  const percentile = context.parsed.y;
-                  const rank = "test";
+                  const percentile = context.parsed.y,
+                        rank = context.dataset.rankData[context.dataIndex];
                   return [
                     percentile != null ? `Percentile: ${percentile}%` : "No data",
                     rank != null ? `Rank: ${rank.toLocaleString()}` : ""
