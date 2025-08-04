@@ -56,7 +56,7 @@
             </tr>
         </thead>
 
-        <tbody id="player-table-body"></tbody>
+        <tbody id="teams-table-body"></tbody>
 
         <tfoot>
             <tr class="th-purple text-center">
@@ -119,7 +119,7 @@
     window.tableConfig = {
         table: "teams",
         url: `/get-sorted-players?table=teams&team_id={{ team_id }}`,
-        tbodySelector: "#player-table-body",
+        tbodySelector: "#teams-table-body",
         loadingSelector: "#loading",
         sortBy: "{{ sort_by }}",
         sortOrder: "{{ order }}",

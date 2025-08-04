@@ -82,7 +82,8 @@ def get_current_gw():
             "[get_current_gw] cache hit, loading bootstrap-static from DB")
         data = json.loads(row[0])
     else:
-        logger.info("[get_current_gw] cache miss, fetching %s", FPL_STATIC_URL)
+        logger.debug("[get_current_gw] cache miss, fetching %s",
+                     FPL_STATIC_URL)
         resp = requests.get(FPL_STATIC_URL)
         resp.raise_for_status()
         data = resp.json()
@@ -95,7 +96,7 @@ def get_current_gw():
             return gw
 
     # pre-season or between seasons
-    logger.info(
+    logger.debug(
         "[get_current_gw] no 'is_current' event found, returning None (pre-season or post-season)")
     return None
 
@@ -137,11 +138,11 @@ def init_last_event_updated():
 
 def get_static_data(force_refresh=False, current_gw=-1):
     """Fetch bootstrap-static data and sync static_player_info, pruning stale data."""
-    logger.info("🔄 [get_static_data] called")
+    logger.debug("🔄 [get_static_data] called")
 
     # Trigger event-status check + pruning
     event_updated = get_event_status_last_update()
-    logger.info(f"🕒 [get_static_data] event_updated: {event_updated}")
+    logger.debug(f"🕒 [get_static_data] event_updated: {event_updated}")
 
     static_url = FPL_STATIC_URL
     conn = sqlite3.connect(DATABASE, check_same_thread=False)
@@ -155,24 +156,24 @@ def get_static_data(force_refresh=False, current_gw=-1):
     if row:
         data_str, timestamp = row
         cached_time = datetime.fromisoformat(timestamp)
-        logger.info(f"📦 [get_static_data] cached_time: {cached_time}")
+        logger.debug(f"📦 [get_static_data] cached_time: {cached_time}")
 
         # Use event-status freshness check only
         if not force_refresh and cached_time >= event_updated:
-            logger.info(
+            logger.debug(
                 "✅ [get_static_data] Cache is fresh, returning cached data")
             conn.close()
             return json.loads(data_str)
         else:
-            logger.info(
+            logger.debug(
                 "⚠️ [get_static_data] Cache is stale, fetching fresh data")
 
     else:
-        logger.info(
+        logger.debug(
             "❌ [get_static_data] No cache row found, fetching fresh data")
 
     # 2️⃣ Fetch fresh data from FPL API
-    logger.info("🌐 [get_static_data] Fetching bootstrap-static from API...")
+    logger.debug("🌐 [get_static_data] Fetching bootstrap-static from API...")
     response = requests.get(static_url, headers=headers)
     response.raise_for_status()
     static_data = response.json()
@@ -184,7 +185,7 @@ def get_static_data(force_refresh=False, current_gw=-1):
         "REPLACE INTO static_data (key, data, last_fetched) VALUES (?, ?, ?)",
         ("bootstrap", json.dumps(static_data), timestamp)
     )
-    logger.info("💾 [get_static_data] Updated static_data table")
+    logger.debug("💾 [get_static_data] Updated static_data table")
 
     # 4️⃣ Rebuild static_player_info (keep only 1 row)
     static_blob = build_player_info(static_data)
@@ -192,12 +193,12 @@ def get_static_data(force_refresh=False, current_gw=-1):
         INSERT OR REPLACE INTO static_player_info (gameweek, data, last_fetched)
         VALUES (?, ?, ?)
     """, (current_gw, json.dumps(static_blob), timestamp))
-    logger.info("💾 [get_static_data] Updated static_player_info table")
+    logger.debug("💾 [get_static_data] Updated static_player_info table")
 
     conn.commit()
     conn.close()
 
-    logger.info("🔚 [get_static_data] finished")
+    logger.debug("🔚 [get_static_data] finished")
     return static_data
 
 # Check if I have the latest data
@@ -209,7 +210,7 @@ def get_event_status_last_update():
     if _last_event_updated is None:
         init_last_event_updated()  # Initialize from DB
 
-    logger.info("🔄 get_event_status_last_update called")
+    logger.debug("🔄 get_event_status_last_update called")
 
     response = requests.get(FPL_EVENT_STATUS_URL)
     response.raise_for_status()
@@ -229,11 +230,12 @@ def get_event_status_last_update():
     # logger.debug(f"⏩ Faking new event_updated: {_last_event_updated}")
     # _last_event_updated = datetime.now(timezone.utc) + timedelta(minutes=5)
 
-    logger.info(f"🧹 Pruning with event_updated={_last_event_updated}")
+    logger.debug(f"🧹 Pruning with event_updated={_last_event_updated}")
 
     with sqlite3.connect(DATABASE, check_same_thread=False) as conn:
         prune_stale_data(conn, _last_event_updated)
-        logger.info(f"🗑️ Deleting stale rows older than {_last_event_updated}")
+        logger.debug(
+            f"🗑️ Deleting stale rows older than {_last_event_updated}")
 
     return _last_event_updated
 

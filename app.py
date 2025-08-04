@@ -465,19 +465,6 @@ def points(team_id):
                            order=request.args.get('order', 'desc'),
                            current_page='points')
 
-# --- PER 90 PAGE ---
-
-
-@app.route("/<int:team_id>/team/per_90")
-def per_90(team_id):
-    flash("Season hasn't started yet. No data available.", "info")
-    return render_template("per_90.html",
-                           team_id=team_id,
-                           current_gw=session.get('current_gw'),
-                           manager=g.manager,
-                           sort_by=request.args.get('sort_by', 'goals_per90'),
-                           order=request.args.get('order', 'desc'),
-                           current_page='per_90')
 
 # --- TEAMS PAGE ---
 
@@ -688,6 +675,7 @@ def get_sorted_players():
     # 8️⃣ Handle special tables
     if table == "talisman":
         # filter and sort merges first and second argument. But no team_blob required for this route...
+        #
         players, _ = filter_and_sort_players(static_blob, {}, request.args)
         seen = set()
         talisman_list = []
@@ -700,7 +688,7 @@ def get_sorted_players():
         return jsonify(players=talisman_list, players_images=images, manager=g.manager)
 
     if table == "teams":
-        stats = aggregate_team_stats(team_blob)
+        stats = aggregate_team_stats(static_blob)
         sorted_stats = sorted(
             (team for team in stats.values() if team.get(sort_by, 0) != 0),
             key=lambda team: team.get(sort_by, 0),
