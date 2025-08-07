@@ -2,7 +2,7 @@
 
 {% block body %}
 
-<div class="row p-1 gy-1 gx-2">
+<div class="row p-3 gy-1 gx-2">
   <!-- FILTER COLUMN -->
   <div class="col-12 col-lg-6 order-1 order-lg-2 {% if hide_element %}d-none{% endif %} px-2"><!-- small padding -->
     <!-- FILTER BUTTON AND CURRENT SORT ROW -->
@@ -16,15 +16,7 @@
         <!-- SORT INFO -->
         <div id="sort-info" class="mx-2 mx-lg-0">
           <div class="d-flex flex-column flex-lg-row">
-            <div>
-              Sorted by:
-            </div>
-            <div>
-              <span id="current-sort" class="fw-bold"></span>&nbsp;<span id="current-order"></span>
-            </div>
-          </div>
-          <div class="d-none d-lg-block">
-            <span id="current-hover">Click table headers to change sort</span>
+            Sorted by:&nbsp;<span id="current-sort" class="fw-bold"></span>
           </div>
         </div>
       </div>
@@ -71,10 +63,8 @@
                 <label for="minutes-slider" class="form-label">Minutes</label>
                 <div id="minutes-slider" class="slider-narrow"></div>
               </div>
-
             </div>
           </div>
-
         </div>
       </div>
     </div><!-- /#filterContent -->
@@ -82,7 +72,7 @@
 
   <!-- PLAYER IMAGES COLUMN -->
   <div class="col-12 col-lg-6 order-2 order-lg-1">
-    <div id="player-images" class="player-image-container d-flex">
+    <div id="player-images" class="player-image-container d-flex py-1">
       <div class="skeleton-loader-container">
         <div class="skeleton-loader"></div>
       </div>

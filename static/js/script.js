@@ -331,19 +331,19 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Current hover
-  const hoverEl = document.getElementById("current-hover");
-  if (hoverEl) {
-    const defaultText = hoverEl.textContent;
-    document.querySelectorAll("th[data-sort]").forEach((th) => {
-      const key = th.dataset.sort;
-      const tip = window.tableConfig.lookup?.[key] || th.textContent.trim();
-      th.addEventListener("mouseenter", () => (hoverEl.textContent = tip));
-      th.addEventListener(
-        "mouseleave",
-        () => (hoverEl.textContent = defaultText)
-      );
-    });
-  }
+  // const hoverEl = document.getElementById("current-hover");
+  // if (hoverEl) {
+  //   const defaultText = hoverEl.textContent;
+  //   document.querySelectorAll("th[data-sort]").forEach((th) => {
+  //     const key = th.dataset.sort;
+  //     const tip = window.tableConfig.lookup?.[key] || th.textContent.trim();
+  //     th.addEventListener("mouseenter", () => (hoverEl.textContent = tip));
+  //     th.addEventListener(
+  //       "mouseleave",
+  //       () => (hoverEl.textContent = defaultText)
+  //     );
+  //   });
+  // }
 
   // 8.3) Cell-hover highlighting (text-danger handling)
   // document.querySelectorAll("table.interactive-table").forEach((table) => {
@@ -540,18 +540,19 @@ document.addEventListener("DOMContentLoaded", () => {
     window.fetchData(tableConfig.sortBy, tableConfig.sortOrder);
   }
   initComponents();
-});
 
-// Tooltip setup for table headers
-if (window.tableConfig && window.tableConfig.lookup) {
-  document.querySelectorAll("table thead th").forEach((th) => {
-    const sortKey = th.getAttribute("data-sort");
-    if (sortKey && window.tableConfig.lookup[sortKey]) {
-      th.setAttribute("title", window.tableConfig.lookup[sortKey]);
-      th.setAttribute("data-bs-toggle", "tooltip");
-    }
-  });
-}
+  // Tooltip setup for table headers
+  if (window.tableConfig && window.tableConfig.lookup) {
+    document.querySelectorAll("table thead th").forEach((th) => {
+      const sortKey = th.getAttribute("data-sort");
+      if (sortKey && window.tableConfig.lookup[sortKey]) {
+        th.setAttribute("title", window.tableConfig.lookup[sortKey]);
+        th.setAttribute("data-bs-toggle", "tooltip");
+      }
+    });
+  }
+  window.initTooltips();
+});
 
 // ──────────── 9) popstate (back/forward) ─────────────
 window.addEventListener("popstate", () => {
