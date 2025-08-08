@@ -303,16 +303,27 @@ td {
 
 .player-image-container {
   position: relative;
-  xoverflow: hidden;  /* Prevent images from spilling outside */
-  height: 180px;      /* You might need to set an explicit height depending on your layout */
+  /* overflow: hidden;  Prevent images from spilling outside */
+  height: 140px;      /* You might need to set an explicit height depending on your layout */
   z-index: 3; /* Make sure this is higher than the table's z-index */
 }
 
 /* All child wrappers should be absolute */
 .player-image-container div {
   position: absolute;
-  top: 20px;
+  /* top: 20px; */
 }
+
+/* .player-image-container div:after {
+  content: "";
+  background-color: white;
+  opacity: 50%;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 50%;
+} */
 
 .table-responsive {
   position: relative; /* Ensure it creates a stacking context */
@@ -321,7 +332,7 @@ td {
 
 /* Overlap effect with different left offsets and stacking orders */
 .player-image-1 {
-  left: 0;
+  left: 0%;
   z-index: 10;
 }
 .player-image-2 {
@@ -344,7 +355,7 @@ td {
 /* Responsive image sizing */
 .overlap-img {
   max-width: 150px; /* or use a percentage */
-  width: auto;
+  /* width: auto; */
 }
 
 
@@ -362,12 +373,12 @@ td {
 /* header */
 #header-logo-gw a {
   border-radius: 5px;
-  padding: 0.5rem;
+  /* padding: 0.5rem; */
 }
 
 #header-logo {
   color: black;
-  font-size: 1rem;
+  /* font-size: 1rem; */
   font-weight: bold;
 }
 #header-gw {
@@ -657,3 +668,16 @@ th.sorted {
   /* optional: add a little shadow so you see the separation */
   box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
 }
+
+
+/* Trying to fix the rubber banding dislodging my NAV */
+html,
+body {
+  overflow-x: clip;
+  /* or: hidden; */
+  overscroll-behavior-x: none;
+  /* Safari/iOS 16+ */
+  background: white;
+  /* match your nav/page bg so bounce never shows white */
+}
+

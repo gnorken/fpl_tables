@@ -3,13 +3,13 @@
 
 {% block page_content %}
 <div class="container-fluid px-3">
-    <div class="table-responsive">
+    <div class="table-responsive"><!-- horizontal scroll -->
         <table id="defence-table" class="interactive-table table table-borderless table-striped text-center text-nowrap">
             <thead class="th-purple text-center">
-                <tr>
+                <tr class="sticky-top">
                     <th id="top-players" class="sticky-col align-middle round-border-top">↑ Top Five
                     </th>
-                    <th colspan="17" class="bg-team round-border-top ps-3 text-start text-lg-center"
+                    <th colspan="17" class="bg-team round-border-top ps-3 text-start text-md-center"
                         title="Players that are or have been in {{ manager.team_name }} this season">
                         Stats for {{ manager.team_name }}
                     </th>
@@ -24,7 +24,7 @@
                     <th data-sort="defcon_team" class="sort-team bg-team">Defcon</th>
                     <th data-sort="clean_sheets_team" class="sort-team bg-team">CS</th>
                     <th data-sort="clean_sheets_per_90_team" class="sort-team bg-team">CS90</th>
-                   
+                    
                     <th data-sort="captained_team" class="sort-team bg-team"><span class="d-lg-none small">Captained</span><span class="d-none d-lg-inline">C</span></th>
                     <th data-sort="dreamteam_count_team" class="sort-team bg-team">DT</th>
                     <th data-sort="bonus_team" class="sort-team bg-team">BP</th>
@@ -79,6 +79,7 @@
 
 {% block scripts %}
 <script>
+
     // 1) Page‐specific lookup for header‐hover tooltips:
     const managerName = {{ manager.team_name| tojson }};
     const lookup = {
@@ -150,7 +151,7 @@
                             style="width: 20px; height: 20px; flex:0 0 auto;"
                             onerror="this.onerror=null;this.src='https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png';"
                         >
-                        <div class="ms-1 text-truncate" style="max-width: 12ch;">${short}</div>
+                        <div class="ms-1 text-truncate" style="max-width: 9ch;">${short}</div>
                     </div>
                     </td>`;
                 }

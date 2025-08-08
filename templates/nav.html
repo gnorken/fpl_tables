@@ -3,20 +3,20 @@
     <nav class="d-flex align-items-center">
         <!-- MANGER INFO SMALL-->
         <div id="header-logo-gw" class="d-none d-md-block">
-            <a href="/" class="d-flex align-items-end text-light text-decoration-none btn-turqouise">
-                <h1 id="header-logo" class="m-0">FPL Tables</h1>
+            <a href="/" class="d-flex align-items-end text-light text-decoration-none btn-turqouise p-2">
+                <h1 id="header-logo" class="m-0 h6">FPL Tables</h1>
                 <span id="header-gw" class="d-none d-sm-block px-2 text-center fst-italic fw-lighter">
                     {% if current_gw is none %}
-                    preseason
+                        Preseason
                     {% else %}
-                    GW{{ current_gw }}
+                        GW{{ current_gw }}
                     {% endif %}
                 </span>
             </a>
         </div>
 
         {% if manager %}
-        <div id="header-team" class="d-flex align-items-center p-1">
+        <!-- <div id="header-team" class="d-flex align-items-end p-1"> -->
             <div id="flag" class="mx-2">
                 {% if manager.national_league_url %}
                 <a href="{{ manager.national_league_url }}">
@@ -33,7 +33,7 @@
                     <h2 class="mb-0">{{ manager.team_name }}</h2>
                 </div>
             </a>
-        </div>
+        <!-- </div> -->
 
 
         <!-- THE DROPDOWN BUTTON -->
