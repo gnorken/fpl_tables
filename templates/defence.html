@@ -2,76 +2,78 @@
 {% block title %}Defence{% endblock %}
 
 {% block page_content %}
-<div class="table-responsive">
-    <table id="defence-table" class="interactive-table table table-borderless table-striped text-center text-nowrap">
-        <thead class="th-purple text-center">
-            <tr>
-                <th id="top-players" class="sticky-col align-middle round-border-top">↑ Top Five
-                </th>
-                <th colspan="17" class="bg-team round-border-top"
-                    title="Players that are or have been in {{ manager.team_name }} this season">
-                    Stats for {{ manager.team_name }}
-                </th>
-                <th colspan="17"  class="round-border-top">Player Totals</th>
-            </tr>
-            <tr class="text-wrap">
-                <th id="entries" class="sticky-col"></th>
-
-                {# --- Team-specific columns (primary) --- #}
-                <th data-sort="starts_team" class="sort-team bg-team"><span class="d-lg-none small">Starts</span><span class="d-none d-lg-inline">S</span></th>
-                <th data-sort="minutes_team" class="sort-team bg-team"><span class="d-lg-none small">Minutes</span><span class="d-none d-lg-inline">M</span></th>
-                <th data-sort="defcon_team" class="sort-team bg-team"><span class="d-lg-none small">Defensive Contributions</span><span class="d-none d-lg-inline">DC</span></th>
-                <th data-sort="clean_sheets_team" class="sort-team bg-team"><span class="d-lg-none small">Cleansheets</span><span class="d-none d-lg-inline">CS</span></th>
-                <th data-sort="clean_sheets_per_90_team" class="sort-team bg-team"><span class="d-lg-none small">Cleansheets Per_90</span><span class="d-none d-lg-inline">CS90</span></th>
-               
-                <th data-sort="captained_team" class="sort-team bg-team"><span class="d-lg-none small">Captained</span><span class="d-none d-lg-inline">C</span></th>
-                <th data-sort="dreamteam_count_team" class="sort-team bg-team"><span class="d-lg-none small">Times in Dreamteam</span><span class="d-none d-lg-inline">DT</span></th>
-                <th data-sort="bonus_team" class="sort-team bg-team"><span class="d-lg-none small">Bonus Points</span><span class="d-none d-lg-inline">BP</span></th>
-                <th data-sort="penalties_saved_team" class="sort-team bg-team"><span class="d-lg-none small">Penalties Saved</span><span class="d-none d-lg-inline">PS</span></th>
-                <th data-sort="starts_benched_team" class="sort-team bg-team"><span class="d-lg-none small">Benched Starts</span><span class="d-none d-lg-inline">bS</span></th>
-                <th data-sort="minutes_benched_team" class="sort-team bg-team"><span class="d-lg-none small">Benched Minutes</span><span class="d-none d-lg-inline">CS90</span></th>
-
-                <!-- Negatives -->
-                <th data-sort="yellow_cards_team" class="sort-team bg-team"><span class="d-lg-none small">Yellow Cards</span><span class="d-none d-lg-inline">YC</span></th>
-                <th data-sort="red_cards_team" class="sort-team bg-team"><span class="d-lg-none small">Red Cards</span><span class="d-none d-lg-inline">RC</span></th>
-                <th data-sort="goals_conceded_team" class="sort-team bg-team"><span class="d-lg-none small">Goals Conceded</span><span class="d-none d-lg-inline">GC</span></th>
-                <th data-sort="expected_goals_conceded_team" class="sort-team bg-team"><span class="d-lg-none small">Expected_Goals Conceded</span><span class="d-none d-lg-inline">xGC</span></th>
-                <th data-sort="own_goals_team" class="sort-team bg-team"><span class="d-lg-none small">Own Goals</span><span class="d-none d-lg-inline">OG</span></th>
-                <th data-sort="penalties_missed_team" class="sort-team bg-team"><span class="d-lg-none small">Penalties Missed</span><span class="d-none d-lg-inline">PM</span></th>
-
-                {# --- Overall columns (secondary) --- #}
-                <th data-sort="starts" class="sort"><span class="d-lg-none small">Starts</span><span class="d-none d-lg-inline">S</span></th>
-                <th data-sort="minutes" class="sort"><span class="d-lg-none small">Minutes</span><span class="d-none d-lg-inline">M</span></th>
-                <th data-sort="defcon" class="sort"><span class="d-lg-none small">Defensive Contributions</span><span class="d-none d-lg-inline">DC</span></th>
-                <th data-sort="clean_sheets" class="sort"><span class="d-lg-none small">Clean Sheets</span><span class="d-none d-lg-inline">CS</span></th>
-                <th data-sort="clean_sheets_per_90" class="sort"><span class="d-lg-none small">Cleansheets Per_90</span><span class="d-none d-lg-inline">CS90</span></th>
-        
-                <th data-sort="dreamteam_count" class="sort"><span class="d-lg-none small">Times in Dreamteam</span><span class="d-none d-lg-inline">DT</span></th>
-                <th data-sort="bonus" class="sort"><span class="d-lg-none small">Bonus Points</span><span class="d-none d-lg-inline">BP</span></th>
-                <th data-sort="penalties_saved" class="sort"><span class="d-lg-none small">Penalties Saved</span><span class="d-none d-lg-inline">PS</span></th>
-                <th data-sort="yellow_cards" class="sort"><span class="d-lg-none small">Yellow Cards</span><span class="d-none d-lg-inline">YC</span></th>
-                <th data-sort="red_cards" class="sort"><span class="d-lg-none small">Red Cards</span><span class="d-none d-lg-inline">RC</span></th>
-                <th data-sort="goals_conceded" class="sort"><span class="d-lg-none small">Goals Conceded</span><span class="d-none d-lg-inline">GC</span></th>
-                <th data-sort="expected_goals_conceded" class="sort"><span class="d-lg-none small">Expected_Goals Conceded</span><span class="d-none d-lg-inline">xGC</span></th>
-                <th data-sort="own_goals" class="sort"><span class="d-lg-none small">Own Goals</span><span class="d-none d-lg-inline">OG</span></th>
-                <th data-sort="penalties_missed" class="sort"><span class="d-lg-none small">Penalties Missed</span><span class="d-none d-lg-inline">PM</span></th>
-            </tr>
-        </thead>
-
-        <tbody id="player-table-body">
-            <!-- rows injected by script.js -->
-        </tbody>
-
-        <tfoot>
-            <tr class="th-purple text-center">
-                <th class="sticky-col round-border-btm">.</th>
-                <th colspan="17" class="bg-team round-border-btm">
-                    <div id="loading" style="display:none;">Loading…</div>
-                </th>
-                <th colspan="17" class="round-border-btm"></th>
-            </tr>
-        </tfoot>
-    </table>
+<div class="container-fluid px-3">
+    <div class="table-responsive">
+        <table id="defence-table" class="interactive-table table table-borderless table-striped text-center text-nowrap">
+            <thead class="th-purple text-center">
+                <tr>
+                    <th id="top-players" class="sticky-col align-middle round-border-top">↑ Top Five
+                    </th>
+                    <th colspan="17" class="bg-team round-border-top ps-3 text-start text-lg-center"
+                        title="Players that are or have been in {{ manager.team_name }} this season">
+                        Stats for {{ manager.team_name }}
+                    </th>
+                    <th colspan="17"  class="round-border-top ps-3 text-start text-lg-center">Player Totals</th>
+                </tr>
+                <tr class="text-wrap">
+                    <th id="entries" class="sticky-col"></th>
+    
+                    {# --- Team-specific columns (primary) --- #}
+                    <th data-sort="starts_team" class="sort-team bg-team">S</th>
+                    <th data-sort="minutes_team" class="sort-team bg-team">M</th>
+                    <th data-sort="defcon_team" class="sort-team bg-team">Defcon</th>
+                    <th data-sort="clean_sheets_team" class="sort-team bg-team">CS</th>
+                    <th data-sort="clean_sheets_per_90_team" class="sort-team bg-team">CS90</th>
+                   
+                    <th data-sort="captained_team" class="sort-team bg-team"><span class="d-lg-none small">Captained</span><span class="d-none d-lg-inline">C</span></th>
+                    <th data-sort="dreamteam_count_team" class="sort-team bg-team">DT</th>
+                    <th data-sort="bonus_team" class="sort-team bg-team">BP</th>
+                    <th data-sort="penalties_saved_team" class="sort-team bg-team">PS</th>
+                    <th data-sort="starts_benched_team" class="sort-team bg-team">bS</th>
+                    <th data-sort="minutes_benched_team" class="sort-team bg-team">CS90</th>
+    
+                    <!-- Negatives -->
+                    <th data-sort="yellow_cards_team" class="sort-team bg-team">YC</th>
+                    <th data-sort="red_cards_team" class="sort-team bg-team">RC</th>
+                    <th data-sort="goals_conceded_team" class="sort-team bg-team">GC</th>
+                    <th data-sort="expected_goals_conceded_team" class="sort-team bg-team">xGC</th>
+                    <th data-sort="own_goals_team" class="sort-team bg-team">OG</th>
+                    <th data-sort="penalties_missed_team" class="sort-team bg-team">PM</th>
+    
+                    {# --- Overall columns (secondary) --- #}
+                    <th data-sort="starts" class="sort">S</th>
+                    <th data-sort="minutes" class="sort">M</th>
+                    <th data-sort="defcon" class="sort">DC</th>
+                    <th data-sort="clean_sheets" class="sort">CS</th>
+                    <th data-sort="clean_sheets_per_90" class="sort">CS90</th>
+            
+                    <th data-sort="dreamteam_count" class="sort">DT</th>
+                    <th data-sort="bonus" class="sort">Bonus</th>
+                    <th data-sort="penalties_saved" class="sort">PS</th>
+                    <th data-sort="yellow_cards" class="sort">YC</th>
+                    <th data-sort="red_cards" class="sort">RC</th>
+                    <th data-sort="goals_conceded" class="sort">GC</th>
+                    <th data-sort="expected_goals_conceded" class="sort">xGC</th>
+                    <th data-sort="own_goals" class="sort">OG</th>
+                    <th data-sort="penalties_missed" class="sort">PM</th>
+                </tr>
+            </thead>
+    
+            <tbody id="player-table-body">
+                <!-- rows injected by script.js -->
+            </tbody>
+    
+            <tfoot>
+                <tr class="th-purple text-center">
+                    <th class="sticky-col round-border-btm">.</th>
+                    <th colspan="17" class="bg-team round-border-btm">
+                        <div id="loading" style="display:none;">Loading…</div>
+                    </th>
+                    <th colspan="17" class="round-border-btm"></th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
 </div>
 {% endblock %}
 
@@ -138,7 +140,7 @@
 
                     <td class="sticky-col vert-border-end vert-border">
                     <div class="d-flex align-items-center">
-                        <div class="text-center vert-border-end" style="width:2ch; flex:0 0 auto;">${idx + 1}</div>
+                        <div class="text-center vert-border-end d-none d-lg-inline" style="width:2ch; flex:0 0 auto;">${idx + 1}</div>
                         <img 
                             src="${badgeUrl}"
                             alt="${p.team_name} badge"
