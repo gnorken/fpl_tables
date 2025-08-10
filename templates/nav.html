@@ -2,7 +2,7 @@
 
     <nav class="d-flex align-items-center">
         <!-- MANGER INFO SMALL-->
-        <div id="header-logo-gw" class="d-none d-md-block">
+        <div id="header-logo-gw" class="d-none d-md-block me-2">
             <a href="/" class="d-flex align-items-end text-light text-decoration-none btn-turqouise p-2">
                 <h1 id="header-logo" class="m-0 h6">FPL Tables</h1>
                 <span id="header-gw" class="d-none d-sm-block px-2 text-center fst-italic fw-lighter">
@@ -17,13 +17,13 @@
 
         {% if manager %}
         <!-- <div id="header-team" class="d-flex align-items-end p-1"> -->
-            <div id="flag" class="mx-2">
+            <div id="flag" class="me-2">
                 {% if manager.national_league_url %}
                 <a href="{{ manager.national_league_url }}">
                     {{ manager.flag_html|safe }}
                 </a>
                 {% else %}
-                {{ manager.flag_html|safe }}
+                    {{ manager.flag_html|safe }}
                 {% endif %}
 
             </div>

@@ -21,7 +21,7 @@ from modules.fetch_mini_leagues import (
 )
 from modules.fetch_teams_table import aggregate_team_stats
 from modules.fetch_all_tables import (
-    build_player_info,
+    build_player_info,  # Now inside get_static_data
     populate_player_info_all_with_live_data,
 )
 from modules.fetch_manager_data import get_manager_data, get_manager_history
@@ -49,8 +49,8 @@ import logging
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(levelname)-8s %(name)s: %(message)s"
-    # format="%(asctime)s %(levelname)-8s %(name)s: %(message)s"
+    # format="%(levelname)-8s %(name)s: %(message)s"
+    format="%(asctime)s %(levelname)-8s %(name)s: %(message)s"
 )
 
 
@@ -108,21 +108,23 @@ def load_manager_into_g():
     """
     1) If the route has a team_id param, use it AND save it to session.
     2) Else if there’s one in session, use that.
-    3) Else clear everything.
+    3) Else clear everything when going back to index.
     """
-    # grab from URL first
     tid = (request.view_args or {}).get("team_id")
+
+    # Check if the request is to the index page and is a GET request
+    if request.endpoint == 'index' and request.method == 'GET':
+        # Clear the session team_id when returning to the index page
+        session.pop("team_id", None)
+        logger.info("Cleared session team_id on GET to index route")
 
     if tid is not None:
         # user is explicitly choosing a manager in the URL
         session["team_id"] = tid
         logger.debug("Session team_id set to %s", tid)
     else:
-        # no param → clear old selection
-        session.pop("team_id", None)
-
-    # now fallback to session if we didn’t get it from URL
-    tid = tid or session.get("team_id")
+        # fallback to session if not in URL
+        tid = session.get("team_id")
 
     if tid:
         try:
@@ -164,23 +166,11 @@ def reset_session():
 @app.before_request
 def initialize_session():
     if 'current_gw' not in session:
-        # first time in this session
-        gw = get_current_gw()
-        logger.info(
-            f"[initialize_session] first init, get_current_gw() → {gw!r}")
-        session['current_gw'] = gw  # even if None, key now exists
+        gw = get_current_gw()              # int or None
+        session['current_gw'] = gw or 0    # 👈 normalise None -> 0
+        logger.info(f"[initialize_session] init gw={session['current_gw']}")
     else:
-        # subsequent requests
-        logger.debug(
-            f"[initialize_session] already set, current_gw={session['current_gw']!r}")
-
-
-@app.before_request
-def initialize_session():
-    if 'current_gw' not in session:
-        gw = get_current_gw()
-        logger.info(f"initialize_session: gw is {gw}")
-        session['current_gw'] = gw  # even if None, key now exists
+        logger.debug(f"[initialize_session] gw={session['current_gw']!r}")
 
 
 # --- Flash preseason ---
@@ -196,8 +186,6 @@ def flash_if_preseason():
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    logger.info("test info at index")
-    logger.debug("test debug at index")
     MAX_USERS = get_max_users()
     current_gw = session.get('current_gw', '__')
     # GET
@@ -455,7 +443,6 @@ def defence(team_id):
 
 @app.route("/<int:team_id>/team/points")
 def points(team_id):
-    flash_if_preseason()
     return render_template("points.html",
                            team_id=team_id,
                            current_gw=session.get('current_gw'),
@@ -471,13 +458,13 @@ def points(team_id):
 
 @app.route("/<int:team_id>/team/teams")
 def teams(team_id):
-    flash("Season hasn't started yet. No data available.", "info")
+
     try:
         # grab current GW from session
         current_gw = session.get('current_gw', '__')
 
         # default sort key + order
-        default_sort_by = 'starts'
+        default_sort_by = 'goals_scored'
         default_order = 'desc'
 
         # allow user to override via query-string
@@ -526,12 +513,12 @@ def mini_leagues(league_id):
     current_gw = session.get("current_gw") or get_current_gw()
     session["current_gw"] = current_gw
 
-    if current_gw is None:
-        flash("Mini-leagues are unavailable before the season starts.", "warning")
-        team_id = session.get("team_id")
-        if team_id:
-            return redirect(url_for("manager", team_id=team_id))
-        return redirect(url_for("index"))
+    # if current_gw is None:
+    #     flash("Mini-leagues are unavailable before the season starts.", "warning")
+    #     team_id = session.get("team_id")
+    #     if team_id:
+    #         return redirect(url_for("manager", team_id=team_id))
+    #     return redirect(url_for("index"))
 
     # 2️⃣ pull sort params out of the query (for JS to re‐use)
     sort_by = request.args.get("sort_by", "rank")
@@ -579,7 +566,7 @@ def get_sorted_players():
         return jsonify({"error": "Missing team_id"}), 400
 
     # 3️⃣ Always fetch static_data (refreshes cache if stale)
-    logger.info("🔄 [get_static_data] CALLED")
+    logger.debug("🔄 [get_static_data] CALLED")
     static_data = get_static_data(current_gw=current_gw)
 
     # 4️⃣ Fetch static player info
@@ -588,12 +575,16 @@ def get_sorted_players():
     cur.execute(
         "SELECT data FROM static_player_info WHERE gameweek = ?", (current_gw,))
     row = cur.fetchone()
+
     if not row:
         conn.close()
-        return jsonify({"error": f"No static_player_info for gameweek {current_gw}"}), 500
+        logger.warning(
+            f"No static_player_info for gw={current_gw}; returning empty list")
+        return jsonify(players=[], players_images=[], manager=g.manager), 200
+
     static_blob = {int(pid): blob for pid, blob in json.loads(row[0]).items()}
 
-    # 5️⃣ Mini-league branch (unchanged, no team_blob)
+    # 5️⃣ Mini-league branch (no team_blob)
     if table == "mini_league":
         cur.execute("""
             SELECT data, last_fetched FROM mini_league_cache 
@@ -641,36 +632,65 @@ def get_sorted_players():
         return jsonify(players=players, manager=g.manager)
 
     # 6️⃣ Load or refresh team_player_info
-    cur.execute("SELECT data, last_fetched FROM team_player_info WHERE team_id=? AND gameweek=?",
+    # Before the SELECT
+    cur.execute("SELECT COUNT(*) FROM team_player_info WHERE team_id=? AND gameweek=?",
                 (team_id, current_gw))
+    count_tg = cur.fetchone()[0]
+    logger.debug(f"Rows for team_id={team_id}, gw={current_gw}: {count_tg}")
+    logger.debug(
+        f"Fetching team_player_info for team_id={team_id}, gw={current_gw}")
+    cur.execute(
+        "SELECT data, last_fetched FROM team_player_info WHERE team_id=? AND gameweek=?",
+        (team_id, current_gw)
+    )
     row = cur.fetchone()
+    logger.debug(f"SELECT returned: {row!r}")
+
     if row:
+        logger.debug(
+            f"Found existing record for team_id={team_id}, gw={current_gw}")
         data, last_fetched = row
+        logger.debug(
+            f"last_fetched={last_fetched}, event_status_last_update={get_event_status_last_update()}")
+
         if datetime.fromisoformat(last_fetched) >= get_event_status_last_update():
+            logger.debug("Using cached team_player_info data from DB")
             team_blob = {int(pid): blob for pid,
                          blob in json.loads(data).items()}
         else:
+            logger.debug("Cached data is stale — refreshing from live data")
             team_blob = populate_player_info_all_with_live_data(
                 team_id, static_blob, static_data)
-            cur.execute("""INSERT OR REPLACE INTO team_player_info 
-                           (team_id, gameweek, data, last_fetched)
-                           VALUES (?, ?, ?, ?)""",
-                        (team_id, current_gw, json.dumps(team_blob),
-                         datetime.now(timezone.utc).isoformat()))
+            logger.debug(f"Refreshed team_blob keys={list(team_blob.keys())}")
+            cur.execute(
+                """INSERT OR REPLACE INTO team_player_info 
+                (team_id, gameweek, data, last_fetched)
+                VALUES (?, ?, ?, ?)""",
+                (team_id, current_gw, json.dumps(team_blob),
+                 datetime.now(timezone.utc).isoformat())
+            )
             conn.commit()
     else:
+        logger.debug(
+            f"No record found — fetching fresh data for team_id={team_id}, gw={current_gw}")
         team_blob = populate_player_info_all_with_live_data(
             team_id, static_blob, static_data)
-        cur.execute("""INSERT OR REPLACE INTO team_player_info 
-                       (team_id, gameweek, data, last_fetched)
-                       VALUES (?, ?, ?, ?)""",
-                    (team_id, current_gw, json.dumps(team_blob),
-                     datetime.now(timezone.utc).isoformat()))
+        logger.debug(f"Fresh team_blob keys={list(team_blob.keys())}")
+        cur.execute(
+            """INSERT OR REPLACE INTO team_player_info 
+            (team_id, gameweek, data, last_fetched)
+            VALUES (?, ?, ?, ?)""",
+            (team_id, current_gw, json.dumps(team_blob),
+             datetime.now(timezone.utc).isoformat())
+        )
         conn.commit()
+
+    logger.debug(f"Final team_blob length={len(team_blob)}")
     conn.close()
 
     # 7️⃣ Merge global totals + team-specific info
     merged_blob = merge_team_and_global(static_blob, team_blob)
+    logger.debug(f"Merged blob length={len(merged_blob)}")
 
     # 8️⃣ Handle special tables
     if table == "talisman":
@@ -705,7 +725,7 @@ def get_sorted_players():
                     break
         return jsonify(players=sorted_stats, players_images=top5, manager=g.manager)
 
-    # 9️⃣ Default tables (offence, defence, points, per90)
+    # 9️⃣ Default tables (offence, defence, points)
     players, images = filter_and_sort_players(
         merged_blob, team_blob, request.args)
     return jsonify(players=players, players_images=images, manager=g.manager)

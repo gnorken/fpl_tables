@@ -71,10 +71,10 @@ def filter_and_sort_players(global_info, team_info, request_args):
     min_minutes = int(request_args.get("min_minutes", 0))
     max_minutes = int(request_args.get(
         "max_minutes", 38 * 90))
-    logger.info(
-        "  → inside filter: min_cost=%s–%s, min_minutes=%s–%s",
-        min_cost, max_cost, min_minutes, max_minutes
-    )
+    # logger.info(
+    #     "  → inside filter: min_cost=%s–%s, min_minutes=%s–%s",
+    #     min_cost, max_cost, min_minutes, max_minutes
+    # )
 
     # Columns to treat specially
     negative_columns = {
@@ -104,17 +104,17 @@ def filter_and_sort_players(global_info, team_info, request_args):
         min_ok = (min_minutes <= p.get("minutes", 0) <= max_minutes)
 
         # log a few sample failures
-        if not min_ok:
-            logger.info(
-                "Dropping %s: minutes=%s not in %s–%s",
-                p.get("web_name"), p.get("minutes"), min_minutes, max_minutes
-            )
+        # if not min_ok:
+        #     logger.info(
+        #         "Dropping %s: minutes=%s not in %s–%s",
+        #         p.get("web_name"), p.get("minutes"), min_minutes, max_minutes
+        #     )
 
         if cost_ok and pos_ok and min_ok:
             kept.append(p)
 
     players = kept
-    logger.info("Kept %d/%d after minutes filter", len(kept), before)
+    # logger.info("Kept %d/%d after minutes filter", len(kept), before)
 
     if sort_by in negative_columns:
         players = [p for p in players if float(p.get(sort_by, 0)) < 0]

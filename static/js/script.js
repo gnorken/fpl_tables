@@ -255,7 +255,7 @@ async function fetchData(sortBy, sortOrder) {
 
     // ← NEW: minutes filter
     const { minMin, maxMin } = getSelectedMinutesRange();
-    console.log("🔍 Minutes slider values:", minMin, maxMin);
+    // console.log("🔍 Minutes slider values:", minMin, maxMin);
     params.min_minutes = minMin;
     params.max_minutes = maxMin;
   }

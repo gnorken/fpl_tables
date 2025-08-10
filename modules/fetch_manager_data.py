@@ -80,7 +80,6 @@ def get_manager_data(team_id):
 
     # 2️⃣ Cache miss or stale → fetch from API
     def try_fetch(url):
-        logger.info("hei på deg")
         resp = requests.get(url, headers=HEADERS, timeout=10)
         logger.debug("REQUEST %s HEADERS: %s", url, resp.request.headers)
         logger.debug("RESPONSE STATUS: %s", resp.status_code)

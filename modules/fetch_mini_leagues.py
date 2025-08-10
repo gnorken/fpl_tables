@@ -1,7 +1,8 @@
+import logging
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-# fetch_mini_leagues.py
+logger = logging.getLogger(__name__)
 
 FPL_API = "https://fantasy.premierleague.com/api"
 SESSION = requests.Session()
@@ -166,8 +167,13 @@ def get_team_mini_league_summary(team_id: int, static_data: dict) -> dict:
     SESSION.headers.update({"User-Agent": "Mozilla/5.0"})
 
     # 1) figure out current GW
-    current_gw = next(e["id"]
-                      for e in static_data["events"] if e.get("is_current"))
+    current_gw = next(
+        (e["id"] for e in static_data["events"] if e.get("is_current")),
+        None
+    )
+
+    if current_gw is None:
+        logger.warning("No current gameweek found in the data.")
 
     # 2) fetch all pick lists in parallel
     pick_urls = {
@@ -176,7 +182,7 @@ def get_team_mini_league_summary(team_id: int, static_data: dict) -> dict:
     }
     picks_map = {}
     with ThreadPoolExecutor(max_workers=8) as ex:
-        future_to_gw = {ex.submit(SESSION.get, url)                        : gw for gw, url in pick_urls.items()}
+        future_to_gw = {ex.submit(SESSION.get, url): gw for gw, url in pick_urls.items()}
         for fut in as_completed(future_to_gw):
             gw = future_to_gw[fut]
             try:
@@ -206,7 +212,7 @@ def get_team_mini_league_summary(team_id: int, static_data: dict) -> dict:
     live_urls = {
         gw: f"{FPL_API}/event/{gw}/live/" for gw in picks_map if picks_map[gw]}
     with ThreadPoolExecutor(max_workers=8) as ex:
-        future_to_gw = {ex.submit(SESSION.get, url)                        : gw for gw, url in live_urls.items()}
+        future_to_gw = {ex.submit(SESSION.get, url): gw for gw, url in live_urls.items()}
         for fut in as_completed(future_to_gw):
             gw = future_to_gw[fut]
             try:

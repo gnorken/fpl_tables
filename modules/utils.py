@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 from flask import flash, request
 import json
@@ -137,69 +138,82 @@ def init_last_event_updated():
 
 
 def get_static_data(force_refresh=False, current_gw=-1):
-    """Fetch bootstrap-static data and sync static_player_info, pruning stale data."""
     logger.debug("🔄 [get_static_data] called")
 
-    # Trigger event-status check + pruning
+    # 0) Event status (also prunes)
     event_updated = get_event_status_last_update()
+    event_updated_iso = event_updated.isoformat()
     logger.debug(f"🕒 [get_static_data] event_updated: {event_updated}")
 
-    static_url = FPL_STATIC_URL
     conn = sqlite3.connect(DATABASE, check_same_thread=False)
-    cursor = conn.cursor()
+    cur = conn.cursor()
 
-    # 1️⃣ Check cache
-    cursor.execute(
-        "SELECT data, last_fetched FROM static_data WHERE key = 'bootstrap'")
-    row = cursor.fetchone()
+    # 1) Load bootstrap-static (cache vs API)
+    cur.execute(
+        "SELECT data, last_fetched FROM static_data WHERE key='bootstrap'")
+    row = cur.fetchone()
 
     if row:
         data_str, timestamp = row
         cached_time = datetime.fromisoformat(timestamp)
-        logger.debug(f"📦 [get_static_data] cached_time: {cached_time}")
-
-        # Use event-status freshness check only
         if not force_refresh and cached_time >= event_updated:
             logger.debug(
-                "✅ [get_static_data] Cache is fresh, returning cached data")
-            conn.close()
-            return json.loads(data_str)
+                "✅ [get_static_data] Cache is fresh — using cached bootstrap-static")
+            static_data = json.loads(data_str)
         else:
             logger.debug(
-                "⚠️ [get_static_data] Cache is stale, fetching fresh data")
-
+                "⚠️ [get_static_data] Cache stale — fetching bootstrap-static")
+            resp = requests.get(FPL_STATIC_URL, headers=headers)
+            resp.raise_for_status()
+            static_data = resp.json()
+            timestamp = datetime.now(timezone.utc).isoformat()
+            cur.execute(
+                "REPLACE INTO static_data (key, data, last_fetched) VALUES (?, ?, ?)",
+                ("bootstrap", json.dumps(static_data), timestamp)
+            )
     else:
         logger.debug(
-            "❌ [get_static_data] No cache row found, fetching fresh data")
+            "❌ [get_static_data] No cache row — fetching bootstrap-static")
+        resp = requests.get(FPL_STATIC_URL, headers=headers)
+        resp.raise_for_status()
+        static_data = resp.json()
+        timestamp = datetime.now(timezone.utc).isoformat()
+        cur.execute(
+            "REPLACE INTO static_data (key, data, last_fetched) VALUES (?, ?, ?)",
+            ("bootstrap", json.dumps(static_data), timestamp)
+        )
 
-    # 2️⃣ Fetch fresh data from FPL API
-    logger.debug("🌐 [get_static_data] Fetching bootstrap-static from API...")
-    response = requests.get(static_url, headers=headers)
-    response.raise_for_status()
-    static_data = response.json()
+    # 2) Decide the single key we’ll use (-1 in preseason)
+    gw_key = current_gw if (isinstance(current_gw, int)
+                            and current_gw >= 1) else -1
 
-    timestamp = datetime.now(timezone.utc).isoformat()
-
-    # 3️⃣ Update static_data table
-    cursor.execute(
-        "REPLACE INTO static_data (key, data, last_fetched) VALUES (?, ?, ?)",
-        ("bootstrap", json.dumps(static_data), timestamp)
-    )
-    logger.debug("💾 [get_static_data] Updated static_data table")
-
-    # 4️⃣ Rebuild static_player_info (keep only 1 row)
+    # 3) Build static_blob
     static_blob = build_player_info(static_data)
-    cursor.execute("""
+
+    # 4) Only aggregate global points once the season starts
+    if gw_key >= 1:
+        fill_global_points_from_explain(
+            static_blob=static_blob,
+            current_gw=gw_key,
+            event_updated_iso=event_updated_iso,
+            db_path=DATABASE
+        )
+    else:
+        logger.debug(
+            "[get_static_data] Preseason → skipping global explain aggregation")
+
+    # 5) Snapshot for routes to read
+    cur.execute("""
         INSERT OR REPLACE INTO static_player_info (gameweek, data, last_fetched)
         VALUES (?, ?, ?)
-    """, (current_gw, json.dumps(static_blob), timestamp))
+    """, (gw_key, json.dumps(static_blob), timestamp))
     logger.debug("💾 [get_static_data] Updated static_player_info table")
 
     conn.commit()
     conn.close()
-
     logger.debug("🔚 [get_static_data] finished")
     return static_data
+
 
 # Check if I have the latest data
 
@@ -488,3 +502,103 @@ def performance_emoji(percentile):
         return "🤩"
     else:
         return "🤯"
+
+
+EXPLAIN_TO_FIELD = {
+    "minutes": "minutes_points",
+    "goals_scored": "goals_points",
+    "assists": "assists_points",
+    "clean_sheets": "clean_sheets_points",
+    "saves": "save_points",
+    "own_goals": "own_goals_points",
+    "goals_conceded": "goals_conceded_points",
+    "penalties_saved": "penalties_saved_points",
+    "penalties_missed": "penalties_missed_points",
+    "yellow_cards": "yellow_cards_points",
+    "red_cards": "red_cards_points",
+}
+
+
+def apply_points_payload(static_blob: dict, payload: dict) -> None:
+    # zero first (defensive)
+    for pi in static_blob.values():
+        for fld in EXPLAIN_TO_FIELD.values():
+            pi[fld] = 0
+    for pid_str, pts in payload.items():
+        pid = int(pid_str)
+        if pid in static_blob:
+            for fld, val in pts.items():
+                static_blob[pid][fld] = int(val)
+
+# New function to add points per category for points table for player_info_static
+
+
+def fill_global_points_from_explain(static_blob: dict, current_gw: int, event_updated_iso: str, db_path: str) -> None:
+    if not current_gw or current_gw < 1:
+        logger.debug("[global_points] no current_gw yet → skip")
+        # leaves *_points = 0; fine in preseason
+        return
+
+    conn = sqlite3.connect(db_path, check_same_thread=False)
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS global_points_cache (
+            event_updated TEXT PRIMARY KEY,
+            data         TEXT NOT NULL,
+            last_fetched TEXT NOT NULL
+        )
+    """)
+    cur.execute(
+        "SELECT data FROM global_points_cache WHERE event_updated = ?", (event_updated_iso,))
+    row = cur.fetchone()
+    if row:
+        logger.debug("[global_points] cache hit")
+        apply_points_payload(static_blob, json.loads(row[0]))
+        conn.close()
+        return
+
+    logger.debug("[global_points] cache miss → fetching explain for all GWs")
+    session = requests.Session()
+    session.headers.update(
+        {"User-Agent": "Mozilla/5.0", "Accept-Encoding": "gzip"})
+
+    urls = {
+        gw: f"https://fantasy.premierleague.com/api/event/{gw}/live/" for gw in range(1, current_gw + 1)}
+    payload = {}  # pid -> { field -> points }
+
+    def ensure(pid: int):
+        if pid not in payload:
+            payload[pid] = {v: 0 for v in EXPLAIN_TO_FIELD.values()}
+        return payload[pid]
+
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        futs = {ex.submit(session.get, url): gw for gw, url in urls.items()}
+        for fut in as_completed(futs):
+            gw = futs[fut]
+            try:
+                resp = fut.result()
+                data = resp.json()
+            except Exception as e:
+                logger.warning(f"[global_points] GW {gw} fetch failed: {e}")
+                continue
+
+            for el in data.get("elements", []):
+                pid = el.get("id")
+                if pid is None:
+                    continue
+                tgt = ensure(pid)
+                for blk in el.get("explain", []):
+                    for s in blk.get("stats", []):
+                        dst = EXPLAIN_TO_FIELD.get(s.get("identifier"))
+                        if dst:
+                            tgt[dst] += int(s.get("points", 0))
+
+    cur.execute(
+        "INSERT OR REPLACE INTO global_points_cache (event_updated, data, last_fetched) VALUES (?, ?, ?)",
+        (event_updated_iso, json.dumps(payload),
+         datetime.now(timezone.utc).isoformat())
+    )
+    conn.commit()
+    conn.close()
+
+    apply_points_payload(static_blob, payload)

@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 def build_player_info(static_data):
+    logger.debug("[build_player_info] called")
     teams = static_data.get("teams", [])
     players = static_data.get("elements", [])
 
@@ -30,9 +31,12 @@ def build_player_info(static_data):
             # Season stats (so far)
             "assists": p["assists"],
             "assists_performance": round(p["assists"] - float(p.get("expected_assists", 0)), 2),
+            "bonus": p["bonus"],
             "bps": p["bps"],
             "clean_sheets": p["clean_sheets"],
             "clean_sheets_per_90": p["clean_sheets_per_90"],
+            "defensive_contribution": p["defensive_contribution"],
+            "defensive_contribution_per_90": p["defensive_contribution_per_90"],
             "dreamteam_count": p["dreamteam_count"],
             "expected_assists": round(float(p.get("expected_assists", 0)), 2),
             "expected_goal_involvements": round(float(p.get("expected_goal_involvements", 0)), 2),
@@ -57,18 +61,19 @@ def build_player_info(static_data):
             "yellow_cards": p["yellow_cards"],
 
             # Global points breakdown (populate later) Need to convert to points
+            # 0-59 minutes. 1 point. 60+ 2 points.
             "minutes_points": 0,
-            "clean_sheets_points": 0,
-            "assists_points": 0,
-            "goals_points": 0,
-            "bonus_points": 0,
-            "save_points": 0,
-            "own_goals_points": 0,
-            "goals_conceded_points": 0,
-            "penalties_saved_points": 0,
-            "penalties_missed_points": 0,
-            "yellow_cards_points": p["yellow_cards"] * 2,
-            "red_cards_points": 0,
+            "defensive_contribution_points": 0,  # 2 points
+            "clean_sheets_points": 0,       # 4 points for GK and Def, 1 point for Mid
+            "assists_points": 0,            # 3 points
+            "goals_points": 0,              # 10, 6, 5, 4 points depending on element type
+            "save_points": 0,               # 2 points for every three saves in a game
+            "own_goals_points": 0,          # -2 points
+            "goals_conceded_points": 0,     # -1 point every other goal conceded within a game
+            "penalties_saved_points": 0,    # 5 points
+            "penalties_missed_points": 0,   # -2 points
+            "yellow_cards_points": 0,       # -1 point
+            "red_cards_points": 0,          # -2 points
 
             # Team-specific aggregates (populate later)
             "assists_performance_team": 0,
@@ -77,7 +82,7 @@ def build_player_info(static_data):
             "assists_points_team": 0,
             "assists_team": 0,
             "benched_points_team": 0,
-            "bonus_points_team": 0,
+            "bonus_team": 0,
             "bps_team": 0,
             "clean_sheets_team": 0,
             "clean_sheets_per_90_team": 0,
@@ -85,6 +90,9 @@ def build_player_info(static_data):
             "captained_points_team": 0,
             "captained_team": 0,
             "dreamteam_count_team": 0,
+            # Need to wire up in get all player data function
+            "defensive_contribution_team": 0,
+            "defensive_contribution_per_90_team": 0,
             "expected_assists_team": 0,
             "expected_goals_team": 0,
             "expected_goal_involvements_team": 0,
@@ -115,7 +123,7 @@ def build_player_info(static_data):
             "starts_team": 0,
             "total_points_team": 0,
             "yellow_cards_team": 0,
-            "yellow_cards_points_team": 999,
+            "yellow_cards_points_team": 0,
             "red_cards_team": 0,
             "red_cards_points_team": 0,
         }
@@ -127,6 +135,7 @@ logger = logging.getLogger(__name__)
 
 
 def populate_player_info_all_with_live_data(team_id, player_info, static_data):
+    logger.debug("[populate_player_info_all_with_live_data] called")
     """
     Build team_player_info for a specific team_id:
     - Only players that were in the user's picks at least once.
@@ -220,40 +229,43 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
                 pi['goals_benched_team'] += stats.get('goals_scored', 0)
                 pi['assists_benched_team'] += stats.get('assists', 0)
                 pi['starts_benched_team'] += stats.get('starts', 0)
-                pi['minutes_benched_team'] += stats.get('minutes', 0)
+                # pi['minutes_benched_team'] += stats.get('minutes', 0)
 
             # Starter (or captain/triple) stats
             if mult > 0:
                 assists = stats.get('assists', 0)
+                bonus = stats.get('bonus', 0)
                 bps = stats.get('bps', 0)
                 cs = stats.get('clean_sheets', 0)
                 cs90 = stats.get('clean_sheets_per_90', 0)
-                ic = stats.get('in_dreamteam', False)
                 goals = stats.get('goals_scored', 0)
+                ic = stats.get('in_dreamteam', False)
                 ppg = stats.get('points_per_game', 0)
                 rc = stats.get('red_cards', 0)
                 xg = float(stats.get('expected_goals', 0))
-                xgc = float(stats.get('expected_goals_conceded:', 0))
-                xg90 = float(stats.get('expected_goals_per_90:', 0))
+                xgc = float(stats.get('expected_goals_conceded', 0))
+                xg90 = float(stats.get('expected_goals_per_90', 0))
                 xa = float(stats.get('expected_assists', 0))
                 yc = stats.get('yellow_cards', 0)
 
                 pi['assists_team'] += assists
-                pi['expected_assists_team'] += xa
-                pi['expected_goals_team'] += xg
-                pi['expected_goals_conceded_team'] += xgc
+                pi['bonus_team'] += bonus
                 pi['bps_team'] += bps
                 pi['clean_sheets_team'] += cs
                 pi['clean_sheets_per_90_team'] += cs90
+                pi['expected_assists_team'] += xa
+                pi['expected_goals_team'] += xg
+                pi['expected_goals_conceded_team'] += xgc
                 pi['expected_goal_involvements_team'] += xg + xa
                 pi['expected_goals_per_90_team'] += xg90
                 pi['goals_scored_team'] += goals
                 pi['goals_assists_team'] += goals + assists
                 pi['minutes_team'] += stats.get('minutes', 0)
-                pi['points_per_game'] += ppg
+                pi['points_per_game'] = ppg  # Get the latest one. No summing
                 pi['red_cards_team'] += rc
                 pi['starts_team'] += stats.get('starts', 0)
                 pi['yellow_cards_team'] += yc
+
                 if ic:
                     pi['dreamteam_count_team'] += 1
 
