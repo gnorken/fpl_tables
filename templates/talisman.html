@@ -3,26 +3,31 @@
 
 {% block page_content %}
 <div class="table-responsive">
-    <table id="talisman-table" class="interactive-table table table-borderless table-striped text-nowrap">
-        <thead class="th-purple text-center">
+    <table id="talisman-table" class="interactive-table table table-hover table-borderless table-striped text-nowrap text-center">
+        <thead class="th-purple">
             <tr>
                 <th id="top-players" class="sticky-col align-middle round-border-top">↑ Top Five
                 </th>
-                <th colspan="22" class="round-border-top text-start text-lg-center ps-3">Talisman - Only one player per team</th>
+                <th colspan="27" class="round-border-top text-start text-lg-center ps-3">Talisman - Only one player per team</th>
             </tr>
             <tr>
                 <th id="entries" class="sticky-col"></th>
 
                 {# --- Overall columns (secondary) --- #}
+                <th data-sort="selected_by_percent" class="sort">%</th>
+                <th data-sort="now_cost" class="sort">£</th>
                 <th data-sort="total_points" class="sort">P</th>
                 <th data-sort="starts" class="sort">S</th>
                 <th data-sort="minutes" class="sort">M</th>
-                <th data-sort="defcon" class="sort">DC</th>
+                <th data-sort="defensive_contribution" class="sort">DC</th>
+                <th data-sort="defensive_contribution_per_90" class="sort">DC90</th>
                 <th data-sort="clean_sheets" class="sort">CS</th>
+                <th data-sort="clean_sheets_per_90" class="sort">CS90</th>
 
                 <th data-sort="goals_scored" class="sort">G</th>
                 <th data-sort="expected_goals" class="sort">xG</th>
                 <th data-sort="goals_performance" class="sort">+/−</th>
+                <th data-sort="expected_goals_per_90" class="sort">xG90</th>
                 <th data-sort="assists" class="sort">A</th>
                 <th data-sort="expected_assists" class="sort">xA</th>
                 <th data-sort="assists_performance" class="sort">+/−</th>
@@ -49,7 +54,7 @@
         <tfoot>
             <tr class="th-purple text-center">
                 <th class="sticky-col round-border-btm">.</th>
-                <th colspan="22" class="round-border-btm">
+                <th colspan="27" class="round-border-btm">
                     <div id="loading" style="display:none;">Loading…</div>
                 </th>
             </tr>
@@ -64,11 +69,15 @@
     const managerName = {{ manager.team_name | tojson }};
     const lookup = {
 
+        "selected_by_percent": "Teams selected by",
+        "now_cost": "Current price",
         "total_points": "Total points",
         "starts": "Total starts",
         "minutes": "Total minutes",
-        "defcon": "Total defensive contributions",
+        "defensive_contribution": "Total defensive contributions",
+        "defensive_contribution_per_90": "Defensive contributions per 90",
         "clean_sheets": "Total clean sheets",
+        "clean_sheets_per_90": "Clean sheets per 90",
         "dreamteam_count": "Total Dreamteam appearances",
         "bps": "Total BPS",
         "penalties_saved": "Total penalties saved",
@@ -83,6 +92,7 @@
 
         "goals_scored": `Total goals scored`,
         "expected_goals": `Total expected goals`,
+        "expected_goals_per_90": `Expected goals per 90`,
         "goals_performance": `Goals scored vs expected goals`,
         "assists": `Total assists`,
         "expected_assists": `Expected assists`,
@@ -135,21 +145,31 @@
 
 
             // columns:
-            { key: "total_points", className: "sort vert-border", dataColumn: "starts" },
+            { key: "selected_by_percent", className: "sort", dataColumn: "selected_by_percent", formatter: v => `${parseFloat(v).toFixed(0)}%` } ,
+            { key: "now_cost", className: "sort vert-border", dataColumn: "now_cost", formatter: v => `£${(v/10).toFixed(1)}m`},
+            { key: "total_points", className: "sort vert-border", dataColumn: "total_points" },
+
             { key: "starts", className: "sort vert-border", dataColumn: "starts" },
             { key: "minutes", className: "sort", dataColumn: "minutes" },
-            { key: "defcon", className: "sort", dataColumn: "defcon" },
+
+            { key: "defensive_contribution", className: "sort vert-border", dataColumn: "defcon" },
+            { key: "defensive_contribution_per_90", className: "sort-team", dataColumn: "defcon_90" },
             { key: "clean_sheets", className: "sort", dataColumn: "clean_sheets" },
+            { key: "clean_sheets_per_90", className: "sort", dataColumn: "clean_sheets_per_90", formatter: v => (v).toFixed(2) },
 
             { key: 'goals_scored', dataColumn: "goals_scored ", className: 'sort vert-border' },
             { key: 'expected_goals', dataColumn: "expected_goals", className: 'sort', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
             { key: 'goals_performance', dataColumn: "goals_performance", className: 'sort', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'expected_goals_per_90', dataColumn: "expected_goals_per_90", className: 'sort', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            
             { key: 'assists', dataColumn: "assists", className: 'sort vert-border' },
             { key: 'expected_assists', dataColumn: "expected_assists", className: 'sort', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
             { key: 'assists_performance', dataColumn: "assists_performance", className: 'sort', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            
             { key: 'goals_assists', dataColumn: "goals_assists", className: 'sort vert-border' },
             { key: 'expected_goal_involvements', dataColumn: "expected_goal_involvements", className: 'sort', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
             { key: 'goals_assists_performance', dataColumn: "goals_assists_performance", className: 'sort vert-border-end', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+
             
             { key: "dreamteam_count", className: "sort", dataColumn: "dreamteam_count" },
             { key: "bps", className: "sort", dataColumn: "bps" },

@@ -4,11 +4,12 @@
 {% block page_content %}
 <div class="container-fluid px-3">
     <div class="table-responsive"><!-- horizontal scroll -->
-        <table id="defence-table" class="interactive-table table table-borderless table-striped text-center text-nowrap">
+        <table id="defence-table" class="interactive-table table  table-borderless table-striped text-center text-nowrap">
             <thead class="th-purple text-center">
                 <tr class="sticky-top">
                     <th id="top-players" class="sticky-col align-middle round-border-top">↑ Top Five
                     </th>
+                    <th colspan="2" class="round-border-top">Basic</th>
                     <th colspan="18" class="bg-team round-border-top ps-3 text-start text-md-center"
                         title="Players that are or have been in {{ manager.team_name }} this season">
                         Stats for {{ manager.team_name }}
@@ -17,6 +18,8 @@
                 </tr>
                 <tr class="text-wrap">
                     <th id="entries" class="sticky-col"></th>
+                    <th data-sort="selected_by_percent" class="sort">%</th>
+                    <th data-sort="now_cost" class="sort">£</th>
     
                     {# --- Team-specific columns (primary) --- #}
                     <th data-sort="starts_team" class="sort-team bg-team">S</th>
@@ -68,6 +71,7 @@
             <tfoot>
                 <tr class="th-purple text-center">
                     <th class="sticky-col round-border-btm">.</th>
+                    <th colspan="2" class="th-purple round-border-btm">
                     <th colspan="18" class="bg-team round-border-btm">
                         <div id="loading" style="display:none;">Loading…</div>
                     </th>
@@ -85,6 +89,9 @@
     // 1) Page‐specific lookup for header‐hover tooltips:
     const managerName = {{ manager.team_name| tojson }};
     const lookup = {
+        "selected_by_percent": "Teams selected by",
+        "now_cost": "Current price",
+
         "starts_team": `Starts for ${managerName}`,
         "minutes_team": `Minutes played for ${managerName}`,
         "defensive_contribution_team": `Defensive contributions for ${managerName}`,
@@ -125,6 +132,13 @@
         "overall-data": "Overall stats"
     };
 
+    const positionMap = {
+            1: "GK",
+            2: "DEF",
+            3: "MID",
+            4: "FWD"
+        };
+
     // 2) Now inject the shared tableConfig for `script.js` to pick up:
     window.tableConfig = {
         table: "defence",
@@ -142,27 +156,31 @@
                 const badgeUrl = `https://resources.premierleague.com/premierleague/badges/100/t${p.team_code}@x2.png`;
 
                 return `
-
                     <td class="sticky-col vert-border-end vert-border">
-                    <div class="d-flex align-items-center">
-                        <div class="text-center vert-border-end d-none d-lg-inline" style="width:2ch; flex:0 0 auto;">${idx + 1}</div>
-                        <img 
-                            src="${badgeUrl}"
-                            alt="${p.team_name} badge"
-                            class="img-fluid overlap-badge ms-1"
-                            data-bs-toggle="tooltip"
-                            title="${p.team_name}"
-                            style="width: 20px; height: 20px; flex:0 0 auto;"
-                            onerror="this.onerror=null;this.src='https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png';"
-                        >
-                        <div class="ms-1 text-truncate" style="max-width: 11ch;">${short}</div>
-                    </div>
+                        <div class="d-flex align-items-center">
+                            <div class="text-center vert-border-end d-none d-lg-inline" flex:0 0 auto;">${idx + 1}</div> 
+                            <img 
+                                src="${badgeUrl}"
+                                alt="${p.team_name} badge"
+                                class="img-fluid overlap-badge ms-1"
+                                data-bs-toggle="tooltip"
+                                title="${p.team_name}"
+                                style="width: 20px; height: 20px; flex:0 0 auto;"
+                                onerror="this.onerror=null;this.src='https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png';"
+                            >
+                            <div class="d-flex align-items-end">
+                                <div class="ms-1 text-truncate" style="max-width: 11ch;">${short}</div>
+                                <div class="small text-muted d-none d-lg-inline">&nbsp;${positionMap[p.element_type] || p.element_type}</div>
+                            </div>
+                        </div>
                     </td>`;
                 }
             },
 
             // 18 team‐specific (primary) columns:
-            { key: "starts_team", className: "sort-team", sortLevel: "primary", dataColumn: "starts" },
+            { key: "selected_by_percent", className: "sort", dataColumn: "selected_by_percent", formatter: v => `${parseFloat(v).toFixed(0)}%` },
+            { key: "now_cost", className: "sort", dataColumn: "now_cost", formatter: v => `£${(v / 10).toFixed(1)}m` },
+            { key: "starts_team", className: "sort-team vert-border", sortLevel: "primary", dataColumn: "starts" },
             { key: "minutes_team", className: "sort-team", sortLevel: "primary", dataColumn: "minutes" },
             { key: "defensive_contribution_team", className: "sort-team", sortLevel: "primary", dataColumn: "defcon" },
             { key: "defensive_contribution_per_90_team", className: "sort-team", sortLevel: "primary", dataColumn: "defcon_90" },

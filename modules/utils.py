@@ -191,16 +191,16 @@ def get_static_data(force_refresh=False, current_gw=-1):
     static_blob = build_player_info(static_data)
 
     # 4) Only aggregate global points once the season starts
-    if gw_key >= 1:
+    if current_gw == -1:
+        logger.info("Preseason (gw=-1) → skipping team_player_info population")
+        team_blob = {}
+    else:
         fill_global_points_from_explain(
             static_blob=static_blob,
             current_gw=gw_key,
             event_updated_iso=event_updated_iso,
             db_path=DATABASE
         )
-    else:
-        logger.debug(
-            "[get_static_data] Preseason → skipping global explain aggregation")
 
     # 5) Snapshot for routes to read
     cur.execute("""

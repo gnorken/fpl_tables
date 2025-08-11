@@ -681,3 +681,8 @@ body {
   /* match your nav/page bg so bounce never shows white */
 }
 
+
+.table-hover>tbody>tr:hover {
+  --bs-table-hover-bg: var(--bs-warning-bg-subtle);
+  /* soft yellow */
+}

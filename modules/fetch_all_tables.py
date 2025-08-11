@@ -27,6 +27,7 @@ def build_player_info(static_data):
             "web_name": p["web_name"],
             "element_type": p["element_type"],
             "now_cost": p["now_cost"],
+            "selected_by_percent": p["selected_by_percent"],
 
             # Season stats (so far)
             "assists": p["assists"],
