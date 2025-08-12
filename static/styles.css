@@ -26,7 +26,9 @@ a:active {
 .text-color-light {
   color: var(--text-light);
 }
-
+.text-purple {
+  color: var(--purple) !important;
+}
 .btn-turqouise {
   background-color: var(--turqouise);
   color: var(--text-dark);
