@@ -3,7 +3,7 @@ from flask import session
 
 logger = logging.getLogger(__name__)
 
-# Merging static totals from player_info with team-specific data from team_player_info SQL table
+# Merging static totals from player_info with team-specific data from team_player_info SQL tables
 
 
 def merge_team_and_global(global_info, team_info):
@@ -41,24 +41,28 @@ def merge_team_and_global(global_info, team_info):
 
 def filter_and_sort_players(global_info, team_info, request_args):
     """
-    Merge global and team-specific player info, then filter and sort players.
+    Filter and sort players, merging global and team-specific info only for tables that need it.
     """
-    # 1️⃣ Merge team_info with global_info (ensures missing players get zeros)
-    player_info = merge_team_and_global(global_info, team_info)
-
-    # 2️⃣ Determine which table is being sorted
+    # Determine table type
     table = request_args.get("table", "goals_scored_team")
 
-    # 3️⃣ Set default sort_by based on the table
+    # Conditionally merge based on table
+    if table in ["defence", "offence", "points"]:
+        player_info = merge_team_and_global(global_info, team_info)
+    else:
+        # For talisman and teams, use global_info directly (no team-specific data needed)
+        player_info = global_info
+
+    # Set default sort_by based on the table
     default_sort_by = {
         "defence": "starts_team",
         "offence": "goals_scored_team",
         "points": "minutes_points_team",
-        "am": "total_points",
         "talisman": "total_points",
+        "teams": "total_points"  # Adjust if teams has a different default
     }.get(table, "goals_scored_team")
 
-    # 4️⃣ Get sorting and filter parameters
+    # Get sorting and filter parameters
     sort_by = request_args.get("sort_by", default_sort_by)
     order = request_args.get("order", "desc")
     selected_positions = request_args.get("selected_positions", "")
@@ -67,14 +71,9 @@ def filter_and_sort_players(global_info, team_info, request_args):
     min_cost = float(request_args.get("min_cost", 0)) * 10
     max_cost = float(request_args.get("max_cost", 20)) * 10
 
-    # 1️⃣ Minutes filter
+    # Minutes filter
     min_minutes = int(request_args.get("min_minutes", 0))
-    max_minutes = int(request_args.get(
-        "max_minutes", 38 * 90))
-    # logger.info(
-    #     "  → inside filter: min_cost=%s–%s, min_minutes=%s–%s",
-    #     min_cost, max_cost, min_minutes, max_minutes
-    # )
+    max_minutes = int(request_args.get("max_minutes", 38 * 90))
 
     # Columns to treat specially
     negative_columns = {
@@ -91,31 +90,21 @@ def filter_and_sort_players(global_info, team_info, request_args):
         "starts_team", "total_points_team"
     }
 
-    # 5️⃣ Apply filters
-    before = len(player_info)
-    kept, dropped = [], []
-
+    # Apply filters
+    kept = []
     for p in player_info.values():
-        # existing tests
+        # Cost, positions, and minutes filters
         cost_ok = (min_cost <= p["now_cost"] <= max_cost)
-        pos_ok = (not selected_positions
-                  or str(p["element_type"]) in selected_positions)
-        # new minutes test
+        pos_ok = (not selected_positions or str(
+            p["element_type"]) in selected_positions)
         min_ok = (min_minutes <= p.get("minutes", 0) <= max_minutes)
-
-        # log a few sample failures
-        # if not min_ok:
-        #     logger.info(
-        #         "Dropping %s: minutes=%s not in %s–%s",
-        #         p.get("web_name"), p.get("minutes"), min_minutes, max_minutes
-        #     )
 
         if cost_ok and pos_ok and min_ok:
             kept.append(p)
 
     players = kept
-    # logger.info("Kept %d/%d after minutes filter", len(kept), before)
 
+    # Filter based on sort_by column
     if sort_by in negative_columns:
         players = [p for p in players if float(p.get(sort_by, 0)) < 0]
     elif sort_by in positive_and_negative_columns:
@@ -123,7 +112,7 @@ def filter_and_sort_players(global_info, team_info, request_args):
     else:
         players = [p for p in players if float(p.get(sort_by, 0)) > 0]
 
-    # 6️⃣ Sort
+    # Sort
     reverse_order = order == "desc"
     if sort_by in negative_columns:
         players = sorted(
@@ -132,14 +121,21 @@ def filter_and_sort_players(global_info, team_info, request_args):
         players = sorted(players, key=lambda x: float(
             x[sort_by]), reverse=reverse_order)
 
-    # 7️⃣ Return players and top 5 images
+    # Cap at 100 and set is_truncated for relevant tables
+    is_truncated = False
+    if table in ["defence", "offence", "points"]:
+        is_truncated = len(players) > 100
+        players = players[:100]
+
+    # Return players and top 5 images
     players_images = [{"photo": player["photo"], "team_code": player["team_code"]}
                       for player in players[:5]]
 
-    return players, players_images
+    return players, players_images, is_truncated
+
+# Sort for simple tables. I use it for graph/tables combo on manager page
 
 
-# Sort for simple tables. I use it for graph/tabls combo on manager page
 def sort_table_data(data, sort_by, order, allowed_fields):
     if sort_by in allowed_fields:
         reverse = (order.lower() == 'desc')

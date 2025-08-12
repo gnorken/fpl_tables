@@ -262,11 +262,20 @@ async function fetchData(sortBy, sortOrder) {
 
   const qs = new URLSearchParams(params);
   const resp = await fetch(`${cfg.url}&${qs}`);
-  const { players, players_images, manager } = await resp.json();
+  const { players, players_images, is_truncated, manager } = await resp.json();
 
+  // Update #entries element to show "100+ entries" when truncated
+  const table = cfg.table; // e.g., "defence", "offence", "points", "talisman", "teams", "mini_league"
   document.getElementById("entries").textContent =
-    players.length === 1 ? "1 entry" : `${players.length} entries`;
-  updateTopPlayersText(players.length);
+    players.length === 1
+      ? "1 entry"
+      : ["teams", "talisman"].includes(table) || !is_truncated
+      ? `${players.length} entries`
+      : players.length === 100
+      ? "100+ entries"
+      : `${players.length} entries`;
+
+  updateTopPlayersText(players.length, is_truncated, table);
 
   tbody.innerHTML = "";
   players.forEach((p, idx) => {
@@ -313,6 +322,39 @@ async function fetchData(sortBy, sortOrder) {
   if (loading) loading.style.display = "none";
   tbody.style.display = "";
 }
+
+// Updated updateTopPlayersText to handle "100+ top players"
+function updateTopPlayersText(count, isTruncated, table) {
+  const topPlayersElement = document.getElementById("top-players");
+  if (topPlayersElement) {
+    topPlayersElement.textContent =
+      count === 1
+        ? "1 top player"
+        : ["teams", "talisman"].includes(table) || !isTruncated
+        ? `${count} top players`
+        : count === 100
+        ? "100+ top players"
+        : `${count} top players`;
+  }
+}
+
+window.fetchData = fetchData;
+
+// Updated updateTopPlayersText to handle "100+ top players"
+function updateTopPlayersText(count, isTruncated, table) {
+  const topPlayersElement = document.getElementById("top-players");
+  if (topPlayersElement) {
+    topPlayersElement.textContent =
+      count === 1
+        ? "1 top player"
+        : ["teams", "talisman"].includes(table) || !isTruncated
+        ? `${count} top players`
+        : count === 100
+        ? "100+ top players"
+        : `${count} top players`;
+  }
+}
+
 window.fetchData = fetchData;
 
 // ─────────────── 8) DOMContentLoaded ─────────────────

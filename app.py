@@ -632,7 +632,6 @@ def get_sorted_players():
         return jsonify(players=players, manager=g.manager)
 
     # 6️⃣ Load or refresh team_player_info
-    # Before the SELECT
     cur.execute("SELECT COUNT(*) FROM team_player_info WHERE team_id=? AND gameweek=?",
                 (team_id, current_gw))
     count_tg = cur.fetchone()[0]
@@ -688,15 +687,11 @@ def get_sorted_players():
     logger.debug(f"Final team_blob length={len(team_blob)}")
     conn.close()
 
-    # 7️⃣ Merge global totals + team-specific info
-    merged_blob = merge_team_and_global(static_blob, team_blob)
-    logger.debug(f"Merged blob length={len(merged_blob)}")
-
     # 8️⃣ Handle special tables
     if table == "talisman":
         # filter and sort merges first and second argument. But no team_blob required for this route...
-        #
-        players, _ = filter_and_sort_players(static_blob, {}, request.args)
+        players, _, is_truncated = filter_and_sort_players(
+            static_blob, {}, request.args)
         seen = set()
         talisman_list = []
         for p in players:
@@ -705,7 +700,7 @@ def get_sorted_players():
                 talisman_list.append(p)
         images = [{"photo": p["photo"], "team_code": p["team_code"]}
                   for p in talisman_list[:5]]
-        return jsonify(players=talisman_list, players_images=images, manager=g.manager)
+        return jsonify(players=talisman_list, players_images=images, is_truncated=False, manager=g.manager)
 
     if table == "teams":
         stats = aggregate_team_stats(static_blob)
@@ -725,10 +720,10 @@ def get_sorted_players():
                     break
         return jsonify(players=sorted_stats, players_images=top5, manager=g.manager)
 
-    # 9️⃣ Default tables (offence, defence, points)
-    players, images = filter_and_sort_players(
-        merged_blob, team_blob, request.args)
-    return jsonify(players=players, players_images=images, manager=g.manager)
+    # 9️⃣ Default tables (defence, offence, points)
+    players, images, is_truncated = filter_and_sort_players(
+        static_blob, team_blob, request.args)
+    return jsonify(players=players, players_images=images, is_truncated=is_truncated, manager=g.manager)
 
 
 if __name__ == "__main__":
