@@ -474,8 +474,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const col = td.dataset.column;
       const sortLevel = td.dataset.sortLevel;
 
-      const primaryBg = sortLevel === "primary" ? "#e90052" : "#38003c";
-      const matchBg = sortLevel === "primary" ? "#38003c" : "#e90052";
+      const primaryBg = sortLevel === "primary" ? "#D9722C" : "#203C73";
+      const matchBg = sortLevel === "primary" ? "#203C73" : "#D9722C";
 
       // Current cell
       if (td.classList.contains("text-danger")) {
@@ -537,9 +537,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const slider = document.getElementById("price-slider");
   if (slider && window.noUiSlider && !slider.noUiSlider) {
     noUiSlider.create(slider, {
-      start: [3, 15],
+      start: [4, 14.5],
       connect: true,
-      range: { min: 3, max: 15 },
+      range: { min: 4, max: 14.5 },
       step: 0.1,
       tooltips: true,
       format: wNumb({ decimals: 1, prefix: "£" }),

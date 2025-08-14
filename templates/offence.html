@@ -4,16 +4,19 @@
 {% block page_content %}
 <div class="table-responsive">
     <table id="offence-table" class="interactive-table table table-borderless table-striped text-center text-nowrap">
-        <thead class="th-purple">
+        <thead class="th-bg-primary">
             <tr class="text-center">
-                <th colspan="1" id="top-players" data-sort="top-players" class="sticky-col round-border-top">↑ Top Five
+                <th id="top-players" data-sort="top-players" class="sticky-col round-border-top-left">↑ Top Five
                 </th>
+                <th colspan="2" class="round-border-top-right"></th>
                 <th colspan="15" data-sort="team-data" class="bg-team round-border-top">Stats for {{ manager.team_name
                     }}</th>
                 <th colspan="10" data-sort="overall-data" class="round-border-top">Player Totals</th>
             </tr>
             <tr class="text-center text-wrap">
                 <th colspan="1" id="entries" data-sort="entries" class="sticky-col">Players</th>
+                <th data-sort="selected_by_percent" class="sort">%</th>
+                <th data-sort="now_cost" class="sort">£</th>
                 <!-- note: no onclicks here any more -->
                 <th data-sort="goals_scored_team" class="sort-team bg-team">G</th>
                 <th data-sort="expected_goals_team" class="sort-team bg-team">xG</th>
@@ -48,8 +51,9 @@
             <!-- rows get injected here -->
         </tbody>
         <tfoot>
-            <tr class="th-purple text-center">
-                <th colspan="1" class="sticky-col round-border-btm">.</th>
+            <tr class="th-bg-primary text-center">
+                <th colspan="1" class="sticky-col round-border-btm"></th>
+                <th colspan="2" class="th-bg-primary round-border-btm-right"></th>
                 <th colspan="15" class="bg-team align-middle round-border-btm">
                     <div id="loading" style="display:none">Loading...</div>
                 </th>
@@ -62,6 +66,13 @@
 
 {% block scripts %}
 <script>
+
+    const positionMap = {
+            1: "GK",
+            2: "DEF",
+            3: "MID",
+            4: "FWD"
+        };
 // --- Top Scorers page config ---
 window.tableConfig = {
   table: 'offence',
@@ -89,12 +100,18 @@ window.tableConfig = {
                     style="width: 20px; height: 20px; flex:0 0 auto;"
                     onerror="this.onerror=null;this.src='https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png';"
                 >
-                <div class="ms-1 text-truncate" style="max-width: 12ch;">${short}</div>
+                <div class="d-flex align-items-end">
+                    <div class="ms-1 text-truncate" style="max-width: 11ch;">${short}</div>
+                    <div class="small text-muted d-none d-lg-inline">&nbsp;${positionMap[p.element_type] || p.element_type}</div>
+                </div>
             </div>
             </td>`;
           }
       },
 
+
+    { key: "selected_by_percent", className: "sort", dataColumn: "selected_by_percent", formatter: v => `${parseFloat(v).toFixed(0)}%` },
+    { key: "now_cost", className: "sort", dataColumn: "now_cost", formatter: v => `£${(v / 10).toFixed(1)}m` },
     // 14 team-specific metrics
     { key: 'goals_scored_team', dataColumn: "goals_scored", sortLevel: "primary", className: 'sort-team vert-border' },
     { key: 'expected_goals_team', dataColumn: "expected_goals", sortLevel: "primary", className: 'sort-team', formatter: v => (Math.round(v*10)/10).toFixed(1) },
@@ -130,6 +147,8 @@ window.tableConfig = {
     const name = {{ manager.team_name| tojson
 }};
 window.tableConfig.lookup = {
+    "selected_by_percent": "Teams selected by",
+    "now_cost": "Current price",
     "goals_scored_team": `Goals scored for ${name}`,
     "expected_goals_team": `Expected goals for ${name}`,
     "goals_performance_team": `Goals scored vs expected goals scored for ${name}`,

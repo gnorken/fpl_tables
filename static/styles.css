@@ -9,12 +9,45 @@ a:active {
 
 /* Define colors at the root level */
 :root {
-  --purple: #38003c; /* Dark purple */
+  
+  /* Brand */
+  --primary: #203C73;
+  /* Navy blue */
+  --secondary: #D9722C;
+  /* Burnt orange */
+
+  /* Feedback */
+  --success: #2E7D32;
+  /* Muted deep green */
+  --danger: #B22222;
+  /* Brick red */
+  --warning: #E6A700;
+  /* Golden yellow */
+  --info: #3C91E6;
+  /* Clear medium blue */
+
+  /* Neutrals */
+  --light: #F8F9FA;
+  /* Light grey-white */
+  --dark: #212529;
+  /* Bootstrap default dark grey */
+  --muted: #6C757D;
+  /* Muted text grey */
+
+  /* Optional accents */
+  --accent-1: #36558F;
+  /* Lighter blue tint of primary */
+  --accent-2: #E89B6B;
+  /* Lighter orange tint of secondary */
+  --accent-3: #F0D44C;
+  /* Rich warm yellow accent */
+
+
   --purple-comp: #043C00; /* Complemantary to purple */
   --light-purple: #963cff; /* Light Purpe */
   --bright-green: #00ff85; /* Bright green */
   --turqouise: #04f5ff; /* Turqouise */
-  --red: #e90052; /* Redish */
+  /* --red: #e90052;  */
   --yellow: #eaff04; /* yellow */
 
   --text-light: #ffffff; /* White for contrast */
@@ -27,20 +60,11 @@ a:active {
   color: var(--text-light);
 }
 .text-purple {
-  color: var(--purple) !important;
-}
-.btn-turqouise {
-  background-color: var(--turqouise);
-  color: var(--text-dark);
-}
-
-.btn-turqouise:hover {
-  background-color: var(--yellow);
-  color: var(--text-dark);
+  color: var(--primary) !important;
 }
 
 /* for dropdown leagues */
-.red-text a {color:var(--red);}
+.red-text a {color:var(--secondary);}
 .green-text a {color:green;}
 
 /* Team colors */
@@ -168,56 +192,49 @@ a:active {
 /* TABLE */
 /* table colours */
 .bg-team {
-  background-color: var(--red) !important;
+  background-color: var(--secondary) !important;
   color: white !important;
 } /* th team */
 .bg-team a {
-  background-color: var(--red) !important;
+  background-color: var(--secondary) !important;
   color: white !important;
 } /* th links */
 
-.th-purple th {
-  background-color: var(--purple);
+.th-bg-primary th {
+  background-color: var(--primary);
   color: white;
 } /* th */
-.th-purple th a {
-  background-color: var(--purple);
+.th-bg-primary th a {
+  background-color: var(--primary);
   color: white;
 } /* th links */
 
 .td-red td {
-  background-color: var(--red);
+  background-color: var(--secondary);
   color: white;
 }
 
 .bg-purple {
-  background-color: var(--purple);
+  background-color: var(--primary);
   color: white;
-} /* in use? */
+} 
 .bg-green {
   background-color: var(--bright-green);
-} /* in use? */
-.bg-red {
-  background-color: var(--red);
-  color: white;
+} 
+.bg-secondary {
+  background-color: var(--primary) !important;
+  color: var(--text-light);
 }
-.bg-red:hover {
-  background-color: var(--yellow);
+.bg-secondary:hover {
+  background-color: var(--warning) !important;
 }
 .bg-yellow {
-  background-color: var(--yellow);
+  background-color: var(----accent-3);
   color: black;
 }
 .bg-purple-comp {
   background-color: var(--purple-comp);
   color: white;
-}
-
-.th-yellow th {
-  background-color: var(--yellow);
-} /* Totals, not in use? */
-.td-yellow td {
-  background-color: var(--yellow);
 }
 
 td.green-text {
@@ -238,10 +255,10 @@ table {
 
 /* TABLE HEADERS */
 th:hover.sort-team {
-  color: var(--purple) !important;
+  color: var(--primary) !important;
 }
 th:hover.sort {
-  color: var(--red);
+  color: var(--secondary);
 }
 
 /* Cursors */
@@ -373,18 +390,8 @@ td {
 
 
 /* header */
-#header-logo-gw a {
-  border-radius: 5px;
-  /* padding: 0.5rem; */
-}
 
-#header-logo {
-  color: black;
-  /* font-size: 1rem; */
-  font-weight: bold;
-}
 #header-gw {
-  color: black;
   font-size: 0.7rem;
 }
 
@@ -397,30 +404,21 @@ td {
   font-size: 1rem;
 }
 
-/* #tables-btn {
-  background-color: var(--red);
-  color: white;
-}
-#tables-btn:hover {
-  background-color: var(--red);
-  color: black;
-} */
 #tables-btn.show {
-  background-color: yellow;
-  color: black;
+  background-color: var(--accent-3);
 }
 .dropdown-item:active {
   /* Just when clicking on it */
   background-color: white;
-  color: var(--red) !important;
+  color: var(--secondary) !important;
 }
 .dropdown-item:hover {
   /* Just when clicking on it */
   background-color: white;
-  color: var(--red) !important;
+  color: var(--secondary) !important;
 }
 .active {
-  background-color: var(--yellow) !important;
+  background-color: var(--accent-3) !important;
   color: black !important;
 }
 
@@ -433,9 +431,6 @@ td {
   width: 100%;
 }
 
-.slider-wrapper {
-  
-}
 
 .noUi-horizontal .noUi-tooltip {
   transform: translateX(-50%) !important;
@@ -476,7 +471,7 @@ td {
 
 .text-overlay { /* On chips */
   text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-  background-color: var(--purple);
+  background-color: var(--primary);
   color: white;
   padding: 0 1rem;
   z-index: 1;
@@ -527,7 +522,7 @@ th.sorted.sort-team::before {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: var(--red);
+  background-color: var(--secondary);
   z-index: -2;
 }
 
@@ -538,7 +533,7 @@ th.sorted:not(.sort-team)::before {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: var(--purple);
+  background-color: var(--primary);
   z-index: -2;
 }
 
@@ -579,7 +574,7 @@ th.sorted {
 /* mini league current team highlighter */
 /* .highlight-current>td:nth-child(-n+4) { */
 .highlight-current {
-  border: 2px solid var(--red) !important;
+  border: 2px solid var(--secondary) !important;
 }
 
 /* mini league cell highlighter */
@@ -687,4 +682,61 @@ body {
 .table-hover>tbody>tr:hover {
   --bs-table-hover-bg: var(--bs-warning-bg-subtle);
   /* soft yellow */
+}
+
+
+/* Check boxes */
+/* Change the ON colour of the switch */
+.form-check-input:checked {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+/* Optional: Change hover/focus border */
+/* .form-check-input:focus {
+  border-color: var(--accent-1); 
+  box-shadow: 0 0 0 0.25rem var(--accent-2);
+} */
+
+/* Change the label colour */
+.form-check-label {
+  color: var(--dark);
+} 
+
+/* SLIDERS */
+/* Track - unfilled portion */
+.noUi-target {
+  background: #e0e0e0;
+  /* light grey */
+  border-radius: 4px;
+  border: none;
+}
+
+/* Track - filled portion */
+.noUi-connect {
+  background: var(--primary) !important;
+  /* navy */
+}
+
+/* Handle */
+.noUi-handle {
+  /* background: var(--secondary); */
+  /* burnt orange */
+  /* border: 2px solid var(--primary) !important; */
+  border-radius: 50%;
+  box-shadow: none;
+}
+
+/* Handle hover/focus */
+.noUi-handle:hover,
+.noUi-handle:focus {
+  /* background: var(--accent-3); */
+  /* your warm yellow accent */
+  border-color: var(--primary);
+}
+
+/* Remove default handle stripes */
+.noUi-handle:before,
+.noUi-handle:after {
+  display: none;
 }

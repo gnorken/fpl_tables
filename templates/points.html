@@ -4,10 +4,11 @@
 {% block page_content %}
 <div class="table-responsive">
     <table id="points-table" class="interactive-table table table-borderless table-striped text-center text-nowrap">
-        <thead class="th-purple text-center">
+        <thead class="th-bg-primary text-center">
             <tr>
-                <th id="top-players" data-sort="top-players" class="sticky-col align-middle round-border-top">↑ Top Five
+                <th id="top-players" data-sort="top-players" class="sticky-col align-middle round-border-top-left">↑ Top Five
                 </th>
+                <th colspan="2" class="round-border-top-right"></th>
                 <th colspan="18" data-sort="team-data" class="bg-team round-border-top"
                     title="Players that are or have been in {{ manager.team_name }} this season">
                     Stats for {{ manager.team_name }}
@@ -16,6 +17,8 @@
             </tr>
             <tr>
                 <th id="entries" data-sort="entries" class="sticky-col"></th>
+                <th data-sort="selected_by_percent" class="sort">%</th>
+                <th data-sort="now_cost" class="sort">£</th>
 
                 {# — 16 team-specific (primary) columns — #}
                 <th data-sort="total_points_team" class="sort-team bg-team">P</th>
@@ -62,8 +65,9 @@
         </tbody>
 
         <tfoot>
-            <tr class="th-purple text-center">
-                <th class="sticky-col round-border-btm">.</th>
+            <tr class="th-bg-primary text-center">
+                <th class="sticky-col round-border-btm-left"></th>
+                <th colspan="2" class="th-bg-primary round-border-btm-right"></th>
                 <th colspan="18" class="bg-team round-border-btm">
                     <div id="loading" style="display:none;">Loading…</div>
                 </th>
@@ -79,6 +83,9 @@
     // 1) Build a lookup for header-hover tooltips
     const managerName = {{ manager.team_name| tojson }};
     const lookup = {
+        "selected_by_percent": "Teams selected by",
+        "now_cost": "Current price",
+
         "total_points_team": `Points for ${managerName}`,
         "ppm_team": `Points per million for ${managerName}`,
         "points_per_game_team": `Points per game for ${managerName}`,
@@ -121,6 +128,13 @@
         "overall-data": "Overall stats"
     };
 
+    const positionMap = {
+            1: "GK",
+            2: "DEF",
+            3: "MID",
+            4: "FWD"
+        };
+
     // 2) Configure the shared script:
     window.tableConfig = {
         table: "points",
@@ -149,11 +163,17 @@
                             style="width: 20px; height: 20px; flex:0 0 auto;"
                             onerror="this.onerror=null;this.src='https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png';"
                         >
-                        <div class="ms-1 text-truncate" style="max-width: 12ch;">${short}</div>
+                        <div class="d-flex align-items-end">
+                            <div class="ms-1 text-truncate" style="max-width: 11ch;">${short}</div>
+                            <div class="small text-muted d-none d-lg-inline">&nbsp;${positionMap[p.element_type] || p.element_type}</div>
+                        </div>
                     </div>
                     </td>`;
                 }
             },
+
+            { key: "selected_by_percent", className: "sort", dataColumn: "selected_by_percent", formatter: v => `${parseFloat(v).toFixed(0)}%` },
+            { key: "now_cost", className: "sort", dataColumn: "now_cost", formatter: v => `£${(v / 10).toFixed(1)}m` },
 
             // 16 primary columns
             { key: "total_points_team", className: "sort-team vert-border", sortLevel: "primary", dataColumn: "total_points" },
