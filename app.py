@@ -278,7 +278,7 @@ def points(team_id):
                            current_gw=session.get('current_gw'),
                            manager=g.manager,
                            sort_by=request.args.get(
-                               'sort_by', 'total_points'),
+                               'sort_by', 'total_points_team'),
                            order=request.args.get('order', 'desc'),
                            current_page='points')
 

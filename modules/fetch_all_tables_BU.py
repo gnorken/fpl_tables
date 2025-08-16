@@ -3,10 +3,14 @@ import json
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+# Logger for debugging
+logger = logging.getLogger(__name__)
+
 # Build base player info from static_data (bootstrap-static)
 
 
 def build_player_info(static_data):
+    logger.debug("[build_player_info] called")
     teams = static_data.get("teams", [])
     players = static_data.get("elements", [])
 
@@ -26,107 +30,126 @@ def build_player_info(static_data):
             "web_name": p["web_name"],
             "element_type": p["element_type"],
             "now_cost": p["now_cost"],
+            "selected_by_percent": p["selected_by_percent"],
 
             # Season stats (so far)
-            "goals_scored": p["goals_scored"],
-            "expected_goals": round(float(p.get("expected_goals", 0)), 2),
             "assists": p["assists"],
+            "assists_performance": round(p["assists"] - float(p.get("expected_assists", 0)), 2),
+            "bonus": p["bonus"],
+            "bps": p["bps"],
+            "cbi": p["clearances_blocks_interceptions"],
+            "clean_sheets": p["clean_sheets"],
+            "clean_sheets_per_90": p["clean_sheets_per_90"],
+            "defensive_contribution": p["defensive_contribution"],
+            "defensive_contribution_per_90": p["defensive_contribution_per_90"],
+            "defensive_contribution_points": 0,
+            "dreamteam_count": p["dreamteam_count"],
             "expected_assists": round(float(p.get("expected_assists", 0)), 2),
             "expected_goal_involvements": round(float(p.get("expected_goal_involvements", 0)), 2),
-            "goals_assists": p["goals_scored"] + p["assists"],
-            "goals_performance": round(p["goals_scored"] - float(p.get("expected_goals", 0)), 2),
-            "assists_performance": round(p["assists"] - float(p.get("expected_assists", 0)), 2),
+            "expected_goals": round(float(p.get("expected_goals", 0)), 2),
+            "expected_goals_conceded": p["expected_goals_conceded"],
+            "expected_goals_per_90": p["expected_goals_per_90"],
             "goals_assists_performance": round((p["goals_scored"] + p["assists"]) - float(p.get("expected_goal_involvements", 0)), 2),
             "goals_assists_performance_team_vs_total": 0,
-            "starts": p["starts"],
-            "minutes": p["minutes"],
-            "clean_sheets": p["clean_sheets"],
-            "yellow_cards": p["yellow_cards"],
-            "red_cards": p["red_cards"],
-            "bps": p["bps"],
-            "own_goals": p["own_goals"],
+            "goals_scored": p["goals_scored"],
+            "goals_assists": p["goals_scored"] + p["assists"],
             "goals_conceded": p["goals_conceded"],
+            "goals_performance": round(p["goals_scored"] - float(p.get("expected_goals", 0)), 2),
+            "minutes": p["minutes"],
+            "own_goals": p["own_goals"],
+            "red_cards": p["red_cards"],
+            "recoveries": p["recoveries"],
+            "starts": p["starts"],
+            "tackles": p["tackles"],
+            "ppm": round(p["total_points"] / (p["now_cost"] / 10), 1) if p["now_cost"] else 0,
             "penalties_saved": p["penalties_saved"],
             "penalties_missed": p["penalties_missed"],
-            "dreamteam_count": p["dreamteam_count"],
+            "points_per_game": p["points_per_game"],
             "total_points": p["total_points"],
-            "ppm": round(p["total_points"] / (p["now_cost"] / 10), 1) if p["now_cost"] else 0,
+            "yellow_cards": p["yellow_cards"],
 
-            # Global points breakdown (populate later)
+            # Global points breakdown (populate later) Need to convert to points
+            # 0-59 minutes. 1 point. 60+ 2 points.
             "minutes_points": 0,
-            "clean_sheets_points": 0,
-            "assists_points": 0,
-            "goals_points": 0,
-            "bonus_points": 0,
-            "save_points": 0,
-            "own_goals_points": 0,
-            "goals_conceded_points": 0,
-            "penalties_saved_points": 0,
-            "penalties_missed_points": 0,
-            "yellow_cards_points": 0,
-            "red_cards_points": 0,
+            "defensive_contribution_points": 0,  # 2 points
+            "clean_sheets_points": 0,       # 4 points for GK and Def, 1 point for Mid
+            "assists_points": 0,            # 3 points
+            "goals_points": 0,              # 10, 6, 5, 4 points depending on element type
+            "save_points": 0,               # 2 points for every three saves in a game
+            "own_goals_points": 0,          # -2 points
+            "goals_conceded_points": 0,     # -1 point every other goal conceded within a game
+            "penalties_saved_points": 0,    # 5 points
+            "penalties_missed_points": 0,   # -2 points
+            "yellow_cards_points": 0,       # -1 point
+            "red_cards_points": 0,          # -2 points
 
             # Team-specific aggregates (populate later)
-            "goals_scored_team": 0,
-            "expected_goals_team": 0,
-            "goals_performance_team": 0,
-            "goals_benched_team": 0,
-            "goals_captained_team": 0,
-            "assists_team": 0,
-            "expected_assists_team": 0,
             "assists_performance_team": 0,
             "assists_benched_team": 0,
             "assists_captained_team": 0,
-            "goals_assists_team": 0,
-            "expected_goal_involvements_team": 0,
-            "goals_assists_performance_team": 0,
-            "starts_team": 0,
-            "minutes_team": 0,
-            "clean_sheets_team": 0,
-            "captained_team": 0,
-            "yellow_cards_team": 0,
-            "red_cards_team": 0,
+            "assists_points_team": 0,
+            "assists_team": 0,
+            "benched_points_team": 0,
+            "bonus_team": 0,
             "bps_team": 0,
+            "cbi_team": 0,
+            "clean_sheets_team": 0,
+            "clean_sheets_per_90_team": 0,
+            "clean_sheets_points_team": 0,
+            "clean_sheets_rate_team": 0,
+            "captained_points_team": 0,
+            "captained_team": 0,
             "dreamteam_count_team": 0,
-            "starts_benched_team": 0,
-            "minutes_benched_team": 0,
-            "own_goals_team": 0,
+            # Need to wire up in get all player data function
+            "defensive_contribution_team": 0,
+            "defensive_contribution_points_team": 0,
+            "defensive_contribution_per_90_team": 0,
+            "expected_assists_team": 0,
+            "expected_goals_team": 0,
+            "expected_goal_involvements_team": 0,
+            "expected_goals_conceded_team": 0,
+            "expected_goals_per_90_team": 0,
+            "goals_scored_team": 0,
+            "goals_performance_team": 0,
+            "goals_benched_team": 0,
+            "goals_captained_team": 0,
+            "goals_conceded_points_team": 0,
+            "goals_assists_team": 0,
+            "goals_points_team": 0,
             "goals_conceded_team": 0,
+            "goals_assists_performance_team": 0,
+            "minutes_team": 0,
+            "minutes_benched_team": 0,
+            "minutes_points_team": 0,
+            "own_goals_team": 0,
+            "own_goals_points_team": 0,
             "penalties_saved_team": 0,
             "penalties_missed_team": 0,
-            "total_points_team": 0,
+            "points_per_game_team": 0,
             "ppm_team": 0,
-            "minutes_points_team": 0,
-            "clean_sheets_points_team": 0,
-            "assists_points_team": 0,
-            "goals_points_team": 0,
-            "yellow_cards_points_team": 0,
-            "red_cards_points_team": 0,
-            "bonus_points_team": 0,
-            "save_points_team": 0,
-            "own_goals_points_team": 0,
-            "goals_conceded_points_team": 0,
             "penalties_saved_points_team": 0,
             "penalties_missed_points_team": 0,
-            "benched_points_team": 0,
-            "captained_points_team": 0
+            "recoveries_team": 0,
+            "save_points_team": 0,
+            "starts_benched_team": 0,
+            "starts_team": 0,
+            "tackles_team": 0,
+            "total_points_team": 0,
+            "yellow_cards_team": 0,
+            "yellow_cards_points_team": 0,
+            "red_cards_team": 0,
+            "red_cards_points_team": 0,
         }
     return player_info
 
 
-# Logger for debugging
-logger = logging.getLogger(__name__)
-
-
 def populate_player_info_all_with_live_data(team_id, player_info, static_data):
+    logger.debug("[populate_player_info_all_with_live_data] called")
     """
-    Populate both global points breakdown and team-specific aggregates
-    in one pass per GW, fetching HTTP in parallel to speed up loads.
-    This function now clones its input so the original static blob
-    remains untouched.
+    Build team_player_info for a specific team_id:
+    - Only players that were in the user's picks at least once.
+    - Aggregate team-specific stats across all GWs up to current GW.
     """
-    # 0️⃣ Clone the static blob to avoid mutating original data
-    player_info = {pid: info.copy() for pid, info in player_info.items()}
 
     FPL_API = "https://fantasy.premierleague.com/api"
     session_req = requests.Session()
@@ -135,21 +158,23 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
         "Accept-Encoding": "gzip"
     })
 
-    # Determine current GW
+    # 1️⃣ Determine current GW
     try:
         current_gw = next(e["id"] for e in static_data.get(
             "events", []) if e.get("is_current"))
     except StopIteration:
         logger.error("No current gameweek found in static_data.events")
-        return player_info
+        return {}
 
-    # Prepare URLs
+    # 2️⃣ Prepare URLs for live data and picks (1..current_gw)
     live_urls = {
-        gw: f"{FPL_API}/event/{gw}/live/" for gw in range(1, current_gw + 1)}
+        gw: f"{FPL_API}/event/{gw}/live/" for gw in range(1, current_gw + 1)
+    }
     pick_urls = {
-        gw: f"{FPL_API}/entry/{team_id}/event/{gw}/picks/" for gw in range(1, current_gw + 1)}
+        gw: f"{FPL_API}/entry/{team_id}/event/{gw}/picks/" for gw in range(1, current_gw + 1)
+    }
 
-    # Fetch live + pick data in parallel
+    # 3️⃣ Fetch all live data and picks concurrently
     live_data_map, picks_data_map = {}, {}
     with ThreadPoolExecutor(max_workers=8) as executor:
         future_to_info = {}
@@ -168,6 +193,7 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
             except Exception as e:
                 logger.warning(f"Failed fetch {kind} for GW {gw}: {e}")
                 continue
+
             if kind == 'live':
                 live_data_map[gw] = data.get('elements', [])
             else:
@@ -178,65 +204,86 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
     logger.debug(f"Fetched live_data for GWs: {sorted(live_data_map.keys())}")
     logger.debug(f"Fetched pick_data for GWs: {sorted(picks_data_map.keys())}")
 
-    # Process each GW
+    # 4️⃣ Find all players ever picked across GWs
+    all_picked_pids = set()
+    for picks in picks_data_map.values():
+        all_picked_pids.update(picks.keys())
+
+    # 5️⃣ Initialize ONLY those players from player_info (static snapshot)
+    team_info = {
+        pid: player_info[pid].copy()
+        for pid in all_picked_pids
+        if pid in player_info  # skip if missing in static_data
+    }
+
+    # 6️⃣ Process each GW for team-specific stats
     for gw in range(1, current_gw + 1):
         live_elements = live_data_map.get(gw, [])
         multipliers = picks_data_map.get(gw, {})
-        applied = sum(1 for m in multipliers.values() if m > 0)
+
         logger.debug(
-            f"GW {gw}: using {applied} picks; live_elements={len(live_elements)}; multipliers={len(multipliers)}")
+            f"GW {gw}: picks={len(multipliers)}, live_elements={len(live_elements)}")
 
         for element in live_elements:
             pid = element.get('id')
-            if pid not in player_info:
-                continue
-            pi = player_info[pid]
+            if pid not in multipliers or pid not in team_info:
+                continue  # skip players not picked
+
+            pi = team_info[pid]
             stats = element.get('stats', {})
-            mult = multipliers.get(pid)
+            mult = multipliers[pid]
 
-            # 1) Global points breakdown
-            for block in element.get('explain', []):
-                for s in block.get('stats', []):
-                    key = f"{s['identifier']}_points"
-                    if key in pi:
-                        pi[key] += s.get('points', 0)
-
-            # Skip team-specific logic if not in picks
-            if mult is None:
-                continue
-
-            # 2) Bench stats
+            # Bench stats
             if mult == 0:
                 pi['goals_benched_team'] += stats.get('goals_scored', 0)
                 pi['assists_benched_team'] += stats.get('assists', 0)
                 pi['starts_benched_team'] += stats.get('starts', 0)
                 pi['minutes_benched_team'] += stats.get('minutes', 0)
 
-            # 3) Starter (and possibly captain) stats
-            if mult in (1, 2, 3):
-                xg = float(stats.get('expected_goals', 0))
-                xa = float(stats.get('expected_assists', 0))
-                goals = stats.get('goals_scored', 0)
+            # Starter (or captain/triple) stats
+            if mult > 0:
                 assists = stats.get('assists', 0)
-                cs = stats.get('clean_sheets', 0)
+                bonus = stats.get('bonus', 0)
                 bps = stats.get('bps', 0)
-                yc = stats.get('yellow_cards', 0)
-                rc = stats.get('red_cards', 0)
+                cs = stats.get('clean_sheets', 0)
+                cbi = stats.get('clearances_blocks_interceptions', 0)
+                dc = stats.get('defensive_contribution', 0)
+                goals = stats.get('goals_scored', 0)
+                gc = stats.get('goals_conceded', 0)
                 ic = stats.get('in_dreamteam', False)
+                mins = stats.get('minutes', 0)
+                ppg = stats.get('points_per_game', 0)
+                rc = stats.get('red_cards', 0)
+                r = stats.get('recoveries', 0)
+                t = stats.get('tackles', 0)
+                xg = float(stats.get('expected_goals', 0))
+                xgc = float(stats.get('expected_goals_conceded', 0))
+                xg90 = float(stats.get('expected_g  oals_per_90', 0))
+                xa = float(stats.get('expected_assists', 0))
+                yc = stats.get('yellow_cards', 0)
 
-                # accumulate
-                pi['expected_goals_team'] += xg
-                pi['expected_assists_team'] += xa
-                pi['goals_scored_team'] += goals
                 pi['assists_team'] += assists
-                pi['goals_assists_team'] += (goals + assists)
-                pi['expected_goal_involvements_team'] += (xg + xa)
-                pi['starts_team'] += stats.get('starts', 0)
-                pi['minutes_team'] += stats.get('minutes', 0)
-                pi['clean_sheets_team'] += cs
+                pi['bonus_team'] += bonus
                 pi['bps_team'] += bps
-                pi['yellow_cards_team'] += yc
+                pi['cbi_team'] += cbi
+                pi['clean_sheets_team'] += cs
+                pi['defensive_contribution_team'] += dc
+                pi['expected_assists_team'] += xa
+                pi['expected_goals_team'] += xg
+                pi['expected_goals_conceded_team'] += xgc
+                pi['expected_goal_involvements_team'] += xg + xa
+                pi['expected_goals_per_90_team'] += xg90
+                pi['goals_conceded_team'] += gc
+                pi['goals_scored_team'] += goals
+                pi['goals_assists_team'] += goals + assists
+                pi['minutes_team'] += mins
+                pi['points_per_game'] = ppg  # Get the latest one. No summing
                 pi['red_cards_team'] += rc
+                pi['recoveries_team'] += r
+                pi['starts_team'] += stats.get('starts', 0)
+                pi['tackles_team'] += t
+                pi['yellow_cards_team'] += yc
+
                 if ic:
                     pi['dreamteam_count_team'] += 1
 
@@ -250,21 +297,20 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
                     pi['expected_goal_involvements_team'], 2
                 )
 
-            # 4) Captain extra
-            if mult in (2, 3):
-                pi['goals_captained_team'] += stats.get('goals_scored', 0)
-                pi['assists_captained_team'] += stats.get('assists', 0)
-                pi['captained_team'] += 1
+                # Captain extra
+                if mult in (2, 3):
+                    pi['goals_captained_team'] += stats.get('goals_scored', 0)
+                    pi['assists_captained_team'] += stats.get('assists', 0)
+                    pi['captained_team'] += 1
 
-            # 5) Team points from explain
-            for block in element.get('explain', []):
-                for s in block.get('stats', []):
-                    key = f"{s['identifier']}_points_team"
-                    if key in pi and mult > 0:
-                        pi[key] += s['points'] * mult
+                # Points from explain
+                for block in element.get('explain', []):
+                    for s in block.get('stats', []):
+                        key = f"{s['identifier']}_points_team"
+                        if key in pi:
+                            pi[key] += s['points'] * mult
 
-            # 6) Total points & ppm
-            if mult and mult > 0:
+                # Total points & ppm
                 total_pts = stats.get('total_points', 0)
                 pi['total_points_team'] += total_pts
                 cost = pi.get('now_cost', 0)
@@ -272,4 +318,20 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
                     pi['ppm_team'] = round(
                         pi['total_points_team'] / (cost / 10), 1)
 
-    return player_info
+                # Defensive contributions per 90 team
+                if pi["minutes_team"] > 0:
+                    pi["defensive_contribution_per_90_team"] = (
+                        pi["defensive_contribution"] / pi["minutes_team"]) * 90
+                # Clean sheet per 90 team
+                if pi["minutes_team"] > 0:
+                    pi["clean_sheets_per_90_team"] = (
+                        pi["clean_sheets_team"] / pi["minutes_team"]) * 90
+                else:
+                    pi["clean_sheets_per_90_team"] = 0
+
+                # Clean sheet rate team
+                val = (cs / mins) * 90 if mins else 0.0
+                pi["clean_sheets_rate_team"] = min(val, 1.0)
+
+    # 7️⃣ Return ONLY picked players
+    return team_info

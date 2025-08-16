@@ -103,7 +103,7 @@ window.tableConfig = {
                     onerror="this.onerror=null;this.src='https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png';"
                 >
                 <div class="d-flex align-items-end">
-                    <div class="ms-1 text-truncate" style="max-width: 11ch;">${short}</div>
+                    <div class="ms-1 text-truncate">${short}</div>
                     <div class="small text-muted d-none d-lg-inline">&nbsp;${positionMap[p.element_type] || p.element_type}</div>
                 </div>
             </div>
@@ -115,7 +115,7 @@ window.tableConfig = {
     { key: "selected_by_percent", className: "sort", dataColumn: "selected_by_percent", formatter: v => `${parseFloat(v).toFixed(0)}%` },
     { key: "now_cost", className: "sort", dataColumn: "now_cost", formatter: v => `£${(v / 10).toFixed(1)}m` },
     // 14 team-specific metrics
-    { key: "total_points_team", className: "sort", sortLevel: "primary", dataColumn: "total_points vert-border", formatter: v => `${parseFloat(v)}p` },
+    { key: "total_points_team", className: "sort vert-border", sortLevel: "primary", dataColumn: "total_points vert-border", formatter: v => `${parseFloat(v)}p` },
     { key: 'goals_scored_team', dataColumn: "goals_scored", sortLevel: "primary", className: 'sort-team' },
     { key: 'expected_goals_team', dataColumn: "expected_goals", sortLevel: "primary", className: 'sort-team', formatter: v => (Math.round(v*10)/10).toFixed(1) },
     { key: 'goals_performance_team', dataColumn: "goals_performance", sortLevel: "primary", className: 'sort-team', formatter: v => (Math.round(v*10)/10).toFixed(1) },
@@ -133,7 +133,7 @@ window.tableConfig = {
     { key: 'goals_assists_performance_team_vs_total', sortLevel: "primary", className: 'sort-team', formatter: v => (Math.round(v*10)/10).toFixed(1) },
     
     // 9 overall metrics
-    { key: "total_points", className: "sort", sortLevel: "secondary", dataColumn: "total_points", formatter: v => `${parseFloat(v)}p` },
+    { key: "total_points", className: "sort vert-border", sortLevel: "secondary", dataColumn: "total_points", formatter: v => `${parseFloat(v)}p` },
     { key: 'goals_scored', dataColumn: "goals_scored", sortLevel: "secondary", className: 'sort vert-border' },
     { key: 'expected_goals', dataColumn: "expected_goals", sortLevel: "secondary", className: 'sort', formatter: v => (Math.round(v*10)/10).toFixed(1) },
     { key: 'goals_performance', dataColumn: "goals_performance", sortLevel: "secondary", className: 'sort', formatter: v => (Math.round(v*10)/10).toFixed(1) },

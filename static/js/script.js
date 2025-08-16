@@ -41,7 +41,7 @@ window.getSelectedPriceRange = () => {
 
 window.getSelectedMinutesRange = () => {
   const slider = document.getElementById("minutes-slider");
-  if (!slider || !slider.noUiSlider) return { minMin: 0, maxMin: 3420 };
+  if (!slider || !slider.noUiSlider) return { minMin: 0, maxMin: 90 };
   const [min, max] = slider.noUiSlider
     .get()
     .map((v) => parseFloat(v.replace(" min", "")));
@@ -556,10 +556,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const minSlider = document.getElementById("minutes-slider");
   if (minSlider && window.noUiSlider && !minSlider.noUiSlider) {
     noUiSlider.create(minSlider, {
-      start: [0, 3420],
+      start: [0, 90],
       connect: true,
-      range: { min: 0, max: 3420 },
-      step: 100,
+      range: { min: 0, max: 90 },
+      step: 1,
       tooltips: true,
       format: wNumb({ decimals: 0 }),
     });
