@@ -9,14 +9,16 @@
                 <th id="top-players" data-sort="top-players" class="sticky-col round-border-top-left">↑ Top Five
                 </th>
                 <th colspan="2" class="round-border-top-right"></th>
-                <th colspan="15" data-sort="team-data" class="bg-team round-border-top">Stats for {{ manager.team_name }}</th>
-                <th colspan="10" data-sort="overall-data" class="round-border-top">Player Totals</th>
+                <th colspan="16" data-sort="team-data" class="bg-team round-border-top">Stats for {{ manager.team_name }}</th>
+                <th colspan="11" data-sort="overall-data" class="round-border-top">Player Totals</th>
             </tr>
             <tr class="text-center">
                 <th colspan="1" id="entries" data-sort="entries" class="sticky-col">Players</th>
                 <th data-sort="selected_by_percent" class="sort">%</th>
                 <th data-sort="now_cost" class="sort">£</th>
-                <!-- note: no onclicks here any more -->
+                
+                <!-- Team columns -->
+                <th data-sort="total_points_team" class="sort-team bg-team">P</th>
                 <th data-sort="goals_scored_team" class="sort-team bg-team">G</th>
                 <th data-sort="expected_goals_team" class="sort-team bg-team">xG</th>
                 <th data-sort="goals_performance_team" class="sort-team bg-team">+/-</th>
@@ -32,8 +34,9 @@
                 <th data-sort="expected_goal_involvements_team" class="sort-team bg-team">xGI</th>
                 <th data-sort="goals_assists_performance_team" class="sort-team bg-team">+/-</th>
                 <th data-sort="goals_assists_performance_team_vs_total" class="sort-team bg-team">+/-</th>
-
+                
                 <!-- overall columns -->
+                <th data-sort="total_points" class="sort">P</th>
                 <th data-sort="goals_scored" class="sort">G</th>
                 <th data-sort="expected_goals" class="sort">xG</th>
                 <th data-sort="goals_performance" class="sort">+/-</th>
@@ -51,12 +54,12 @@
         </tbody>
         <tfoot>
             <tr class="th-bg-primary text-center">
-                <th colspan="1" class="sticky-col round-border-btm"></th>
+                <th colspan="1" class="sticky-col round-border-btm-left"></th>
                 <th colspan="2" class="th-bg-primary round-border-btm-right"></th>
-                <th colspan="15" class="bg-team align-middle round-border-btm">
+                <th colspan="16" class="bg-team align-middle round-border-btm">
                     <div id="loading" style="display:none">Loading...</div>
                 </th>
-                <th colspan="10" class="round-border-btm"></th>
+                <th colspan="11" class="round-border-btm"></th>
             </tr>
         </tfoot>
     </table>
@@ -112,7 +115,8 @@ window.tableConfig = {
     { key: "selected_by_percent", className: "sort", dataColumn: "selected_by_percent", formatter: v => `${parseFloat(v).toFixed(0)}%` },
     { key: "now_cost", className: "sort", dataColumn: "now_cost", formatter: v => `£${(v / 10).toFixed(1)}m` },
     // 14 team-specific metrics
-    { key: 'goals_scored_team', dataColumn: "goals_scored", sortLevel: "primary", className: 'sort-team vert-border' },
+    { key: "total_points_team", className: "sort", sortLevel: "primary", dataColumn: "total_points vert-border", formatter: v => `${parseFloat(v)}p` },
+    { key: 'goals_scored_team', dataColumn: "goals_scored", sortLevel: "primary", className: 'sort-team' },
     { key: 'expected_goals_team', dataColumn: "expected_goals", sortLevel: "primary", className: 'sort-team', formatter: v => (Math.round(v*10)/10).toFixed(1) },
     { key: 'goals_performance_team', dataColumn: "goals_performance", sortLevel: "primary", className: 'sort-team', formatter: v => (Math.round(v*10)/10).toFixed(1) },
     { key: 'expected_goals_per_90_team', dataColumn: "expected_goals_per_90", sortLevel: "primary", className: 'sort-team' },
@@ -127,7 +131,9 @@ window.tableConfig = {
     { key: 'expected_goal_involvements_team', dataColumn: "expected_goal_involvements", sortLevel: "primary", className: 'sort-team', formatter: v => (Math.round(v*10)/10).toFixed(1) },
     { key: 'goals_assists_performance_team', dataColumn: "goals_assists_performance", sortLevel: "primary", className: 'sort-team', formatter: v => (Math.round(v*10)/10).toFixed(1) },
     { key: 'goals_assists_performance_team_vs_total', sortLevel: "primary", className: 'sort-team', formatter: v => (Math.round(v*10)/10).toFixed(1) },
+    
     // 9 overall metrics
+    { key: "total_points", className: "sort", sortLevel: "secondary", dataColumn: "total_points", formatter: v => `${parseFloat(v)}p` },
     { key: 'goals_scored', dataColumn: "goals_scored", sortLevel: "secondary", className: 'sort vert-border' },
     { key: 'expected_goals', dataColumn: "expected_goals", sortLevel: "secondary", className: 'sort', formatter: v => (Math.round(v*10)/10).toFixed(1) },
     { key: 'goals_performance', dataColumn: "goals_performance", sortLevel: "secondary", className: 'sort', formatter: v => (Math.round(v*10)/10).toFixed(1) },
@@ -148,6 +154,8 @@ window.tableConfig = {
 window.tableConfig.lookup = {
     "selected_by_percent": "Teams selected by",
     "now_cost": "Current price",
+    "total_points": "Total points",
+    "total_points_team": `Total points for ${name}`,
     "goals_scored_team": `Goals scored for ${name}`,
     "expected_goals_team": `Expected goals for ${name}`,
     "goals_performance_team": `Goals scored vs expected goals scored for ${name}`,
@@ -159,7 +167,7 @@ window.tableConfig.lookup = {
     "assists_performance_team": `Assists vs expected assists for ${name}`,
     "assists_benched_team": `Benched assists for ${name}`,
     "assists_captained_team": `Captain assists for ${name}`,
-    "goals_assists_team": `G+A for ${name}`,
+    "goals_assists_team": `Goal Involvements for ${name} (Goals + Assists)`,
     "expected_goal_involvements_team": `Expected goals + expected assists for ${name}`,
     "goals_assists_performance_team": `G+A vs xG+xA for ${name}`,
     "goals_assists_performance_team_vs_total":

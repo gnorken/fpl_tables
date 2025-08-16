@@ -88,6 +88,7 @@ def build_player_info(static_data):
             "clean_sheets_team": 0,
             "clean_sheets_per_90_team": 0,
             "clean_sheets_points_team": 0,
+            "clean_sheets_rate_team": 0,
             "captained_points_team": 0,
             "captained_team": 0,
             "dreamteam_count_team": 0,
@@ -230,7 +231,7 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
                 pi['goals_benched_team'] += stats.get('goals_scored', 0)
                 pi['assists_benched_team'] += stats.get('assists', 0)
                 pi['starts_benched_team'] += stats.get('starts', 0)
-                # pi['minutes_benched_team'] += stats.get('minutes', 0)
+                pi['minutes_benched_team'] += stats.get('minutes', 0)
 
             # Starter (or captain/triple) stats
             if mult > 0:
@@ -238,9 +239,11 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
                 bonus = stats.get('bonus', 0)
                 bps = stats.get('bps', 0)
                 cs = stats.get('clean_sheets', 0)
-                cs90 = stats.get('clean_sheets_per_90', 0)
+                dc = stats.get('defensive_contribution', 0)
                 goals = stats.get('goals_scored', 0)
+                gc = stats.get('goals_conceded', 0)
                 ic = stats.get('in_dreamteam', False)
+                mins = stats.get('minutes', 0)
                 ppg = stats.get('points_per_game', 0)
                 rc = stats.get('red_cards', 0)
                 xg = float(stats.get('expected_goals', 0))
@@ -253,15 +256,16 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
                 pi['bonus_team'] += bonus
                 pi['bps_team'] += bps
                 pi['clean_sheets_team'] += cs
-                pi['clean_sheets_per_90_team'] += cs90
+                pi['defensive_contribution_team'] += dc
                 pi['expected_assists_team'] += xa
                 pi['expected_goals_team'] += xg
                 pi['expected_goals_conceded_team'] += xgc
                 pi['expected_goal_involvements_team'] += xg + xa
                 pi['expected_goals_per_90_team'] += xg90
+                pi['goals_conceded_team'] += gc
                 pi['goals_scored_team'] += goals
                 pi['goals_assists_team'] += goals + assists
-                pi['minutes_team'] += stats.get('minutes', 0)
+                pi['minutes_team'] += mins
                 pi['points_per_game'] = ppg  # Get the latest one. No summing
                 pi['red_cards_team'] += rc
                 pi['starts_team'] += stats.get('starts', 0)
@@ -300,6 +304,8 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
                 if cost:
                     pi['ppm_team'] = round(
                         pi['total_points_team'] / (cost / 10), 1)
+                val = (cs / mins) * 90 if mins else 0.0
+                pi["clean_sheets_rate_team"] = min(val, 1.0)
 
     # 7️⃣ Return ONLY picked players
     return team_info

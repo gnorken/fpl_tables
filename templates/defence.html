@@ -5,7 +5,7 @@
 <div class="container-fluid px-3">
     <div class="table-responsive"><!-- horizontal scroll -->
         <table id="defence-table" class="interactive-table table table-borderless table-striped text-center text-nowrap">
-            <thead class="th-bg-primary text-center ">
+            <thead class="th-bg-primary text-center">
                 <tr class="sticky-top">
                     <th id="top-players" class="sticky-col align-middle round-border-top-left">↑ Top Five
                     </th>
@@ -14,20 +14,21 @@
                         title="Players that are or have been in {{ manager.team_name }} this season">
                         Stats for {{ manager.team_name }}
                     </th>
-                    <th colspan="18"  class="round-border-top ps-3 text-start text-lg-center">Player Totals</th>
+                    <th colspan="19"  class="round-border-top ps-3 text-start text-lg-center">Player Totals</th>
                 </tr>
-                <tr class="text-wrap">
+                <tr class="">
                     <th id="entries" class="sticky-col"></th>
                     <th data-sort="selected_by_percent" class="sort">%</th>
                     <th data-sort="now_cost" class="sort">£</th>
-    
+                    
                     {# --- Team-specific columns (primary) --- #}
+                    <th data-sort="total_points_team" class="sort-team bg-team">P</th>
                     <th data-sort="starts_team" class="sort-team bg-team">S</th>
                     <th data-sort="minutes_team" class="sort-team bg-team">M</th>
                     <th data-sort="defensive_contribution_team" class="sort-team bg-team">DC</th>
                     <th data-sort="defensive_contribution_per_90_team" class="sort-team bg-team">DC90</th>
                     <th data-sort="clean_sheets_team" class="sort-team bg-team">CS</th>
-                    <th data-sort="clean_sheets_per_90_team" class="sort-team bg-team">CS90</th>
+                    <th data-sort="clean_sheets_rate_team" class="sort-team bg-team">CS PG</th>
                     
                     <th data-sort="captained_team" class="sort-team bg-team">C</th>
                     <th data-sort="dreamteam_count_team" class="sort-team bg-team">DT</th>
@@ -35,16 +36,16 @@
                     <th data-sort="penalties_saved_team" class="sort-team bg-team">PS</th>
                     <th data-sort="starts_benched_team" class="sort-team bg-team">bS</th>
                     <th data-sort="minutes_benched_team" class="sort-team bg-team">bM</th>
-    
+                    
                     <!-- Negatives -->
                     <th data-sort="yellow_cards_team" class="sort-team bg-team">YC</th>
                     <th data-sort="red_cards_team" class="sort-team bg-team">RC</th>
                     <th data-sort="goals_conceded_team" class="sort-team bg-team">GC</th>
                     <th data-sort="expected_goals_conceded_team" class="sort-team bg-team">xGC</th>
                     <th data-sort="own_goals_team" class="sort-team bg-team">OG</th>
-                    <th data-sort="penalties_missed_team" class="sort-team bg-team">PM</th>
-    
+                    
                     {# --- Overall columns (secondary) --- #}
+                    <th data-sort="total_points" class="sort">P</th>
                     <th data-sort="starts" class="sort">S</th>
                     <th data-sort="minutes" class="sort">M</th>
                     <th data-sort="defensive_contribution" class="sort">DC</th>
@@ -75,7 +76,7 @@
                     <th colspan="18" class="bg-team round-border-btm">
                         <div id="loading" style="display:none;">Loading…</div>
                     </th>
-                    <th colspan="18" class="round-border-btm"></th>
+                    <th colspan="19" class="round-border-btm"></th>
                 </tr>
             </tfoot>
         </table>
@@ -91,13 +92,15 @@
     const lookup = {
         "selected_by_percent": "Teams selected by",
         "now_cost": "Current price",
-
+        
+        "total_points_team": `Points for ${managerName}`,
         "starts_team": `Starts for ${managerName}`,
         "minutes_team": `Minutes played for ${managerName}`,
         "defensive_contribution_team": `Defensive contributions for ${managerName}`,
         "defensive_contribution_per_90_team": `Defensive contributions per 90 for ${managerName}`,
         "clean_sheets_team": `Clean sheets for ${managerName}`,
-        "clean_sheets_per_90_team": `Clean sheets per 90 for ${managerName}`,
+        "clean_sheets_rate_team": `Clean sheets per game for ${managerName}`,
+        // "clean_sheets_per_90_team": `Clean sheets per 90 for ${managerName}`,
         "captained_team": `Times captained for ${managerName}`,
         "dreamteam_count_team": `# in Dreamteam for ${managerName}`,
         "bonus_team": `Bonus points for ${managerName}`,
@@ -109,8 +112,8 @@
         "goals_conceded_team": `Goals conceded by ${managerName}`,
         "expected_goals_conceded": `Expected goals conceded by ${managerName}`,
         "own_goals_team": `Own goals by ${managerName}`,
-        "penalties_missed_team": `Penalties missed by ${managerName}`,
-
+        
+        "total_points": "Total points",
         "starts": "Total starts",
         "minutes": "Total minutes",
         "defensive_contribution": "Total defensive contributions",
@@ -179,13 +182,14 @@
 
             { key: "selected_by_percent", className: "sort", dataColumn: "selected_by_percent", formatter: v => `${parseFloat(v).toFixed(0)}%` },
             { key: "now_cost", className: "sort", dataColumn: "now_cost", formatter: v => `£${(v / 10).toFixed(1)}m` },
-            // 18 team‐specific (primary) columns:
-            { key: "starts_team", className: "sort-team vert-border", sortLevel: "primary", dataColumn: "starts" },
+            // team‐specific (primary) columns:
+            { key: "total_points_team", className: "sort-team vert-border", sortLevel: "primary", dataColumn: "total_points", formatter: v => `${parseFloat(v)}p`  },
+            { key: "starts_team", className: "sort-team", sortLevel: "primary", dataColumn: "starts" },
             { key: "minutes_team", className: "sort-team", sortLevel: "primary", dataColumn: "minutes" },
             { key: "defensive_contribution_team", className: "sort-team", sortLevel: "primary", dataColumn: "defcon" },
             { key: "defensive_contribution_per_90_team", className: "sort-team", sortLevel: "primary", dataColumn: "defcon_90" },
             { key: "clean_sheets_team", className: "sort-team", sortLevel: "primary", dataColumn: "clean_sheets" },
-            { key: "clean_sheets_per_90_team", className: "sort-team vert-border-end", sortLevel: "primary", dataColumn: "clean_sheets_per_90" },
+            { key: "clean_sheets_rate_team", className: "sort-team vert-border-end", sortLevel: "primary", dataColumn: "clean_sheets_rate" },
             { key: "captained_team", dataColumn: "captained" },
             { key: "dreamteam_count_team", className: "sort-team", sortLevel: "primary", dataColumn: "dreamteam_count" },
             { key: "bonus_team", className: "sort-team", sortLevel: "primary", dataColumn: "bonus" },
@@ -198,10 +202,10 @@
             { key: "goals_conceded_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "goals_conceded" },
             { key: "expected_goals_conceded_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "expected_goals_conceded", formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
             { key: "own_goals_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "own_goals" },
-            { key: "penalties_missed_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "penalties_missed" },
-
+            
             // 15 overall (secondary) columns:
-            { key: "starts", className: "sort vert-border", sortLevel: "secondary", dataColumn: "starts" },
+            { key: "total_points", className: "sort vert-border", sortLevel: "secondary", dataColumn: "total_points", formatter: v => `${parseFloat(v)}p` },
+            { key: "starts", className: "sort", sortLevel: "secondary", dataColumn: "starts" },
             { key: "minutes", className: "sort", sortLevel: "secondary", dataColumn: "minutes" },
             { key: "defensive_contribution", className: "sort", sortLevel: "secondary", dataColumn: "defcon" },
             { key: "defensive_contribution_per_90", className: "sort", sortLevel: "secondary", dataColumn: "defcon_90" },

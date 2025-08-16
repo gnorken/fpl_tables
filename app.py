@@ -238,177 +238,6 @@ def manager(team_id):
         flash(f"Error: {e}", "error")
         return redirect(url_for("index"))
 
-# AJAX routes for current season table and graphs in manager.html
-
-# TODO: Enable this when FPL live data is available
-# @app.route("/api/current-season")
-# def current_season():
-#     sort_by = request.args.get('sort_by', 'gw')
-#     order = request.args.get('order', 'desc')
-#     team_id = session.get("team_id")
-
-#     if team_id is None:
-#         return jsonify({"error": "Missing team_id"}), 400
-
-#     # Fetch manager to ensure caching is in place
-#     manager = get_manager_data(team_id)
-
-#     # Check if cached
-#     conn = sqlite3.connect(DATABASE, check_same_thread=False)
-#     cur = conn.cursor()
-#     cur.execute("""
-#         CREATE TABLE IF NOT EXISTS current_season (
-#             team_id      INTEGER PRIMARY KEY,
-#             data         TEXT    NOT NULL,
-#             last_fetched TEXT    NOT NULL
-#         )
-#     """)
-#     conn.commit()
-
-#     cur.execute(
-#         "SELECT data, last_fetched FROM current_season WHERE team_id = ?", (team_id,))
-#     row = cur.fetchone()
-
-#     if row:
-#         data, last_fetched = row
-#         cached_time = datetime.fromisoformat(last_fetched)
-#         event_updated = get_event_status_last_update()
-
-#         if cached_time >= event_updated:
-#             # Cache is fresh
-#             current_season_data = json.loads(data)
-#             conn.close()
-#             return jsonify(sort_table_data(
-#                 current_season_data, sort_by, order,
-#                 allowed_fields=['gw', 'or', 'op', 'gwp', 'gwr',
-#                                 'rank_change', 'pb', 'tm', 'tc', '£']
-#             ))
-
-#     # Cache miss → Fetch from API
-#     response = requests.get(
-#         f"{FPL_API_BASE}/entry/{team_id}/history/", headers=HEADERS)
-#     api_data = response.json()
-
-#     # Transform `current` history rows into your table schema
-#     current_season_data = []
-#     for row in api_data.get("current", []):
-#         current_season_data.append({
-#             "gw": row["event"],
-#             "or": row["overall_rank"],
-#             "rank_change": row.get("rank_change", ""),  # can be ± or numeric
-#             "op": row["points"],
-#             "gwr": row["rank"],
-#             "gwp": row["points_on_bench"],  # or percent if you prefer
-#             "pb": row["points_on_bench"],
-#             "tm": row["event_transfers"],
-#             "tc": row["event_transfers_cost"],
-#             "£": row["value"] / 10  # FPL API stores as integer * 10
-#         })
-
-#     # Cache result
-#     cur.execute("""
-#         INSERT OR REPLACE INTO current_season (team_id, data, last_fetched)
-#         VALUES (?, ?, ?)
-#     """, (team_id, json.dumps(current_season_data),
-#           datetime.now(timezone.utc).isoformat()))
-#     conn.commit()
-#     conn.close()
-
-#     return jsonify(sort_table_data(
-#         current_season_data, sort_by, order,
-#         allowed_fields=['gw', 'or', 'op', 'gwp', 'gwr',
-#                         'rank_change', 'pb', 'tm', 'tc', '£']
-#     ))
-
-
-@app.route("/api/current-season")
-def current_season():
-    sort_by = request.args.get('sort_by', 'gw')
-    order = request.args.get('order',   'desc')
-
-    # data = fetch_from_cache_or_api() Implement later
-    # mock data
-    data = [
-        # {"gw": 1, "or": 179512, "rank_change": "▲", "op": 44, "gwr": 3061510, "gwp": 76,
-        #  "pb": 5, "tm": 1, "tc": "4", "£": 100},
-        # {"gw": 2, "or": 227258, "rank_change": "▲", "op": 105, "gwr": 3012510, "gwp": 52,
-        #  "pb": 0, "tm": 1, "tc": "4", "£": 100.2},
-        # {"gw": 3, "or": 137366, "rank_change": "▼", "op": 149, "gwr": 3456322, "gwp": 50,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
-        # {"gw": 4, "or": 934653, "rank_change": "▲", "op": 283, "gwr": 4009234, "gwp": 76,
-        #  "pb": 5, "tm": 1, "tc": "16", "£": 100},
-        # {"gw": 5, "or": 328543, "rank_change": "▲", "op": 347, "gwr": 4566213, "gwp": 42,
-        #  "pb": 0, "tm": 1, "tc": "0", "£": 100.2},
-        # {"gw": 6, "or": 238234, "rank_change": "▼", "op": 498, "gwr": 82508, "gwp": 60,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
-        # {"gw": 7, "or": 79412, "rank_change": "▲", "op": 544, "gwr": 3061510, "gwp": 76,
-        #  "pb": 5, "tm": 1, "tc": "4", "£": 100},
-        # {"gw": 8, "or": 27258, "rank_change": "▲", "op": 615, "gwr": 3012510, "gwp": 52,
-        #  "pb": 0, "tm": 1, "tc": "4", "£": 100.2},
-        # {"gw": 9, "or": 167366, "rank_change": "▼", "op": 749, "gwr": 3456322, "gwp": 50,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
-        # {"gw": 10, "or": 492453, "rank_change": "▲", "op": 883, "gwr": 4009234, "gwp": 76,
-        #  "pb": 5, "tm": 1, "tc": "16", "£": 100},
-        # {"gw": 11, "or": 438543, "rank_change": "▲", "op": 947, "gwr": 4566213, "gwp": 42,
-        #  "pb": 0, "tm": 1, "tc": "0", "£": 100.2},
-        # {"gw": 12, "or": 238234, "rank_change": "▼", "op": 1198, "gwr": 10000000, "gwp": 60,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
-        # {"gw": 13, "or": 79512, "rank_change": "▲", "op": 1244, "gwr": 3061510, "gwp": 76,
-        #  "pb": 5, "tm": 1, "tc": "4", "£": 100},
-        # {"gw": 14, "or": 227258, "rank_change": "▲", "op": 1305, "gwr": 312510, "gwp": 52,
-        #  "pb": 0, "tm": 1, "tc": "4", "£": 100.2},
-        # {"gw": 15, "or": 167366, "rank_change": "▼", "op": 1449, "gwr": 56322, "gwp": 50,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
-        # {"gw": 16, "or": 424653, "rank_change": "▲", "op": 1583, "gwr": 499234, "gwp": 76,
-        #  "pb": 5, "tm": 1, "tc": "16", "£": 100},
-        # {"gw": 17, "or": 398543, "rank_change": "▲", "op": 1647, "gwr": 4466213, "gwp": 42,
-        #  "pb": 0, "tm": 1, "tc": "0", "£": 100.2},
-        # {"gw": 18, "or": 238234, "rank_change": "▼", "op": 1798, "gwr": 102300, "gwp": 90,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
-        # {"gw": 19, "or": 238234, "rank_change": "▼", "op": 1898, "gwr": 7834000, "gwp": 60,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
-        # {"gw": 20, "or": 79512, "rank_change": "▲", "op": 1944, "gwr": 3061510, "gwp": 76,
-        #  "pb": 5, "tm": 1, "tc": "4", "£": 100},
-        # {"gw": 21, "or": 227258, "rank_change": "▲", "op": 2005, "gwr": 322510, "gwp": 52,
-        #  "pb": 0, "tm": 1, "tc": "4", "£": 100.2},
-        # {"gw": 22, "or": 167366, "rank_change": "▼", "op": 2119, "gwr": 296322, "gwp": 50,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
-        # {"gw": 23, "or": 167366, "rank_change": "▼", "op": 2249, "gwr": 3456322, "gwp": 40,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
-        # {"gw": 24, "or": 222653, "rank_change": "▲", "op": 2383, "gwr": 4009234, "gwp": 76,
-        #  "pb": 5, "tm": 1, "tc": "16", "£": 100},
-        # {"gw": 25, "or": 298543, "rank_change": "▲", "op": 2447, "gwr": 4566213, "gwp": 42,
-        #  "pb": 0, "tm": 1, "tc": "0", "£": 100.2},
-        # {"gw": 26, "or": 228234, "rank_change": "▼", "op": 2598, "gwr": 82508, "gwp": 20,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
-        # {"gw": 27, "or": 79512, "rank_change": "▲", "op": 2644, "gwr": 361510, "gwp": 76,
-        #  "pb": 5, "tm": 1, "tc": "4", "£": 100},
-        # {"gw": 28, "or": 227258, "rank_change": "▲", "op": 2695, "gwr": 2012510, "gwp": 22,
-        #  "pb": 0, "tm": 1, "tc": "4", "£": 100.2},
-        # {"gw": 29, "or": 167366, "rank_change": "▼", "op": 2709, "gwr": 3453322, "gwp": 50,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
-        # {"gw": 30, "or": 2924653, "rank_change": "▲", "op": 2783, "gwr": 3009234, "gwp": 76,
-        #  "pb": 5, "tm": 1, "tc": "16", "£": 100},
-        # {"gw": 31, "or": 3398543, "rank_change": "▲", "op": 2847, "gwr": 4561213, "gwp": 42,
-        #  "pb": 0, "tm": 1, "tc": "0", "£": 100.2},
-        # {"gw": 32, "or": 3228234, "rank_change": 234, "op": 2898, "gwr": 1031000, "gwp": 60,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
-        # {"gw": 33, "or": 79512, "rank_change": "▲", "op": 2944, "gwr": 3061510, "gwp": 76,
-        #  "pb": 5, "tm": 1, "tc": "4", "£": 100},
-        # {"gw": 34, "or": 237258, "rank_change": "▲", "op": 3005, "gwr": 321510, "gwp": 52,
-        #  "pb": 0, "tm": 1, "tc": "4", "£": 100.2},
-        # {"gw": 35, "or": 167366, "rank_change": "▼", "op": 3149, "gwr": 35322, "gwp": 50,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
-        # {"gw": 36, "or": 924653, "rank_change": "▲", "op": 3283, "gwr": 310934, "gwp": 76,
-        #  "pb": 5, "tm": 1, "tc": "16", "£": 100},
-        # {"gw": 37, "or": 398543, "rank_change": "▲", "op": 3347, "gwr": 456621, "gwp": 42,
-        #  "pb": 0, "tm": 1, "tc": "0", "£": 100.2},
-        # {"gw": 38, "or": 238234, "rank_change": "▼", "op": 3398, "gwr": 230000, "gwp": 60,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1}
-    ]
-    data = sort_table_data(data, sort_by, order,
-                           allowed_fields=['gw', 'or', 'op', 'gwp', 'gwr', "rank_change", "pb", "tm", "tc", "£"])
-    return jsonify(data)
 
 # --- OFFENCE PAGE ---
 
@@ -421,7 +250,7 @@ def offence(team_id):
                            current_gw=session.get('current_gw'),
                            manager=g.manager,
                            sort_by=request.args.get(
-                               'sort_by', 'goals_scored'),
+                               'sort_by', 'goals_assists_team'),
                            order=request.args.get('order', 'desc'),
                            current_page='offence')
 
@@ -434,7 +263,8 @@ def defence(team_id):
                            team_id=team_id,
                            current_gw=session.get('current_gw'),
                            manager=g.manager,
-                           sort_by=request.args.get('sort_by', 'starts'),
+                           sort_by=request.args.get(
+                               'sort_by', 'defensive_contribution_team'),
                            order=request.args.get('order', 'desc'),
                            current_page='defence')
 
@@ -643,7 +473,7 @@ def get_sorted_players():
         (team_id, current_gw)
     )
     row = cur.fetchone()
-    logger.debug(f"SELECT returned: {row!r}")
+    # logger.debug(f"SELECT returned: {row!r}")
 
     if row:
         logger.debug(
