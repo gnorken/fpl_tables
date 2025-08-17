@@ -157,10 +157,10 @@ def add_explain_points(pi: dict, explain_blocks, suffix: str = "", mult: int = 1
                 before = pi[key]
                 pi[key] += pts * mult
                 after = pi[key]
-                logging.debug(
-                    f"[GW {gw}] PID {pid} {tag} fixture={fixture_id} "
-                    f"ident={ident} pts={pts} mult={mult} key={key} {before}→{after}"
-                )
+                # logging.debug(
+                #     f"[GW {gw}] PID {pid} {tag} fixture={fixture_id} "
+                #     f"ident={ident} pts={pts} mult={mult} key={key} {before}→{after}"
+                # )
 
 
 def populate_player_info_all_with_live_data(team_id, player_info, static_data):
@@ -313,7 +313,6 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
                 t = stats.get('tackles', 0)
                 xg = float(stats.get('expected_goals', 0))
                 xgc = float(stats.get('expected_goals_conceded', 0))
-                xg90 = float(stats.get('expected_goals_per_90', 0))
                 xa = float(stats.get('expected_assists', 0))
                 yc = stats.get('yellow_cards', 0)
 
@@ -327,7 +326,6 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
                 ti['expected_goals_team'] += xg
                 ti['expected_goals_conceded_team'] += xgc
                 ti['expected_goal_involvements_team'] += (xg + xa)
-                ti['expected_goals_per_90_team'] += xg90
                 ti['goals_conceded_team'] += gc
                 ti['goals_scored_team'] += goals
                 ti['goals_assists_team'] += (goals + assists)
@@ -379,9 +377,12 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
                 ti["clean_sheets_team"] / mins_total) * 90
             rate = (ti["clean_sheets_team"] / mins_total) * 90
             ti["clean_sheets_rate_team"] = min(rate, 1.0)
+            ti["expected_goals_per_90_team"] = (
+                ti["expected_goals_team"] / mins_total) * 90
         else:
             ti["defensive_contribution_per_90_team"] = 0.0
             ti["clean_sheets_per_90_team"] = 0.0
             ti["clean_sheets_rate_team"] = 0.0
+            ti["expected_goals_per_90_team"] = 0.0
 
     return team_info

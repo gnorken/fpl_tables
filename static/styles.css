@@ -73,9 +73,9 @@ a:active {
 }
 
 .btn-outline-primary:hover {
-  color: var(--dark) !important;
-  background-color: var(--accent-3) !important;
-  border-color: var(--primary) !important;
+  color: var(--text-light) !important;
+  background-color: var(--primary) !important;
+  border-color: var(--accent-1) !important;
 }
 
 .bg-primary {
