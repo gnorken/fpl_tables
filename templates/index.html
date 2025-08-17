@@ -31,54 +31,5 @@
 </div>
 
 
-<div class="d-flex align-items-center gap-2 flex-wrap mb-2">
-  <button class="btn btn-outline-secondary d-flex align-items-center" type="button" data-bs-toggle="offcanvas"
-    data-bs-target="#filtersPanel" aria-controls="filtersPanel">
-    <i class="bi bi-sliders me-2"></i> Filters
-    <span id="activeFiltersBadge" class="badge text-bg-primary ms-2 d-none">0</span>
-  </button>
-
-  <button id="resetFiltersBtn" class="btn btn-outline-secondary d-flex align-items-center" type="button" disabled
-    aria-label="Reset all filters">
-    <i class="bi bi-arrow-counterclockwise me-2"></i> Reset
-  </button>
-
-  <button id="applyFiltersBtn" class="btn btn-primary d-sm-none" type="button">
-    Apply
-  </button>
-</div>
-
-<!-- Offcanvas with your filter controls -->
-<div class="offcanvas offcanvas-end" tabindex="-1" id="filtersPanel" aria-labelledby="filtersPanelLabel">
-  <div class="offcanvas-header">
-    <h5 id="filtersPanelLabel" class="offcanvas-title">Filters</h5>
-    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-  </div>
-  <div class="offcanvas-body">
-    <form id="filtersForm">
-      <!-- your controls: selects, sliders, checkboxes, etc. -->
-      <!-- example -->
-      <div class="mb-3">
-        <label class="form-label">Positions</label>
-        <div class="btn-group" role="group" aria-label="Positions">
-          <input type="checkbox" class="btn-check" id="pos1" autocomplete="off">
-          <label class="btn btn-outline-primary" for="pos1">GK</label>
-          <input type="checkbox" class="btn-check" id="pos2" autocomplete="off">
-          <label class="btn btn-outline-primary" for="pos2">DEF</label>
-          <input type="checkbox" class="btn-check" id="pos3" autocomplete="off">
-          <label class="btn btn-outline-primary" for="pos3">MID</label>
-          <input type="checkbox" class="btn-check" id="pos4" autocomplete="off">
-          <label class="btn btn-outline-primary" for="pos4">FWD</label>
-        </div>
-      </div>
-
-      <div class="d-flex gap-2">
-        <button type="button" id="applyInsideBtn" class="btn btn-primary">Apply</button>
-        <button type="button" id="resetInsideBtn" class="btn btn-link">Clear all</button>
-      </div>
-    </form>
-  </div>
-</div>
-
 {% endblock %}
 
