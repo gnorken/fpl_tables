@@ -287,8 +287,9 @@ td {
 .vert-border {
   border-left: 1px solid rgb(222, 226, 230);
 }
-.vert-border-bold {
-  border-left: 1px solid black;
+
+.vert-border-secondary {
+  border-left: 0.1px solid var(--secondary);
 }
 .vert-border-end {
   border-right: 1px solid rgb(222, 226, 230);

@@ -537,6 +537,7 @@ EXPLAIN_TO_FIELD = {
     "penalties_missed": "penalties_missed_points",
     "yellow_cards": "yellow_cards_points",
     "red_cards": "red_cards_points",
+    "defensive_contribution": "defensive_contribution_points",
 }
 
 
@@ -615,6 +616,10 @@ def fill_global_points_from_explain(
         try:
             payload = json.loads(row[0])
             apply_points_payload(static_blob, payload)
+            # ✅ derive counts from points (global)
+            for base in static_blob.values():
+                pts_dc = int(base.get("defensive_contribution_points", 0) or 0)
+                base["defensive_contribution_count"] = pts_dc // 2
         finally:
             if close_after:
                 conn.commit()
@@ -646,7 +651,8 @@ def fill_global_points_from_explain(
 
     # Fetch concurrently with a sensible cap
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
-        futs = {ex.submit(session.get, url, timeout=request_timeout)                : gw for gw, url in urls.items()}
+        futs = {ex.submit(session.get, url, timeout=request_timeout)
+                          : gw for gw, url in urls.items()}
         for fut in as_completed(futs):
             gw = futs[fut]
             try:

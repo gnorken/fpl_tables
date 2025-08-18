@@ -36,12 +36,13 @@ def build_player_info(static_data):
             "assists": p["assists"],
             "assists_performance": round(p["assists"] - float(p.get("expected_assists", 0)), 2),
             "bps": p["bps"],
+            "bonus": p["bonus"],
             "cbi": p["clearances_blocks_interceptions"],
             "clean_sheets": p["clean_sheets"],
             "clean_sheets_per_90": p["clean_sheets_per_90"],
             "defensive_contribution": p["defensive_contribution"],
+            "defensive_contribution_count": 0,
             "defensive_contribution_per_90": p["defensive_contribution_per_90"],
-            "defensive_contribution_points": 0,
             "dreamteam_count": p["dreamteam_count"],
             "expected_assists": round(float(p.get("expected_assists", 0)), 2),
             "expected_goal_involvements": round(float(p.get("expected_goal_involvements", 0)), 2),
@@ -71,7 +72,6 @@ def build_player_info(static_data):
             # Global points breakdown (populate later) Need to convert to points
             # 0-59 minutes. 1 point. 60+ 2 points.
             "assists_points": 0,            # 3 points
-            "bonus_points": 0,
             "clean_sheets_points": 0,       # 4 points for GK and Def, 1 point for Mid
             "defensive_contribution_points": 0,  # 2 points
             "goals_conceded_points": 0,     # -1 point every other goal conceded within a game
@@ -93,7 +93,7 @@ def build_player_info(static_data):
             "assists_points_team": 0,
             "assists_team": 0,
             "benched_points_team": 0,
-            "bonus_points_team": 0,
+            "bonus_team": 0,
             "bps_team": 0,
             "cbi_team": 0,
             "clean_sheets_team": 0,
@@ -104,6 +104,7 @@ def build_player_info(static_data):
             "captained_team": 0,
             "dreamteam_count_team": 0,
             "defensive_contribution_team": 0,
+            "defensive_contribution_count_team": 0,
             "defensive_contribution_points_team": 0,
             "defensive_contribution_per_90_team": 0,
             "expected_assists_team": 0,
@@ -218,7 +219,7 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
         "minutes_points", "defensive_contribution_points", "clean_sheets_points",
         "assists_points", "goals_points", "save_points", "own_goals_points",
         "goals_conceded_points", "penalties_saved_points", "penalties_missed_points",
-        "yellow_cards_points", "red_cards_points", "bonus_points"
+        "yellow_cards_points", "red_cards_points"
     )
     for pi in player_info.values():
         for k in GLOBAL_POINTS_KEYS:
@@ -317,7 +318,7 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
                 yc = stats.get('yellow_cards', 0)
 
                 ti['assists_team'] += assists
-                ti['bonus_points_team'] += bonus
+                ti['bonus_team'] += bonus
                 ti['bps_team'] += bps
                 ti['cbi_team'] += cbi
                 ti['clean_sheets_team'] += cs
@@ -367,6 +368,10 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
         apps = ti.get("appearances_team", 0)
         ti["points_per_game_team"] = round(
             ti["total_points_team"] / apps, 2) if apps else 0
+
+        # ✅ derive the count from points (with multipliers, as you wanted)
+        pts_team = int(ti.get("defensive_contribution_points_team", 0) or 0)
+        ti["defensive_contribution_count_team"] = pts_team // 2
 
         # Calculate per 90s
         mins_total = ti.get("minutes_team", 0)

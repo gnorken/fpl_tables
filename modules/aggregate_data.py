@@ -44,10 +44,10 @@ def filter_and_sort_players(global_info, team_info, request_args):
     Filter and sort players, merging global and team-specific info only for tables that need it.
     """
     # Determine table type
-    table = request_args.get("table", "goals_scored_team")
+    table = request_args.get("table", "summary")
 
     # Conditionally merge based on table
-    if table in ["defence", "offence", "points"]:
+    if table in ["summary", "defence", "offence", "points"]:
         player_info = merge_team_and_global(global_info, team_info)
     else:
         # For talisman and teams, use global_info directly (no team-specific data needed)
@@ -55,6 +55,7 @@ def filter_and_sort_players(global_info, team_info, request_args):
 
     # Set default sort_by based on the table
     default_sort_by = {
+        "summary": "total_points_team",
         "defence": "starts_team",
         "offence": "goals_scored_team",
         "points": "minutes_points_team",
@@ -123,7 +124,7 @@ def filter_and_sort_players(global_info, team_info, request_args):
 
     # Cap at 100 and set is_truncated for relevant tables
     is_truncated = False
-    if table in ["defence", "offence", "points"]:
+    if table in ["summary", "defence", "offence", "points"]:
         is_truncated = len(players) > 100
         players = players[:100]
 

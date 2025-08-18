@@ -239,20 +239,20 @@ def manager(team_id):
         return redirect(url_for("index"))
 
 
-# --- OFFENCE PAGE ---
+# --- SUMMARY PAGE ---
 
 
-@app.route("/<int:team_id>/team/offence")
-def offence(team_id):
+@app.route("/<int:team_id>/team/summary")
+def summary(team_id):
     # flash_if_preseason()
-    return render_template("offence.html",
+    return render_template("summary.html",
                            team_id=team_id,
                            current_gw=session.get('current_gw'),
                            manager=g.manager,
                            sort_by=request.args.get(
-                               'sort_by', 'goals_assists_team'),
+                               'sort_by', 'total_points_team'),
                            order=request.args.get('order', 'desc'),
-                           current_page='offence')
+                           current_page='summary')
 
 # --- DEFENCE PAGE ---
 
@@ -267,6 +267,19 @@ def defence(team_id):
                                'sort_by', 'defensive_contribution_team'),
                            order=request.args.get('order', 'desc'),
                            current_page='defence')
+
+
+@app.route("/<int:team_id>/team/offence")
+def offence(team_id):
+    # flash_if_preseason()
+    return render_template("offence.html",
+                           team_id=team_id,
+                           current_gw=session.get('current_gw'),
+                           manager=g.manager,
+                           sort_by=request.args.get(
+                               'sort_by', 'goals_assists_team'),
+                           order=request.args.get('order', 'desc'),
+                           current_page='offence')
 
 # --- POINTS PAGE ---
 
@@ -550,7 +563,8 @@ def get_sorted_players():
                     break
         return jsonify(players=sorted_stats, players_images=top5, manager=g.manager)
 
-    # 9️⃣ Default tables (defence, offence, points)
+    # 9️⃣ Default tables (summary, defence, offence, points)
+    print("Print if summary gets this far")
     players, images, is_truncated = filter_and_sort_players(
         static_blob, team_blob, request.args)
     return jsonify(players=players, players_images=images, is_truncated=is_truncated, manager=g.manager)

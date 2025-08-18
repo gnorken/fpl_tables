@@ -1,0 +1,349 @@
+{% extends "info.html" %}
+{% block title %}Defence{% endblock %}
+
+{% block page_content %}
+<div class="container-fluid px-3">
+    <div class="table-responsive"><!-- horizontal scroll -->
+        <table id="defence-table"
+            class="interactive-table table table-borderless table-striped text-center text-nowrap">
+            <thead class="th-bg-primary text-center">
+                <tr class="sticky-top">
+                    <th id="top-players" class="sticky-col align-middle round-border-top-left">↑ Top Five
+                    </th>
+                    <th colspan="2" class="round-border-top-right"></th>
+                    <th colspan="12" class="bg-team round-border-top ps-3 text-start text-md-center"
+                        title="Players that are or have been in {{ manager.team_name }} this season">
+                        Stats for {{ manager.team_name }}
+                    </th>
+                    <th colspan="12" class="round-border-top ps-3 text-start text-lg-center">Player Totals</th>
+                </tr>
+                <tr class="">
+                    <th id="entries" class="sticky-col"></th>
+                    <th data-sort="selected_by_percent" class="sort">%</th>
+                    <th data-sort="now_cost" class="sort">£</th>
+
+                    {# --- Team-specific columns (primary) --- #}
+                    <th data-sort="total_points_team" class="sort-team bg-team">P</th>
+                    <th data-sort="starts_team" class="sort-team bg-team">S</th>
+                    <th data-sort="minutes_team" class="sort-team bg-team">M</th>
+                    <th data-sort="defensive_contribution_count_team" class="sort-team bg-team">DC</th>
+                    <th data-sort="defensive_contribution_points_team" class="sort-team bg-team d-none">DC P</th>
+                    <th data-sort="defensive_contribution_team" class="sort-team bg-team d-none">DC</th>
+                    <th data-sort="defensive_contribution_per_90_team" class="sort-team bg-team d-none">DC90</th>
+                    <th data-sort="cbi_team" class="sort-team bg-team d-none">CBI</th>
+                    <th data-sort="tackles_team" class="sort-team bg-team d-none">T</th>
+                    <th data-sort="recoveries_team" class="sort-team bg-team d-none">R</th>
+                    <th data-sort="clean_sheets_team" class="sort-team bg-team">CS</th>
+                    <th data-sort="clean_sheets_per_90_team" class="sort-team bg-team d-none">CS90</th>
+                    <th data-sort="clean_sheets_rate_team" class="sort-team bg-team d-none">CS R</th>
+
+                    <!-- Offence -->
+                    <th data-sort="assists_team" class="sort-team bg-team">A</th>
+                    <th data-sort="expected_assists_team" class="sort-team bg-team d-none">xA</th>
+                    <th data-sort="assists_performance_team" class="sort-team bg-team d-none">+/-</th>
+                    <th data-sort="assists_benched_team" class="sort-team bg-team d-none">bA</th>
+                    <th data-sort="assists_captained_team" class="sort-team bg-team d-none">cA</th>
+                    <th data-sort="goals_scored_team" class="sort-team bg-team">G</th>
+                    <th data-sort="expected_goals_team" class="sort-team bg-team d-none">xG</th>
+                    <th data-sort="goals_performance_team" class="sort-team bg-team d-none">+/-</th>
+                    <th data-sort="expected_goals_per_90_team" class="sort-team bg-team d-none">xG90</th>
+                    <th data-sort="goals_benched_team" class="sort-team bg-team d-none">bG</th>
+                    <th data-sort="goals_captained_team" class="sort-team bg-team d-none">cG</th>
+                    <th data-sort="goals_assists_team" class="sort-team bg-team d-none">GI</th>
+                    <th data-sort="expected_goal_involvements_team" class="sort-team bg-team d-none">xGI</th>
+                    <th data-sort="goals_assists_performance_team" class="sort-team bg-team d-none">+/-</th>
+                    <th data-sort="goals_assists_performance_team_vs_total" class="sort-team bg-team d-none">+/-</th>
+
+
+                    <th data-sort="bonus_team" class="sort-team bg-team">BP</th>
+                    <th data-sort="dreamteam_count_team" class="sort-team bg-team">DT</th>
+                    <th data-sort="penalties_saved_team" class="sort-team bg-team d-none">PS</th>
+                    <th data-sort="starts_benched_team" class="sort-team bg-team d-none">bS</th>
+                    <th data-sort="minutes_benched_team" class="sort-team bg-team d-none">bM</th>
+
+                    <!-- Negatives -->
+                    <th data-sort="yellow_cards_team" class="sort-team bg-team">YC</th>
+                    <th data-sort="red_cards_team" class="sort-team bg-team">RC</th>
+                    <th data-sort="goals_conceded_team" class="sort-team bg-team">GC</th>
+                    <th data-sort="expected_goals_conceded_team" class="sort-team bg-team d-none">xGC</th>
+                    <th data-sort="own_goals_team" class="sort-team bg-team d-none">OG</th>
+
+                    {# --- Overall columns (secondary) --- #}
+                    <th data-sort="total_points" class="sort">P</th>
+                    <th data-sort="starts" class="sort">S</th>
+                    <th data-sort="minutes" class="sort">M</th>
+                    <th data-sort="defensive_contribution_count" class="sort">DC</th>
+                    <th data-sort="defensive_contribution_points" class="sort d-none">DC P</th>
+                    <th data-sort="defensive_contribution" class="sort d-none">DC</th>
+                    <th data-sort="defensive_contribution_per_90" class="sort d-none">DC90</th>
+                    <th data-sort="cbi" class="sort d-none">CBI</th>
+                    <th data-sort="tackles" class="sort d-none">T</th>
+                    <th data-sort="recoveries" class="sort d-none">R</th>
+                    <th data-sort="clean_sheets" class="sort">CS</th>
+                    <th data-sort="clean_sheets_per_90" class="sort d-none">CS90</th>
+
+                    <!-- Offence -->
+                    <th data-sort="assists" class="sort">A</th>
+                    <th data-sort="expected_assists" class="sort d-none">xA</th>
+                    <th data-sort="assists_performance" class="sort d-none">+/-</th>
+                    <th data-sort="goals_scored" class="sort">G</th>
+                    <th data-sort="expected_goals" class="sort d-none">xG</th>
+                    <th data-sort="goals_performance" class="sort d-none">+/-</th>
+                    <th data-sort="expected_goals_per_90" class="sort d-none">xG90</th>
+                    <th data-sort="goals_assists" class="sort d-none">GI</th>
+                    <th data-sort="expected_goal_involvements" class="sort d-none">xGI</th>
+                    <th data-sort="goals_assists_performance" class="sort d-none">+/-</th>
+
+                    <th data-sort="bonus" class="sort">BP</th>
+                    <th data-sort="dreamteam_count" class="sort">DT</th>
+                    <th data-sort="penalties_saved" class="sort d-none">PS</th>
+                    <th data-sort="yellow_cards" class="sort">YC</th>
+                    <th data-sort="red_cards" class="sort">RC</th>
+                    <th data-sort="goals_conceded" class="sort">GC</th>
+                    <th data-sort="expected_goals_conceded" class="sort d-none">xGC</th>
+                    <th data-sort="own_goals" class="sort d-none">OG</th>
+                    <th data-sort="penalties_missed" class="sort d-none">PM</th>
+                </tr>
+            </thead>
+
+            <tbody id="player-table-body">
+                <!-- rows injected by script.js -->
+            </tbody>
+
+            <tfoot>
+                <tr class="th-bg-primary text-center">
+                    <th class="sticky-col round-border-btm-left"></th>
+                    <th colspan="2" class="th-bg-primary round-border-btm-right">
+                    <th colspan="12" class="bg-team round-border-btm">
+                        <div id="loading" style="display:none;">Loading…</div>
+                    </th>
+                    <th colspan="12" class="round-border-btm"></th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+
+    // 1) Page‐specific lookup for header‐hover tooltips:
+    const managerName = {{ manager.team_name| tojson }};
+    const lookup = {
+        "selected_by_percent": "Teams selected by",
+        "now_cost": "Current price",
+
+        "total_points_team": `Points for ${managerName}`,
+        "starts_team": `Starts for ${managerName}`,
+        "minutes_team": `Minutes played for ${managerName}`,
+        "defensive_contribution_points_team": `Defensive contributions points for ${managerName}`,
+        "defensive_contribution_count_team": `Defcons for ${managerName}`,
+        "defensive_contribution_team": `Defensive contributions for ${managerName}`,
+        "defensive_contribution_per_90_team": `Defensive contributions per 90 for ${managerName}`,
+        "cbi_team": `Clearances, blocks and interceptions for ${managerName}`,
+        "recoveries_team": `Recoveries for ${managerName}`,
+        "tackles_team": `Tackles for ${managerName}`,
+        "clean_sheets_team": `Clean sheets for ${managerName}`,
+        "clean_sheets_per_90_team": `Clean sheets per 90 for ${managerName}`,
+        "clean_sheets_rate_team": `Clean sheets rate for ${managerName}. (1 = every game played)`,
+        // "captained_team": `Times captained for ${managerName}`,
+        "dreamteam_count_team": `Times in Dreamteam for ${managerName}`,
+        "bonus_team": `Bonus points for ${managerName}`,
+        "penalties_saved_team": `Penalties saved for ${managerName}`,
+        "starts_benched_team": `Benched starts for ${managerName}`,
+        "minutes_benched_team": `Benched minutes for ${managerName}`,
+        "yellow_cards_team": `Yellow cards for ${managerName}`,
+        "red_cards_team": `Red cards for ${managerName}`,
+        "goals_conceded_team": `Goals conceded by ${managerName}`,
+        "expected_goals_conceded": `Expected goals conceded by ${managerName}`,
+        "own_goals_team": `Own goals by ${managerName}`,
+
+        "total_points": "Points",
+        "starts": "Starts",
+        "minutes": "Minutes",
+        "defensive_contribution_count": "Times achieved defcon points",
+        "defensive_contribution_points": "Points for defensive contributions",
+        "defensive_contribution": "All the defensive contributions (CBIT[R])",
+        "defensive_contribution_per_90": "Defensive contributions per 90",
+        "cbi": `Clearances, blocks and interceptions (CBI)`,
+        "recoveries": `Recoveries`,
+        "tackles": `Tackles`,
+        "clean_sheets": "Clean sheets",
+        "clean_sheets_per_90": "Clean sheets per 90",
+        "dreamteam_count": "Total Dreamteam appearances",
+        "bonus": "Bonus points",
+        "penalties_saved": "Penalties saved",
+        "yellow_cards": "Yellow cards",
+        "red_cards": "Red cards",
+        "goals_conceded": "Goals conceded",
+        "expected_goals_conceded": "Expected goals conceded",
+        "own_goals": "Own goals",
+        "penalties_missed": "Penalties missed",
+        "top-players": "Pictures of the top players for this category",
+        "entries": "Number of entries",
+        "team-data": "Team stats",
+        "overall-data": "Overall stats",
+
+        "goals_scored_team": `Goals scored for ${name}`,
+        "expected_goals_team": `Expected goals for ${name}`,
+        "goals_performance_team": `Goals scored vs expected goals scored for ${name}`,
+        "goals_benched_team": `Benched goals for ${name}`,
+        "goals_captained_team": `Captain goals for ${name}`,
+        "assists_team": `Assists for ${name}`,
+        "expected_assists_team": `Expected assists for ${name}`,
+        "expected_goals_per_90_team": `Expected goals per 90 for ${name}`,
+        "assists_performance_team": `Assists vs expected assists for ${name}`,
+        "assists_benched_team": `Benched assists for ${name}`,
+        "assists_captained_team": `Captain assists for ${name}`,
+        "goals_assists_team": `Goal Involvements for ${name} (Goals + Assists)`,
+        "expected_goal_involvements_team": `Expected goals + expected assists for ${name}`,
+        "goals_assists_performance_team": `G+A vs xG+xA for ${name}`,
+        "goals_assists_performance_team_vs_total":
+        `G+A vs xG+xA vs total for ${name}`,
+        "goals_scored": `Goals scored`,
+        "expected_goals": `Total expected goals`,
+        "goals_performance": `Goals scored vs expected goals`,
+        "assists": `Assists`,
+        "expected_assists": `Expected assists`,
+        "assists_performnce": `Assists vs expected assists`,
+        "expected_goals_per_90": `Expected goals per 90`,
+        "goals_assists": `Total goals + assists`,
+        "expected_goal_involvements": `xG+xA`,
+        "goals_assists_performance": `G+A vs xG+xA`,
+    };
+
+    const positionMap = {
+        1: "GK",
+        2: "DEF",
+        3: "MID",
+        4: "FWD"
+    };
+
+    // 2) Now inject the shared tableConfig for `script.js` to pick up:
+    window.tableConfig = {
+        table: "summary",
+        url: `/get-sorted-players?table=summary&team_id={{ team_id }}`,
+        tbodySelector: "#player-table-body",
+        loadingSelector: "#loading",
+        sortBy: "{{ sort_by }}",
+        sortOrder: "{{ order }}",
+        lookup: lookup,
+        // columns tells script.js what to render, in order:
+        columns: [
+            // rank + name
+            {
+                render: (p, idx) => {
+                    const short = p.web_name.length > 11 ? p.web_name.slice(0, 13) + '…' : p.web_name;
+                    const badgeUrl = `https://resources.premierleague.com/premierleague/badges/100/t${p.team_code}@x2.png`;
+
+                    return `
+                    <td class="sticky-col vert-border-end vert-border">
+                        <div class="d-flex align-items-center">
+                            <div class="text-center vert-border-end d-none d-lg-inline" flex:0 0 auto;">${idx + 1}</div> 
+                            <img 
+                                src="${badgeUrl}"
+                                alt="${p.team_name} badge"
+                                class="img-fluid overlap-badge ms-1"
+                                data-bs-toggle="tooltip"
+                                title="${p.team_name}"
+                                style="width: 20px; height: 20px; flex:0 0 auto;"
+                                onerror="this.onerror=null;this.src='https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png';"
+                            >
+                            <div class="d-flex align-items-end">
+                                <div class="ms-1 text-truncate">${short}</div>
+                                <div class="small text-muted d-none d-lg-inline">&nbsp;${positionMap[p.element_type] || p.element_type}</div>
+                            </div>
+                        </div>
+                    </td>`;
+                }
+            },
+
+            { key: "selected_by_percent", className: "sort", dataColumn: "selected_by_percent", formatter: v => `${parseFloat(v).toFixed(0)}%` },
+            { key: "now_cost", className: "sort ", dataColumn: "now_cost", formatter: v => `£${(v / 10).toFixed(1)}m` },
+            // team‐specific (primary) columns:
+            { key: "total_points_team", className: "sort-team vert-border-secondary", sortLevel: "primary", dataColumn: "total_points", formatter: v => `${parseFloat(v)}p` },
+            { key: "starts_team", className: "sort-team", sortLevel: "primary", dataColumn: "starts" },
+            { key: "minutes_team", className: "sort-team vert-border-end", sortLevel: "primary", dataColumn: "minutes" },
+            { key: "defensive_contribution_count_team", className: "sort-team", sortLevel: "primary", dataColumn: "defcon_count" },
+            { key: "defensive_contribution_points_team", className: "sort-team d-none", sortLevel: "primary", dataColumn: "defcon_points" },
+            { key: "defensive_contribution_team", className: "sort-team d-none", sortLevel: "primary", dataColumn: "defcon" },
+            { key: "defensive_contribution_per_90_team", className: "sort-team d-none", sortLevel: "primary", dataColumn: "defcon_90", formatter: v => (v).toFixed(1) },
+            { key: "cbi_team", className: "sort-team d-none", sortLevel: "primary", dataColumn: "cbi" },
+            { key: "tackles_team", className: "sort-team d-none", sortLevel: "primary", dataColumn: "tackles" },
+            { key: "recoveries_team", className: "sort-team d-none", sortLevel: "primary", dataColumn: "recoveries" },
+            { key: "clean_sheets_team", className: "sort-team", sortLevel: "primary", dataColumn: "clean_sheets" },
+            { key: "clean_sheets_per_90_team", className: "sort-team d-none", sortLevel: "primary", dataColumn: "clean_sheets_per_90", formatter: v => (v).toFixed(1) },
+            { key: "clean_sheets_rate_team", className: "sort-team vert-border-end  d-none", sortLevel: "primary", dataColumn: "clean_sheets_rate" },
+            // { key: "captained_team", dataColumn: "captained" },
+
+            { key: 'assists_team', dataColumn: "assists", sortLevel: "primary", className: 'sort-team' },
+            { key: 'expected_assists_team', dataColumn: "expected_assists", sortLevel: "primary", className: 'sort-team d-none', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'assists_performance_team', dataColumn: "assists_performance", sortLevel: "primary", className: 'sort-team d-none', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'assists_benched_team', className: 'sort-team text-danger d-none' },
+            { key: 'assists_captained_team', className: 'sort-team d-none' },
+            { key: 'goals_scored_team', dataColumn: "goals_scored", sortLevel: "primary", className: 'sort-team' },
+            { key: 'expected_goals_team', dataColumn: "expected_goals", sortLevel: "primary", className: 'sort-team d-none', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'goals_performance_team', dataColumn: "goals_performance", sortLevel: "primary", className: 'sort-team d-none', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'expected_goals_per_90_team', dataColumn: "expected_goals_per_90", sortLevel: "primary", className: 'sort-team d-none', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'goals_benched_team', className: 'sort-team text-danger d-none' },
+            { key: 'goals_captained_team', className: 'sort-team d-none' },
+            { key: 'goals_assists_team', dataColumn: "goals_assists", sortLevel: "primary", className: 'sort-team vert-border d-none' },
+            { key: 'expected_goal_involvements_team', dataColumn: "expected_goal_involvements", sortLevel: "primary", className: 'sort-team d-none', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'goals_assists_performance_team', dataColumn: "goals_assists_performance", sortLevel: "primary", className: 'sort-team d-none', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'goals_assists_performance_team_vs_total', sortLevel: "primary", className: 'sort-team d-none', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+
+            { key: "bonus_team", className: "sort-team", sortLevel: "primary", dataColumn: "bonus" },
+            { key: "dreamteam_count_team", className: "sort-team vert-border", sortLevel: "primary", dataColumn: "dreamteam_count" },
+            { key: "penalties_saved_team", className: "sort-team d-none ", sortLevel: "primary", dataColumn: "penalties_saved" },
+            { key: "starts_benched_team", className: "vert-border d-none", dataColumn: "starts_benched_team" },
+            { key: "minutes_benched_team", dataColumn: "minutes_benched_team", className: "d-none" },
+            // Negatives
+            { key: "yellow_cards_team", className: "sort-team text-danger vert-border", sortLevel: "primary", dataColumn: "yellow_cards" },
+            { key: "red_cards_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "red_cards" },
+            { key: "goals_conceded_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "goals_conceded" },
+            { key: "expected_goals_conceded_team", className: "sort-team text-danger d-none", sortLevel: "primary", dataColumn: "expected_goals_conceded", formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: "own_goals_team", className: "sort-team text-danger d-none", sortLevel: "primary", dataColumn: "own_goals" },
+
+            // 15 overall (secondary) columns:
+            { key: "total_points", className: "sort vert-border-secondary", sortLevel: "secondary", dataColumn: "total_points", formatter: v => `${parseFloat(v)}p` },
+            { key: "starts", className: "sort", sortLevel: "secondary", dataColumn: "starts" },
+            { key: "minutes", className: "sort vert-border-end", sortLevel: "secondary", dataColumn: "minutes" },
+            { key: "defensive_contribution_count", className: "sort", sortLevel: "secondary", dataColumn: "defcon_count" },
+            { key: "defensive_contribution_points", className: "sort d-none", sortLevel: "secondary", dataColumn: "defcon_points" },
+            { key: "defensive_contribution", className: "sort d-none", sortLevel: "secondary", dataColumn: "defcon" },
+            { key: "defensive_contribution_per_90", className: "sort d-none", sortLevel: "secondary", dataColumn: "defcon_90" },
+            { key: "cbi", className: "sort d-none", sortLevel: "secondary", dataColumn: "cbi" },
+            { key: "tackles", className: "sort d-none", sortLevel: "secondary", dataColumn: "tackles" },
+            { key: "recoveries", className: "sort d-none", sortLevel: "secondary", dataColumn: "recoveries" },
+            { key: "clean_sheets", className: "sort", sortLevel: "secondary", dataColumn: "clean_sheets" },
+            { key: "clean_sheets_per_90", className: "sort d-none", sortLevel: "secondary", dataColumn: "clean_sheets_per_90", formatter: v => (v).toFixed(2) },
+            { key: "penalties_saved", className: "sort d-none", sortLevel: "secondary", dataColumn: "penalties_saved" },
+            
+            // Offence
+            { key: 'assists', dataColumn: "assists", sortLevel: "secondary", className: 'sort' },
+            { key: 'expected_assists', dataColumn: "expected_assists", sortLevel: "secondary", className: 'sort d-none', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'assists_performance', dataColumn: "assists_performance", sortLevel: "secondary", className: 'sort d-none', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'goals_scored', dataColumn: "goals_scored", sortLevel: "secondary", className: 'sort' },
+            { key: 'expected_goals', dataColumn: "expected_goals", sortLevel: "secondary", className: 'sort d-none', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'goals_performance', dataColumn: "goals_performance", sortLevel: "secondary", className: 'sort d-none', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'expected_goals_per_90', dataColumn: "expected_goals_per_90", sortLevel: "secondary", className: 'sort d-none', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'goals_assists', dataColumn: "goals_assists", sortLevel: "secondary", className: 'sort vert-border d-none' },
+            { key: 'expected_goal_involvements', dataColumn: "expected_goal_involvements", sortLevel: "secondary", className: 'sort d-none', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: 'goals_assists_performance', dataColumn: "goals_assists_performance", sortLevel: "secondary", className: 'sort vert-border-end d-none', formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            
+            { key: "bonus", className: "sort", sortLevel: "secondary", dataColumn: "bonus" },
+            { key: "dreamteam_count", className: "sort vert-border", sortLevel: "secondary", dataColumn: "dreamteam_count" },
+            // Negatives
+            { key: "yellow_cards", className: "sort text-danger vert-border", sortLevel: "secondary", dataColumn: "yellow_cards" },
+            { key: "red_cards", className: "sort text-danger", sortLevel: "secondary", dataColumn: "red_cards" },
+            { key: "goals_conceded", className: "sort text-danger", sortLevel: "secondary", dataColumn: "goals_conceded" },
+            { key: "expected_goals_conceded", className: "sort text-danger d-none", sortLevel: "secondary", dataColumn: "expected_goals_conceded", formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
+            { key: "own_goals", className: "sort text-danger d-none", sortLevel: "secondary", dataColumn: "own_goals" },
+            { key: "penalties_missed", className: "sort text-danger vert-border-end d-none", sortLevel: "secondary", dataColumn: "penalties_missed" }
+        ]
+        // currentGw: {{ current_gw }}
+    };
+</script>
+
+{% endblock %}
