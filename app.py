@@ -564,10 +564,10 @@ def get_sorted_players():
         return jsonify(players=sorted_stats, players_images=top5, manager=g.manager)
 
     # 9️⃣ Default tables (summary, defence, offence, points)
-    print("Print if summary gets this far")
-    players, images, is_truncated = filter_and_sort_players(
+    print("Default tables.")
+    players, images, is_truncated, price_range = filter_and_sort_players(
         static_blob, team_blob, request.args)
-    return jsonify(players=players, players_images=images, is_truncated=is_truncated, manager=g.manager)
+    return jsonify(players=players, players_images=images, is_truncated=is_truncated, manager=g.manager, price_range=price_range)
 
 
 if __name__ == "__main__":

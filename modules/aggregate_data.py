@@ -41,49 +41,66 @@ def merge_team_and_global(global_info, team_info):
 
 def filter_and_sort_players(global_info, team_info, request_args):
     """
-    Filter and sort players, merging global and team-specific info only for tables that need it.
+    Filter and sort players. Compute price_range BEFORE applying price filters.
     """
-    # Determine table type
     table = request_args.get("table", "summary")
 
-    # Conditionally merge based on table
     if table in ["summary", "defence", "offence", "points"]:
         player_info = merge_team_and_global(global_info, team_info)
     else:
-        # For talisman and teams, use global_info directly (no team-specific data needed)
         player_info = global_info
 
-    # Set default sort_by based on the table
     default_sort_by = {
         "summary": "total_points_team",
         "defence": "starts_team",
         "offence": "goals_scored_team",
         "points": "minutes_points_team",
         "talisman": "total_points",
-        "teams": "total_points"  # Adjust if teams has a different default
+        "teams": "total_points",
     }.get(table, "goals_scored_team")
 
-    # Get sorting and filter parameters
     sort_by = request_args.get("sort_by", default_sort_by)
     order = request_args.get("order", "desc")
     selected_positions = request_args.get("selected_positions", "")
-
-    # Cost filter (convert from UI cost to API cost format)
-    min_cost = float(request_args.get("min_cost", 0)) * 10
-    max_cost = float(request_args.get("max_cost", 20)) * 10
-
-    # Minutes filter
+    min_cost = request_args.get(
+        "min_cost", type=float)  # £ units (may be None)
+    max_cost = request_args.get("max_cost", type=float)
     min_minutes = int(request_args.get("min_minutes", 0))
     max_minutes = int(request_args.get("max_minutes", 38 * 90))
 
-    # Columns to treat specially
+    # ---------------- 1) Pre-price filtering (positions + minutes only) ----------------
+    pre_price = []
+    for p in player_info.values():
+        pos_ok = (not selected_positions or str(
+            p.get("element_type")) in selected_positions)
+        min_ok = (min_minutes <= p.get("minutes", 0) <= max_minutes)
+        if pos_ok and min_ok:
+            pre_price.append(p)
+
+    # ---------------- 2) price_range from pre_price (in tenths, like now_cost) --------
+    all_costs = [p.get("now_cost")
+                 for p in pre_price if p.get("now_cost") is not None]
+    price_range = {
+        "min": min(all_costs) if all_costs else None,
+        "max": max(all_costs) if all_costs else None,
+    }
+
+    # ---------------- 3) Apply price filter (convert £ to tenths) ----------------------
+    players = pre_price
+    if min_cost is not None:
+        thr = int(min_cost * 10)
+        players = [p for p in players if p.get("now_cost", 0) >= thr]
+    if max_cost is not None:
+        thr = int(max_cost * 10)
+        players = [p for p in players if p.get("now_cost", 0) <= thr]
+
+    # ---------------- 4) Column-based inclusion filter -------------------------------
     negative_columns = {
         "points_pm_team", "yellow_cards_points_team", "yellow_cards_points",
         "red_cards_points_team", "red_cards_points", "penalties_missed_points",
         "penalties_missed_points_team", "own_goals_points", "own_goals_points_team",
         "goals_conceded_points", "goals_conceded_points_team",
     }
-
     positive_and_negative_columns = {
         "goals_performance_team", "assists_performance_team", "goals_assists_performance_team",
         "goals_performance", "assists_performance", "goals_assists_performance",
@@ -91,21 +108,6 @@ def filter_and_sort_players(global_info, team_info, request_args):
         "starts_team", "total_points_team"
     }
 
-    # Apply filters
-    kept = []
-    for p in player_info.values():
-        # Cost, positions, and minutes filters
-        cost_ok = (min_cost <= p["now_cost"] <= max_cost)
-        pos_ok = (not selected_positions or str(
-            p["element_type"]) in selected_positions)
-        min_ok = (min_minutes <= p.get("minutes", 0) <= max_minutes)
-
-        if cost_ok and pos_ok and min_ok:
-            kept.append(p)
-
-    players = kept
-
-    # Filter based on sort_by column
     if sort_by in negative_columns:
         players = [p for p in players if float(p.get(sort_by, 0)) < 0]
     elif sort_by in positive_and_negative_columns:
@@ -113,26 +115,25 @@ def filter_and_sort_players(global_info, team_info, request_args):
     else:
         players = [p for p in players if float(p.get(sort_by, 0)) > 0]
 
-    # Sort
-    reverse_order = order == "desc"
+    # ---------------- 5) Sort ----------------------------------------------------------
+    reverse_order = (order == "desc")
     if sort_by in negative_columns:
-        players = sorted(
-            players, key=lambda x: x[sort_by], reverse=not reverse_order)
+        players = sorted(players, key=lambda x: x.get(
+            sort_by, 0), reverse=not reverse_order)
     else:
         players = sorted(players, key=lambda x: float(
-            x[sort_by]), reverse=reverse_order)
+            x.get(sort_by, 0)), reverse=reverse_order)
 
-    # Cap at 100 and set is_truncated for relevant tables
+    # ---------------- 6) Truncate & images --------------------------------------------
     is_truncated = False
     if table in ["summary", "defence", "offence", "points"]:
         is_truncated = len(players) > 100
         players = players[:100]
 
-    # Return players and top 5 images
-    players_images = [{"photo": player["photo"], "team_code": player["team_code"]}
-                      for player in players[:5]]
+    players_images = [{"photo": p.get("photo"), "team_code": p.get(
+        "team_code")} for p in players[:5]]
 
-    return players, players_images, is_truncated
+    return players, players_images, is_truncated, price_range
 
 # Sort for simple tables. I use it for graph/tables combo on manager page
 

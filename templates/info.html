@@ -30,8 +30,8 @@
       <div class="col-12 col-lg-2 order-2 order-lg-1
                   d-flex flex-column justify-content-lg-end mt-2 mt-lg-0">
         <!-- Mobile row: switches + reset inline -->
-        <div class="d-flex flex-nowrap align-items-center w-100 flex-lg-column">
-          <form id="checkboxForm" class="d-flex flex-nowrap gap-2 gap-lg-0 flex-lg-column w-100">
+        <div class="d-flex flex-nowrap align-items-center justify-content-center w-100 flex-lg-column">
+          <form id="checkboxForm" class="d-flex flex-nowrap gap-2 gap-lg-0 flex-lg-column">
             <div class="form-check form-switch">
               <input type="checkbox" name="position" id="checkbox1" class="form-check-input" value="1" checked>
               <label class="form-check-label" for="checkbox1">GK</label>
@@ -51,7 +51,7 @@
           </form>
     
           <!-- Mobile reset (inline at end of switches row) -->
-          <button id="resetBtnMobile" type="button" class="btn btn-outline-primary ms-2 d-lg-none">
+          <button id="resetBtnMobile" type="button" class="btn btn-outline-primary ms-2 d-lg-none reset-filters">
             ↻
           </button>
         </div>
@@ -59,7 +59,7 @@
     
       <!-- RESET column (LG only, between switches and sliders) -->
       <div class="col-12 col-lg-2 order-3 order-lg-3 d-none d-lg-flex align-items-center">
-        <button id="resetBtnLg" type="button" class="btn btn-outline-primary w-100">
+        <button id="resetBtnLg" type="button" class="btn btn-outline-primary w-100 reset-filters">
           ↻ <br> Reset
         </button>
       </div>
