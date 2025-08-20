@@ -65,7 +65,7 @@ def build_manager(me: dict, league_entry: dict | None = None) -> dict:
         "overall_rank":        me.get("summary_overall_rank", 0),
         "player_name":         f"{me.get('player_first_name', '')} {me.get('player_last_name', '')}".strip(),
         "total_points":        me.get("summary_overall_points", 0),
-        "years_active":        me.get("years_active") or 0,
+        "years_active":        me.get("years_active") + 1 or 0,
     }
 
     if league_entry:

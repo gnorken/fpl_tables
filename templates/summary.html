@@ -252,7 +252,7 @@
                             >
                             <div class="d-flex align-items-end">
                                 <div class="ms-1 text-truncate">${short}</div>
-                                <div class="small text-muted d-none d-lg-inline">&nbsp;${positionMap[p.element_type] || p.element_type}</div>
+                                <div class="small text-muted d-none d-xl-inline">&nbsp;${positionMap[p.element_type] || p.element_type}</div>
                             </div>
                         </div>
                     </td>`;
@@ -337,7 +337,7 @@
             // Negatives
             { key: "yellow_cards", className: "sort text-danger vert-border", sortLevel: "secondary", dataColumn: "yellow_cards" },
             { key: "red_cards", className: "sort text-danger", sortLevel: "secondary", dataColumn: "red_cards" },
-            { key: "goals_conceded", className: "sort text-danger", sortLevel: "secondary", dataColumn: "goals_conceded" },
+            { key: "goals_conceded", className: "sort text-danger vert-border-end", sortLevel: "secondary", dataColumn: "goals_conceded" },
             { key: "expected_goals_conceded", className: "sort text-danger d-none", sortLevel: "secondary", dataColumn: "expected_goals_conceded", formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
             { key: "own_goals", className: "sort text-danger d-none", sortLevel: "secondary", dataColumn: "own_goals" },
             { key: "penalties_missed", className: "sort text-danger vert-border-end d-none", sortLevel: "secondary", dataColumn: "penalties_missed" }

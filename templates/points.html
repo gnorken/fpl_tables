@@ -22,6 +22,8 @@
 
                 {# — 16 team-specific (primary) columns — #}
                 <th data-sort="total_points_team" class="sort-team bg-team">P</th>
+                <th data-sort="captained_points_team" class="sort-team bg-team">C</th>
+                <th data-sort="benched_points_team" class="sort-team bg-team">B</th>
                 <th data-sort="points_per_game_team" class="sort-team bg-team">PPG</th>
                 <th data-sort="ppm_team" class="sort-team bg-team">PPM</th>
                 <th data-sort="minutes_points_team" class="sort-team bg-team">M</th>
@@ -29,7 +31,7 @@
                 <th data-sort="clean_sheets_points_team" class="sort-team bg-team">CS</th>
                 <th data-sort="assists_points_team" class="sort-team bg-team">A</th>
                 <th data-sort="goals_scored_points_team" class="sort-team bg-team">G</th>
-                <th data-sort="bonus_points_team" class="sort-team bg-team">B</th>
+                <th data-sort="bonus_team" class="sort-team bg-team">B</th>
                 <th data-sort="save_points_team" class="sort-team bg-team">S</th>
                 <th data-sort="penalties_saved_points_team" class="sort-team bg-team">PS</th>
                 <th data-sort="goals_conceded_points_team" class="sort-team bg-team">GC</th>
@@ -37,8 +39,6 @@
                 <th data-sort="red_cards_points_team" class="sort-team bg-team">RC</th>
                 <th data-sort="own_goals_points_team" class="sort-team bg-team">OG</th>
                 <th data-sort="penalties_missed_points_team" class="sort-team bg-team">PM</th>
-                <th data-sort="benched_points_team" class="sort-team bg-team">B</th>
-                <th data-sort="captained_points_team" class="sort-team bg-team">C</th>
 
                 {# — 14 overall (secondary) columns — #}
                 <th data-sort="total_points" class="sort">P</th>
@@ -49,7 +49,7 @@
                 <th data-sort="clean_sheets_points" class="sort">CS</th>
                 <th data-sort="assists_points" class="sort">A</th>
                 <th data-sort="goals_scored_points" class="sort">G</th>
-                <th data-sort="bonus_points" class="sort">B</th>
+                <th data-sort="bonus" class="sort">B</th>
                 <th data-sort="saves_points" class="sort">S</th>
                 <th data-sort="penalties_saved_points" class="sort">PS</th>
                 <th data-sort="goals_conceded_points" class="sort">GC</th>
@@ -94,7 +94,7 @@
         "clean_sheets_points_team": `Points for clean sheets by ${managerName}`,
         "assists_points_team": `Points for assists by ${managerName}`,
         "goals_points_team": `Points for goals by ${managerName}`,
-        "bonus_points_team": `Bonus points for ${managerName}`,
+        "bonus_team": `Bonus points for ${managerName}`,
         "save_points_team": `Points for saves by ${managerName}`,
         "penalties_saved_points_team": `Points for penalties saved for ${managerName}`,
         "goals_conceded_points_team": `Points lost to conceded goals for ${managerName}`,
@@ -113,7 +113,7 @@
         "clean_sheets_points": "Total points for clean sheets",
         "assists_points": "Total points for assist",
         "goals_points": "Total points for goal scored",
-        "bonus_points": "Total bonus points",
+        "bonus": "Total bonus points",
         "save_points": "Total points for saves",
         "penalties_saved_points": "Total points for penalties saved",
         "goals_conceded_points": "Total minus points for conceded goals",
@@ -177,6 +177,8 @@
 
             // 16 primary columns
             { key: "total_points_team", className: "sort-team vert-border", sortLevel: "primary", dataColumn: "total_points" },
+            { key: "captained_points_team", className: "sort-team", sortLevel: "primary", dataColumn: "captained_points" },
+            { key: "benched_points_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "benched_points" },
             { key: "points_per_game_team", className: "sort-team", sortLevel: "primary", dataColumn: "points_per_game" },
             { key: "ppm_team", className: "sort-team", sortLevel: "primary", dataColumn: "ppm" },
             { key: "minutes_points_team", className: "sort-team vert-border", sortLevel: "primary", dataColumn: "minutes_points" },
@@ -184,7 +186,7 @@
             { key: "clean_sheets_points_team", className: "sort-team", sortLevel: "primary", dataColumn: "clean_sheets_points" },
             { key: "assists_points_team", className: "sort-team", sortLevel: "primary", dataColumn: "assists_points" },
             { key: "goals_scored_points_team", className: "sort-team", sortLevel: "primary", dataColumn: "goals_scored_points" },
-            { key: "bonus_points_team", className: "sort-team", sortLevel: "primary", dataColumn: "bonus_points" },
+            { key: "bonus_team", className: "sort-team", sortLevel: "primary", dataColumn: "bonus" },
             { key: "saves_points_team", className: "sort-team", sortLevel: "primary", dataColumn: "save_points" },
             { key: "penalties_saved_points_team", className: "sort-team", sortLevel: "primary", dataColumn: "penalties_saved_points" },
             { key: "goals_conceded_points_team", className: "sort-team text-danger vert-border", sortLevel: "primary", dataColumn: "goals_conceded_points" },
@@ -192,8 +194,6 @@
             { key: "red_cards_points_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "red_cards_points" },
             { key: "own_goals_points_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "own_goals_points" },
             { key: "penalties_missed_points_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "penalties_missed_points" },
-            { key: "benched_points_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "benched_points" },
-            { key: "captained_points_team", className: "sort-team", sortLevel: "primary", dataColumn: "captained_points" },
 
             // 14 secondary columns
             { key: "total_points", className: "sort vert-border", sortLevel: "secondary", dataColumn: "total_points" },
@@ -204,7 +204,7 @@
             { key: "clean_sheets_points", className: "sort", sortLevel: "secondary", dataColumn: "clean_sheets_points" },
             { key: "assists_points", className: "sort", sortLevel: "secondary", dataColumn: "assists_points" },
             { key: "goals_scored_points", className: "sort", sortLevel: "secondary", dataColumn: "goals_scored_points" },
-            { key: "bonus_points", className: "sort", sortLevel: "secondary", dataColumn: "bonus_points" },
+            { key: "bonus", className: "sort", sortLevel: "secondary", dataColumn: "bonus" },
             { key: "saves_points", className: "sort", sortLevel: "secondary", dataColumn: "save_points" },
             { key: "penalties_saved_points", className: "sort", sortLevel: "secondary", dataColumn: "penalties_saved_points" },
             { key: "goals_conceded_points", className: "sort text-danger vert-border", sortLevel: "secondary", dataColumn: "goals_conceded_points" },

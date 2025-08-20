@@ -14,7 +14,7 @@
                     title="Players that are or have been in {{ manager.team_name }} this season">
                     Stats for {{ manager.team_name }}
                 </th>
-                <th colspan="13" data-sort="overall-data" class="round-border-top d-xxl-table-cell">Team Totals</th>
+                <th colspan="13" data-sort="overall-data" class="round-border-top">Team Totals</th>
             </tr>
             <tr>
                 <th id="entries" data-sort="entries" class="sticky-col"></th>
@@ -29,30 +29,30 @@
                 <th data-sort="expected_goals_team" class="sort-team bg-team">xG</th>
                 <th data-sort="captained_team" class="sort-team bg-team">C</th>
                 <th data-sort="dreamteam_count_team" class="sort-team bg-team">DT</th>
-                <th data-sort="bps_team" class="sort-team bg-team">BPS</th>
+                <th data-sort="bonus_team" class="sort-team bg-team">B</th>
                 <th data-sort="penalties_saved_team" class="sort-team bg-team">PS</th>
                 <th data-sort="starts_benched_team" class="sort-team bg-team">bS</th>
-                <th data-sort="minutes_benched_team" class="sort-team bg-team">M</th>
-                <th data-sort="yellow_cards_team" class="d-xl-table-cell sort-team bg-team">YC</th>
-                <th data-sort="red_cards_team" class="d-xl-table-cell sort-team bg-team">RC</th>
-                <th data-sort="goals_conceded_team" class="d-xl-table-cell sort-team bg-team">GC</th>
-                <th data-sort="own_goals_team" class="d-xl-table-cell sort-team bg-team">OG</th>
-                <th data-sort="penalties_missed_team" class="d-xl-table-cell sort-team bg-team">PM</th>
+                <th data-sort="minutes_benched_team" class="sort-team bg-team">bM</th>
+                <th data-sort="yellow_cards_team" class="sort-team bg-team">YC</th>
+                <th data-sort="red_cards_team" class="sort-team bg-team">RC</th>
+                <th data-sort="goals_conceded_team" class="sort-team bg-team">GC</th>
+                <th data-sort="own_goals_team" class="sort-team bg-team">OG</th>
+                <th data-sort="penalties_missed_team" class="sort-team bg-team">PM</th>
 
                 {# — 13 secondary overall cols — #}
-                <th data-sort="clean_sheets" class="sort d-xxl-table-cell">CS</th>
+                <th data-sort="clean_sheets" class="sort">CS</th>
                 <th data-sort="assists" class="sort">A</th>
                 <th data-sort="expected_assists" class="sort">xA</th>
                 <th data-sort="goals_scored" class="sort">G</th>
                 <th data-sort="expected_goals" class="sort">xG</th>
-                <th data-sort="dreamteam_count" class="sort d-xxl-table-cell">DT</th>
-                <th data-sort="bps" class="sort d-xxl-table-cell">BPS</th>
-                <th data-sort="penalties_saved" class="sort d-xxl-table-cell">PS</th>
-                <th data-sort="yellow_cards" class="sort d-xxl-table-cell">YC</th>
-                <th data-sort="red_cards" class="sort d-xxl-table-cell">RC</th>
-                <th data-sort="goals_conceded" class="sort d-xxl-table-cell">GC</th>
-                <th data-sort="own_goals" class="sort d-xxl-table-cell">OG</th>
-                <th data-sort="penalties_missed" class="sort d-xxl-table-cell">PM</th>
+                <th data-sort="dreamteam_count" class="sort">DT</th>
+                <th data-sort="bonus" class="sort">B</th>
+                <th data-sort="penalties_saved" class="sort">PS</th>
+                <th data-sort="yellow_cards" class="sort">YC</th>
+                <th data-sort="red_cards" class="sort">RC</th>
+                <th data-sort="goals_conceded" class="sort">GC</th>
+                <th data-sort="own_goals" class="sort">OG</th>
+                <th data-sort="penalties_missed" class="sort">PM</th>
             </tr>
         </thead>
 
@@ -64,7 +64,7 @@
                 <th colspan="18" class="bg-team round-border-btm">
                     <div id="loading" style="display:none;">Loading…</div>
                 </th>
-                <th colspan="13" class="round-border-btm d-xxl-table-cell"></th>
+                <th colspan="13" class="round-border-btm"></th>
             </tr>
         </tfoot>
     </table>
@@ -85,7 +85,7 @@
         "expected_goals_team": `Expected goals for ${managerName}`,
         "captained_team": `Times captained for ${managerName}`,
         "dreamteam_count_team": `DreamTeam entries for ${managerName}`,
-        "bps_team": `BPS for ${managerName}`,
+        "bonus_team": `Bonus points for ${managerName}`,
         "penalties_saved_team": `Penalties saved for ${managerName}`,
         "starts_benched_team": `Benched starts for ${managerName}`,
         "minutes_benched_team": `Benched minutes for ${managerName}`,
@@ -101,7 +101,7 @@
         "goals_scored": "Total goals scored",
         "expected_goals": "Total expected goals",
         "dreamteam_count": "Total dreamteam entries",
-        "bps": "Total BPS",
+        "bonus": "Total bonus points",
         "penalties_saved": "Total penalties saved",
         "yellow_cards": "Total yellow cards",
         "red_cards": "Total red cards",
@@ -128,7 +128,7 @@
             // name/rank
             {
                 render: (p, idx) => `
-          <td class="sticky-col vert-border-end">
+          <td class="sticky-col">
             <div class="d-flex">
               <div style="width:3ch">${idx + 1}</div>
               <div>${p.team_name}</div>
@@ -137,7 +137,7 @@
             },
 
             // 18 primary
-            { key: "starts_team", className: "sort-team", sortLevel: "primary", dataColumn: "starts" },
+            { key: "starts_team", className: "sort-team vert-border-secondary", sortLevel: "primary", dataColumn: "starts" },
             { key: "minutes_team", className: "sort-team", sortLevel: "primary", dataColumn: "minutes" },
             { key: "clean_sheets_team", className: "sort-team", dataColumn: "clean_sheets", sortLevel: "primary", dataColumn: "clean_sheets" },
             { key: "assists_team", className: "sort-team", sortLevel: "primary", dataColumn: "assists" },
@@ -146,30 +146,30 @@
             { key: "expected_goals_team", className: "sort-team", sortLevel: "primary", dataColumn: "expected_goals", formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
             { key: "captained_team", className: "sort-team", sortLevel: "primary", dataColumn: "captained" },
             { key: "dreamteam_count_team", className: "sort-team", sortLevel: "primary", dataColumn: "dreamteam_count" },
-            { key: "bps_team", className: "sort-team", sortLevel: "primary", dataColumn: "bps" },
+            { key: "bonus_team", className: "sort-team", sortLevel: "primary", dataColumn: "bonus" },
             { key: "penalties_saved_team", className: "sort-team", sortLevel: "primary", dataColumn: "penalties_saved" },
-            { key: "starts_benched_team", className: "sort-team", sortLevel: "primary", dataColumn: "starts_benched" },
-            { key: "minutes_benched_team", className: "sort-team", sortLevel: "primary", dataColumn: "minutes_benched" },
-            { key: "yellow_cards_team", className: "sort-team", sortLevel: "primary", dataColumn: "yellow_cards" },
-            { key: "red_cards_team", className: "sort-team", sortLevel: "primary", dataColumn: "red_cards" },
-            { key: "goals_conceded_team", className: "sort-team", sortLevel: "primary", dataColumn: "goals_conceded" },
-            { key: "own_goals_team", className: "sort-team", sortLevel: "primary", dataColumn: "own_goals" },
-            { key: "penalties_missed_team", className: "sort-team", sortLevel: "primary", dataColumn: "penalties_missed" },
+            { key: "starts_benched_team", className: "sort-team vert-border", sortLevel: "primary", dataColumn: "starts_benched" },
+            { key: "minutes_benched_team", className: "sort-team vert-border-end", sortLevel: "primary", dataColumn: "minutes_benched" },
+            { key: "yellow_cards_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "yellow_cards" },
+            { key: "red_cards_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "red_cards" },
+            { key: "goals_conceded_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "goals_conceded" },
+            { key: "own_goals_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "own_goals" },
+            { key: "penalties_missed_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "penalties_missed" },
 
             // 13 secondary
-            { key: "clean_sheets", className: "sort", sortLevel: "secondary", dataColumn: "clean_sheets" },
+            { key: "clean_sheets", className: "sort vert-border-secondary", sortLevel: "secondary", dataColumn: "clean_sheets" },
             { key: "assists", className: "sort", sortLevel: "secondary", dataColumn: "assists" },
             { key: "expected_assists", className: "sort", sortLevel: "secondary", dataColumn: "expected_assists", formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
             { key: "goals_scored", className: "sort", sortLevel: "secondary", dataColumn: "goals_scored" },
             { key: "expected_goals", className: "sort", sortLevel: "secondary", dataColumn: "expected_goals", formatter: v => (Math.round(v * 10) / 10).toFixed(1) },
             { key: "dreamteam_count", className: "sort", sortLevel: "secondary", dataColumn: "dreamteam_count" },
-            { key: "bps", className: "sort", sortLevel: "secondary", dataColumn: "bps" },
+            { key: "bonus", className: "sort", sortLevel: "secondary", dataColumn: "bonus" },
             { key: "penalties_saved", className: "sort", sortLevel: "secondary", dataColumn: "penalties_saved" },
-            { key: "yellow_cards", className: "sort", sortLevel: "secondary", dataColumn: "yellow_cards" },
-            { key: "red_cards", className: "sort", sortLevel: "secondary", dataColumn: "red_cards" },
-            { key: "goals_conceded", className: "sort", sortLevel: "secondary", dataColumn: "goals_conceded" },
-            { key: "own_goals", className: "sort", sortLevel: "secondary", dataColumn: "own_goals" },
-            { key: "penalties_missed", className: "sort", sortLevel: "secondary", dataColumn: "penalties_missed" }
+            { key: "yellow_cards", className: "sort text-danger vert-border", sortLevel: "secondary", dataColumn: "yellow_cards" },
+            { key: "red_cards", className: "sort text-danger", sortLevel: "secondary", dataColumn: "red_cards" },
+            { key: "goals_conceded", className: "sort text-danger", sortLevel: "secondary", dataColumn: "goals_conceded" },
+            { key: "own_goals", className: "sort text-danger", sortLevel: "secondary", dataColumn: "own_goals" },
+            { key: "penalties_missed", className: "sort text-danger vert-border-end", sortLevel: "secondary", dataColumn: "penalties_missed" }
         ]
     };
 </script>

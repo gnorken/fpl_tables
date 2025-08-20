@@ -532,8 +532,9 @@ def get_sorted_players():
 
     # 8️⃣ Handle special tables
     if table == "talisman":
+        print("Talisman table")
         # filter and sort merges first and second argument. But no team_blob required for this route...
-        players, _, is_truncated = filter_and_sort_players(
+        players, _, is_truncated, price_range = filter_and_sort_players(
             static_blob, {}, request.args)
         seen = set()
         talisman_list = []
@@ -543,10 +544,12 @@ def get_sorted_players():
                 talisman_list.append(p)
         images = [{"photo": p["photo"], "team_code": p["team_code"]}
                   for p in talisman_list[:5]]
-        return jsonify(players=talisman_list, players_images=images, is_truncated=False, manager=g.manager)
+        return jsonify(players=talisman_list, players_images=images, is_truncated=False, manager=g.manager, price_range=price_range)
 
     if table == "teams":
-        stats = aggregate_team_stats(static_blob)
+        print("Teams table")
+        merged = merge_team_and_global(static_blob, team_blob)
+        stats = aggregate_team_stats(merged)
         sorted_stats = sorted(
             (team for team in stats.values() if team.get(sort_by, 0) != 0),
             key=lambda team: team.get(sort_by, 0),
