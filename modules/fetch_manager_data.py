@@ -1,16 +1,19 @@
-import time
-from flask import url_for
-import json
-from modules.utils import get_event_status_last_update, territory_icon
-from datetime import datetime, timezone
-import logging
-import requests
-import sqlite3
 from flask import session, url_for
+import json
+from datetime import datetime, timezone
+from modules.utils import get_event_status_last_update, territory_icon, SESSION, get_json_cached
 from modules.utils import (territory_icon)
+import logging
+import sqlite3
+import time
 
 
 logger = logging.getLogger(__name__)
+
+TIMEOUT_SHORT = (3, 6)   # connect, read
+TIMEOUT_MED = (3, 8)
+TIMEOUT_LONG = (3, 12)
+
 
 TOTAL_MANAGERS_BY_SEASON = {
     "2002/03": 76_284,
@@ -40,12 +43,6 @@ TOTAL_MANAGERS_BY_SEASON = {
 
 
 FPL_API_BASE = "https://fantasy.premierleague.com/api"
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:40.0) "
-                  "Gecko/20100101 Firefox/40.0",
-    "Accept-Encoding": "gzip",
-    "Accept": "application/json"
-}
 
 DB_PATH = "page_views.db"
 
@@ -80,7 +77,7 @@ def get_manager_data(team_id):
 
     # 2️⃣ Cache miss or stale → fetch from API
     def try_fetch(url):
-        resp = requests.get(url, headers=HEADERS, timeout=10)
+        resp = SESSION.get(url, timeout=10)
         logger.debug("REQUEST %s HEADERS: %s", url, resp.request.headers)
         logger.debug("RESPONSE STATUS: %s", resp.status_code)
         logger.debug("RESPONSE CONTENT-TYPE: %s",
@@ -90,6 +87,7 @@ def get_manager_data(team_id):
         return resp
 
     base_url = f"{FPL_API_BASE}/entry/{team_id}/"
+    api_data = get_json_cached(base_url)  # dedup within the request
     resp = try_fetch(base_url)
 
     # detect HTML or parse errors
@@ -155,7 +153,7 @@ DEFAULT_PHOTO = "Photo-Missing"
 
 def get_manager_history(team_id):
     history_url = f"{FPL_API_BASE}/entry/{team_id}/history/"
-    history_response = requests.get(history_url, headers=HEADERS)
+    history_response = SESSION.get(history_url, timeout=TIMEOUT_MED)
     history_data = history_response.json()
 
     for season in history_data.get("past", []):
@@ -251,7 +249,7 @@ def get_manager_history(team_id):
 
     # Fetch bootstrap static data once for use in all lookups.
     bootstrap_url = "https://fantasy.premierleague.com/api/bootstrap-static/"
-    bootstrap_response = requests.get(bootstrap_url, headers=HEADERS)
+    bootstrap_response = SESSION.get(bootstrap_url, timeout=TIMEOUT_MED)
     bootstrap_data = bootstrap_response.json()
 
     # -----------------------------
@@ -265,7 +263,7 @@ def get_manager_history(team_id):
 
             # Fetch picks for the event.
             picks_url = f"{FPL_API_BASE}/entry/{team_id}/event/{event_number}/picks/"
-            picks_response = requests.get(picks_url, headers=HEADERS)
+            picks_response = SESSION.get(picks_url, timeout=TIMEOUT_SHORT)
             picks_data = picks_response.json()
 
             # Find the captain's pick.
@@ -278,7 +276,7 @@ def get_manager_history(team_id):
             if captain_element is not None:
                 # Fetch live data for the event.
                 live_url = f"{FPL_API_BASE}/event/{event_number}/live/"
-                live_response = requests.get(live_url, headers=HEADERS)
+                live_response = SESSION.get(live_url, timeout=TIMEOUT_SHORT)
                 live_data = live_response.json()
 
                 for element in live_data.get("elements", []):
@@ -316,7 +314,7 @@ def get_manager_history(team_id):
 
             # Fetch picks for the bench boost event.
             picks_url = f"{FPL_API_BASE}/entry/{team_id}/event/{event_number}/picks/"
-            picks_response = requests.get(picks_url, headers=HEADERS)
+            picks_response = SESSION.get(picks_url, timeout=15)
             picks_data = picks_response.json()
 
             # Get the four bench players based on their positions (12, 13, 14, 15).
@@ -329,7 +327,7 @@ def get_manager_history(team_id):
 
             # Fetch live data for the event.
             live_url = f"{FPL_API_BASE}/event/{event_number}/live/"
-            live_response = requests.get(live_url, headers=HEADERS)
+            live_response = SESSION.get(live_url, timeout=15)
             live_data = live_response.json()
 
             # Create a mapping of element IDs to their total points.
@@ -365,64 +363,6 @@ def get_manager_history(team_id):
                     chips_state[chip_key]["players"][idx]["web_name"] = web_name
                     chips_state[chip_key]["players"][idx]["team_code"] = team_code
                     chips_state[chip_key]["total_points"] += points
-
-    # # -----------------------------
-    # # Process Assistant Manager (am)
-    # # -----------------------------
-    # # The assistant manager is identified by picks with element_type == 5 and spans three consecutive gameweeks.
-    # if chips_state["am"]["used"] and chips_state["am"]["gw"]:
-    #     start_event = chips_state["am"]["gw"]
-    #     am_total = 0
-    #     events_list = []
-    #     managers_list = []
-    #     # Process three consecutive gameweeks.
-    #     for event_number in range(start_event, start_event + 3):
-    #         picks_url = f"{FPL_API_BASE}/entry/{team_id}/event/{event_number}/picks/"
-    #         picks_response = requests.get(picks_url, headers=HEADERS)
-    #         picks_data = picks_response.json()
-
-    #         assistant_element = None
-    #         # Find the assistant manager by element_type == 5.
-    #         for pick in picks_data.get("picks", []):
-    #             if pick.get("element_type") == 5:
-    #                 assistant_element = pick.get("element")
-    #                 break
-
-    #         points = 0
-    #         photo = DEFAULT_PHOTO
-    #         web_name = None
-    #         team_code = None
-
-    #         if assistant_element is not None:
-    #             # Fetch live data for this event.
-    #             live_url = f"{FPL_API_BASE}/event/{event_number}/live/"
-    #             live_response = requests.get(live_url, headers=HEADERS)
-    #             live_data = live_response.json()
-
-    #             for element in live_data.get("elements", []):
-    #                 if element.get("id") == assistant_element:
-    #                     points = element.get("stats", {}).get(
-    #                         "total_points", 0)
-    #                     break
-
-    #             # Get photo and web_name from bootstrap data.
-    #             for player in bootstrap_data.get("elements", []):
-    #                 if player.get("id") == assistant_element:
-    #                     team_code = player.get("team_code")
-    #                     candidate = player.get("opta_code", "")
-    #                     if candidate:
-    #                         photo = candidate.replace(".jpg", ".png")
-    #                     web_name = player.get("web_name")
-    #                     break
-
-    #         events_list.append(event_number)
-    #         am_total += points
-    #         managers_list.append(
-    #             {"photo": photo, "total_points": points, "web_name": web_name, "team_code": team_code})
-
-    #     chips_state["am"]["events"] = events_list
-    #     chips_state["am"]["managers"] = managers_list
-    #     chips_state["am"]["total_points"] = am_total
 
     return {
         "chips_state": chips_state,

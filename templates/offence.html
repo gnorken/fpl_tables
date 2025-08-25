@@ -81,6 +81,7 @@ window.tableConfig = {
   url: `/get-sorted-players?table=offence&team_id={{ team_id }}`,
   tbodySelector: '#player-table-body',
   loadingSelector: '#loading',
+  currentGw: {{ (current_gw or 1)| int }},
   sortBy: '{{ sort_by }}',
   sortOrder: '{{ order }}',
   columns: [

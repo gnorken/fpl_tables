@@ -121,6 +121,7 @@
         url: `/get-sorted-players?table=teams&team_id={{ team_id }}`,
         tbodySelector: "#teams-table-body",
         loadingSelector: "#loading",
+        currentGw: {{ (current_gw or 1)| int }},
         sortBy: "{{ sort_by }}",
         sortOrder: "{{ order }}",
         lookup: lookup,

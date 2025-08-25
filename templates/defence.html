@@ -158,6 +158,7 @@
         url: `/get-sorted-players?table=defence&team_id={{ team_id }}`,
         tbodySelector: "#player-table-body",
         loadingSelector: "#loading",
+        currentGw: {{ (current_gw or 1)| int }},
         sortBy: "{{ sort_by }}",
         sortOrder: "{{ order }}",
         lookup: lookup,
@@ -204,7 +205,7 @@
             { key: "recoveries_team", className: "sort-team", sortLevel: "primary", dataColumn: "recoveries" },
             { key: "clean_sheets_team", className: "sort-team vert-border", sortLevel: "primary", dataColumn: "clean_sheets" },
             { key: "clean_sheets_per_90_team", className: "sort-team", sortLevel: "primary", dataColumn: "clean_sheets_per_90", formatter: v => (v).toFixed(1) },
-            { key: "clean_sheets_rate_team", className: "sort-team vert-border-end", sortLevel: "primary", dataColumn: "clean_sheets_rate" },
+            { key: "clean_sheets_rate_team", className: "sort-team vert-border-end", sortLevel: "primary", dataColumn: "clean_sheets_rate", formatter: v=> (v).toFixed(1) },
             // { key: "captained_team", dataColumn: "captained" },
             { key: "penalties_saved_team", className: "sort-team", sortLevel: "primary", dataColumn: "penalties_saved" },
             // Negatives

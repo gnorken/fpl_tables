@@ -134,7 +134,7 @@
         "selected_by_percent": "Teams selected by",
         "now_cost": "Current price",
 
-        "total_points_team": `Points for ${managerName}`,
+        "total_points_team": `Points for ${managerName} (incl. captain)`,
         "starts_team": `Starts for ${managerName}`,
         "minutes_team": `Minutes played for ${managerName}`,
         "defensive_contribution_points_team": `Defensive contributions points for ${managerName}`,
@@ -226,6 +226,7 @@
         url: `/get-sorted-players?table=summary&team_id={{ team_id }}`,
         tbodySelector: "#player-table-body",
         loadingSelector: "#loading",
+        currentGw: {{ (current_gw or 1)| int }},
         sortBy: "{{ sort_by }}",
         sortOrder: "{{ order }}",
         lookup: lookup,

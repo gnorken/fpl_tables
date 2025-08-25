@@ -162,19 +162,15 @@ def reset_session():
     return "Session cleared!"
 
 
-# Ensure current_gw in sessio
+# Ensure current_gw in session
 @app.before_request
 def initialize_session():
     if 'current_gw' not in session:
-        # first time in this session
-        gw = get_current_gw()
-        logger.info(
-            f"[initialize_session] first init, get_current_gw() → {gw!r}")
-        session['current_gw'] = gw  # even if None, key now exists
+        gw = get_current_gw()              # int or None
+        session['current_gw'] = gw or 0    # 👈 normalise None -> 0
+        logger.info(f"[initialize_session] init gw={session['current_gw']}")
     else:
-        # subsequent requests
-        logger.debug(
-            f"[initialize_session] already set, current_gw={session['current_gw']!r}")
+        logger.debug(f"[initialize_session] gw={session['current_gw']!r}")
 
 
 # --- Flash preseason ---
@@ -242,192 +238,21 @@ def manager(team_id):
         flash(f"Error: {e}", "error")
         return redirect(url_for("index"))
 
-# AJAX routes for current season table and graphs in manager.html
 
-# TODO: Enable this when FPL live data is available
-# @app.route("/api/current-season")
-# def current_season():
-#     sort_by = request.args.get('sort_by', 'gw')
-#     order = request.args.get('order', 'desc')
-#     team_id = session.get("team_id")
-
-#     if team_id is None:
-#         return jsonify({"error": "Missing team_id"}), 400
-
-#     # Fetch manager to ensure caching is in place
-#     manager = get_manager_data(team_id)
-
-#     # Check if cached
-#     conn = sqlite3.connect(DATABASE, check_same_thread=False)
-#     cur = conn.cursor()
-#     cur.execute("""
-#         CREATE TABLE IF NOT EXISTS current_season (
-#             team_id      INTEGER PRIMARY KEY,
-#             data         TEXT    NOT NULL,
-#             last_fetched TEXT    NOT NULL
-#         )
-#     """)
-#     conn.commit()
-
-#     cur.execute(
-#         "SELECT data, last_fetched FROM current_season WHERE team_id = ?", (team_id,))
-#     row = cur.fetchone()
-
-#     if row:
-#         data, last_fetched = row
-#         cached_time = datetime.fromisoformat(last_fetched)
-#         event_updated = get_event_status_last_update()
-
-#         if cached_time >= event_updated:
-#             # Cache is fresh
-#             current_season_data = json.loads(data)
-#             conn.close()
-#             return jsonify(sort_table_data(
-#                 current_season_data, sort_by, order,
-#                 allowed_fields=['gw', 'or', 'op', 'gwp', 'gwr',
-#                                 'rank_change', 'pb', 'tm', 'tc', '£']
-#             ))
-
-#     # Cache miss → Fetch from API
-#     response = requests.get(
-#         f"{FPL_API_BASE}/entry/{team_id}/history/", headers=HEADERS)
-#     api_data = response.json()
-
-#     # Transform `current` history rows into your table schema
-#     current_season_data = []
-#     for row in api_data.get("current", []):
-#         current_season_data.append({
-#             "gw": row["event"],
-#             "or": row["overall_rank"],
-#             "rank_change": row.get("rank_change", ""),  # can be ± or numeric
-#             "op": row["points"],
-#             "gwr": row["rank"],
-#             "gwp": row["points_on_bench"],  # or percent if you prefer
-#             "pb": row["points_on_bench"],
-#             "tm": row["event_transfers"],
-#             "tc": row["event_transfers_cost"],
-#             "£": row["value"] / 10  # FPL API stores as integer * 10
-#         })
-
-#     # Cache result
-#     cur.execute("""
-#         INSERT OR REPLACE INTO current_season (team_id, data, last_fetched)
-#         VALUES (?, ?, ?)
-#     """, (team_id, json.dumps(current_season_data),
-#           datetime.now(timezone.utc).isoformat()))
-#     conn.commit()
-#     conn.close()
-
-#     return jsonify(sort_table_data(
-#         current_season_data, sort_by, order,
-#         allowed_fields=['gw', 'or', 'op', 'gwp', 'gwr',
-#                         'rank_change', 'pb', 'tm', 'tc', '£']
-#     ))
+# --- SUMMARY PAGE ---
 
 
-@app.route("/api/current-season")
-def current_season():
-    sort_by = request.args.get('sort_by', 'gw')
-    order = request.args.get('order',   'desc')
-
-    # data = fetch_from_cache_or_api() Implement later
-    # mock data
-    data = [
-        # {"gw": 1, "or": 179512, "rank_change": "▲", "op": 44, "gwr": 3061510, "gwp": 76,
-        #  "pb": 5, "tm": 1, "tc": "4", "£": 100},
-        # {"gw": 2, "or": 227258, "rank_change": "▲", "op": 105, "gwr": 3012510, "gwp": 52,
-        #  "pb": 0, "tm": 1, "tc": "4", "£": 100.2},
-        # {"gw": 3, "or": 137366, "rank_change": "▼", "op": 149, "gwr": 3456322, "gwp": 50,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
-        # {"gw": 4, "or": 934653, "rank_change": "▲", "op": 283, "gwr": 4009234, "gwp": 76,
-        #  "pb": 5, "tm": 1, "tc": "16", "£": 100},
-        # {"gw": 5, "or": 328543, "rank_change": "▲", "op": 347, "gwr": 4566213, "gwp": 42,
-        #  "pb": 0, "tm": 1, "tc": "0", "£": 100.2},
-        # {"gw": 6, "or": 238234, "rank_change": "▼", "op": 498, "gwr": 82508, "gwp": 60,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
-        # {"gw": 7, "or": 79412, "rank_change": "▲", "op": 544, "gwr": 3061510, "gwp": 76,
-        #  "pb": 5, "tm": 1, "tc": "4", "£": 100},
-        # {"gw": 8, "or": 27258, "rank_change": "▲", "op": 615, "gwr": 3012510, "gwp": 52,
-        #  "pb": 0, "tm": 1, "tc": "4", "£": 100.2},
-        # {"gw": 9, "or": 167366, "rank_change": "▼", "op": 749, "gwr": 3456322, "gwp": 50,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
-        # {"gw": 10, "or": 492453, "rank_change": "▲", "op": 883, "gwr": 4009234, "gwp": 76,
-        #  "pb": 5, "tm": 1, "tc": "16", "£": 100},
-        # {"gw": 11, "or": 438543, "rank_change": "▲", "op": 947, "gwr": 4566213, "gwp": 42,
-        #  "pb": 0, "tm": 1, "tc": "0", "£": 100.2},
-        # {"gw": 12, "or": 238234, "rank_change": "▼", "op": 1198, "gwr": 10000000, "gwp": 60,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
-        # {"gw": 13, "or": 79512, "rank_change": "▲", "op": 1244, "gwr": 3061510, "gwp": 76,
-        #  "pb": 5, "tm": 1, "tc": "4", "£": 100},
-        # {"gw": 14, "or": 227258, "rank_change": "▲", "op": 1305, "gwr": 312510, "gwp": 52,
-        #  "pb": 0, "tm": 1, "tc": "4", "£": 100.2},
-        # {"gw": 15, "or": 167366, "rank_change": "▼", "op": 1449, "gwr": 56322, "gwp": 50,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
-        # {"gw": 16, "or": 424653, "rank_change": "▲", "op": 1583, "gwr": 499234, "gwp": 76,
-        #  "pb": 5, "tm": 1, "tc": "16", "£": 100},
-        # {"gw": 17, "or": 398543, "rank_change": "▲", "op": 1647, "gwr": 4466213, "gwp": 42,
-        #  "pb": 0, "tm": 1, "tc": "0", "£": 100.2},
-        # {"gw": 18, "or": 238234, "rank_change": "▼", "op": 1798, "gwr": 102300, "gwp": 90,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
-        # {"gw": 19, "or": 238234, "rank_change": "▼", "op": 1898, "gwr": 7834000, "gwp": 60,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
-        # {"gw": 20, "or": 79512, "rank_change": "▲", "op": 1944, "gwr": 3061510, "gwp": 76,
-        #  "pb": 5, "tm": 1, "tc": "4", "£": 100},
-        # {"gw": 21, "or": 227258, "rank_change": "▲", "op": 2005, "gwr": 322510, "gwp": 52,
-        #  "pb": 0, "tm": 1, "tc": "4", "£": 100.2},
-        # {"gw": 22, "or": 167366, "rank_change": "▼", "op": 2119, "gwr": 296322, "gwp": 50,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
-        # {"gw": 23, "or": 167366, "rank_change": "▼", "op": 2249, "gwr": 3456322, "gwp": 40,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
-        # {"gw": 24, "or": 222653, "rank_change": "▲", "op": 2383, "gwr": 4009234, "gwp": 76,
-        #  "pb": 5, "tm": 1, "tc": "16", "£": 100},
-        # {"gw": 25, "or": 298543, "rank_change": "▲", "op": 2447, "gwr": 4566213, "gwp": 42,
-        #  "pb": 0, "tm": 1, "tc": "0", "£": 100.2},
-        # {"gw": 26, "or": 228234, "rank_change": "▼", "op": 2598, "gwr": 82508, "gwp": 20,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
-        # {"gw": 27, "or": 79512, "rank_change": "▲", "op": 2644, "gwr": 361510, "gwp": 76,
-        #  "pb": 5, "tm": 1, "tc": "4", "£": 100},
-        # {"gw": 28, "or": 227258, "rank_change": "▲", "op": 2695, "gwr": 2012510, "gwp": 22,
-        #  "pb": 0, "tm": 1, "tc": "4", "£": 100.2},
-        # {"gw": 29, "or": 167366, "rank_change": "▼", "op": 2709, "gwr": 3453322, "gwp": 50,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
-        # {"gw": 30, "or": 2924653, "rank_change": "▲", "op": 2783, "gwr": 3009234, "gwp": 76,
-        #  "pb": 5, "tm": 1, "tc": "16", "£": 100},
-        # {"gw": 31, "or": 3398543, "rank_change": "▲", "op": 2847, "gwr": 4561213, "gwp": 42,
-        #  "pb": 0, "tm": 1, "tc": "0", "£": 100.2},
-        # {"gw": 32, "or": 3228234, "rank_change": 234, "op": 2898, "gwr": 1031000, "gwp": 60,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
-        # {"gw": 33, "or": 79512, "rank_change": "▲", "op": 2944, "gwr": 3061510, "gwp": 76,
-        #  "pb": 5, "tm": 1, "tc": "4", "£": 100},
-        # {"gw": 34, "or": 237258, "rank_change": "▲", "op": 3005, "gwr": 321510, "gwp": 52,
-        #  "pb": 0, "tm": 1, "tc": "4", "£": 100.2},
-        # {"gw": 35, "or": 167366, "rank_change": "▼", "op": 3149, "gwr": 35322, "gwp": 50,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1},
-        # {"gw": 36, "or": 924653, "rank_change": "▲", "op": 3283, "gwr": 310934, "gwp": 76,
-        #  "pb": 5, "tm": 1, "tc": "16", "£": 100},
-        # {"gw": 37, "or": 398543, "rank_change": "▲", "op": 3347, "gwr": 456621, "gwp": 42,
-        #  "pb": 0, "tm": 1, "tc": "0", "£": 100.2},
-        # {"gw": 38, "or": 238234, "rank_change": "▼", "op": 3398, "gwr": 230000, "gwp": 60,
-        #  "pb": 3, "tm": 0, "tc": "4", "£": 100.1}
-    ]
-    data = sort_table_data(data, sort_by, order,
-                           allowed_fields=['gw', 'or', 'op', 'gwp', 'gwr', "rank_change", "pb", "tm", "tc", "£"])
-    return jsonify(data)
-
-# --- OFFENCE PAGE ---
-
-
-@app.route("/<int:team_id>/team/offence")
-def offence(team_id):
+@app.route("/<int:team_id>/team/summary")
+def summary(team_id):
     # flash_if_preseason()
-    return render_template("offence.html",
+    return render_template("summary.html",
                            team_id=team_id,
                            current_gw=session.get('current_gw'),
                            manager=g.manager,
                            sort_by=request.args.get(
-                               'sort_by', 'goals_scored'),
+                               'sort_by', 'total_points_team'),
                            order=request.args.get('order', 'desc'),
-                           current_page='offence')
+                           current_page='summary')
 
 # --- DEFENCE PAGE ---
 
@@ -438,9 +263,23 @@ def defence(team_id):
                            team_id=team_id,
                            current_gw=session.get('current_gw'),
                            manager=g.manager,
-                           sort_by=request.args.get('sort_by', 'starts'),
+                           sort_by=request.args.get(
+                               'sort_by', 'defensive_contribution_team'),
                            order=request.args.get('order', 'desc'),
                            current_page='defence')
+
+
+@app.route("/<int:team_id>/team/offence")
+def offence(team_id):
+    # flash_if_preseason()
+    return render_template("offence.html",
+                           team_id=team_id,
+                           current_gw=session.get('current_gw'),
+                           manager=g.manager,
+                           sort_by=request.args.get(
+                               'sort_by', 'goals_assists_team'),
+                           order=request.args.get('order', 'desc'),
+                           current_page='offence')
 
 # --- POINTS PAGE ---
 
@@ -452,7 +291,7 @@ def points(team_id):
                            current_gw=session.get('current_gw'),
                            manager=g.manager,
                            sort_by=request.args.get(
-                               'sort_by', 'total_points'),
+                               'sort_by', 'total_points_team'),
                            order=request.args.get('order', 'desc'),
                            current_page='points')
 
@@ -560,8 +399,9 @@ def get_sorted_players():
     league_id = request.args.get("league_id", type=int)
     sort_by = request.args.get("sort_by", default=None)
     order = request.args.get("order", default="desc")
-    current_gw = session.get("current_gw") or -1
+    current_gw = session.get("current_gw")
     max_show = request.args.get("max_show", 2, type=int)
+    print(f"current gw is: {current_gw}")
 
     # 2️⃣ Validate required params
     if table == "mini_league" and league_id is None:
@@ -570,7 +410,7 @@ def get_sorted_players():
         return jsonify({"error": "Missing team_id"}), 400
 
     # 3️⃣ Always fetch static_data (refreshes cache if stale)
-    logger.info("🔄 [get_static_data] CALLED")
+    logger.debug("🔄 [get_static_data] CALLED")
     static_data = get_static_data(current_gw=current_gw)
 
     # 4️⃣ Fetch static player info
@@ -579,15 +419,19 @@ def get_sorted_players():
     cur.execute(
         "SELECT data FROM static_player_info WHERE gameweek = ?", (current_gw,))
     row = cur.fetchone()
+
     if not row:
         conn.close()
-        return jsonify({"error": f"No static_player_info for gameweek {current_gw}"}), 500
+        logger.warning(
+            f"No static_player_info for gw={current_gw}; returning empty list")
+        return jsonify(players=[], players_images=[], manager=g.manager), 200
+
     static_blob = {int(pid): blob for pid, blob in json.loads(row[0]).items()}
 
     # 5️⃣ Mini-league branch (no team_blob)
     if table == "mini_league":
         cur.execute("""
-            SELECT data, last_fetched FROM mini_league_cache 
+            SELECT data, last_fetched FROM mini_league_cache
             WHERE league_id=? AND gameweek=? AND team_id=? AND max_show=?
         """, (league_id, current_gw, team_id, max_show))
         row = cur.fetchone()
@@ -613,7 +457,7 @@ def get_sorted_players():
                      reverse=(order == "desc"))
 
         league_leader_pts = max((p.get("total_points", 0)
-                                for p in players), default=0)
+                                 for p in players), default=0)
         leader_pts = get_overall_league_leader_total()
         for p in players:
             p["pts_behind_league_leader"] = p.get(
@@ -622,7 +466,7 @@ def get_sorted_players():
             p["years_active_label"] = ordinalformat(p.get("years_active", 0))
 
         cur.execute("""
-            INSERT OR REPLACE INTO mini_league_cache 
+            INSERT OR REPLACE INTO mini_league_cache
             (league_id, gameweek, team_id, max_show, data, last_fetched)
             VALUES (?,?,?,?,?,?)
         """, (league_id, current_gw, team_id, max_show,
@@ -632,7 +476,6 @@ def get_sorted_players():
         return jsonify(players=players, manager=g.manager)
 
     # 6️⃣ Load or refresh team_player_info
-    # Before the SELECT
     cur.execute("SELECT COUNT(*) FROM team_player_info WHERE team_id=? AND gameweek=?",
                 (team_id, current_gw))
     count_tg = cur.fetchone()[0]
@@ -644,7 +487,7 @@ def get_sorted_players():
         (team_id, current_gw)
     )
     row = cur.fetchone()
-    logger.debug(f"SELECT returned: {row!r}")
+    # logger.debug(f"SELECT returned: {row!r}")
 
     if row:
         logger.debug(
@@ -663,7 +506,7 @@ def get_sorted_players():
                 team_id, static_blob, static_data)
             logger.debug(f"Refreshed team_blob keys={list(team_blob.keys())}")
             cur.execute(
-                """INSERT OR REPLACE INTO team_player_info 
+                """INSERT OR REPLACE INTO team_player_info
                 (team_id, gameweek, data, last_fetched)
                 VALUES (?, ?, ?, ?)""",
                 (team_id, current_gw, json.dumps(team_blob),
@@ -677,7 +520,7 @@ def get_sorted_players():
             team_id, static_blob, static_data)
         logger.debug(f"Fresh team_blob keys={list(team_blob.keys())}")
         cur.execute(
-            """INSERT OR REPLACE INTO team_player_info 
+            """INSERT OR REPLACE INTO team_player_info
             (team_id, gameweek, data, last_fetched)
             VALUES (?, ?, ?, ?)""",
             (team_id, current_gw, json.dumps(team_blob),
@@ -688,15 +531,12 @@ def get_sorted_players():
     logger.debug(f"Final team_blob length={len(team_blob)}")
     conn.close()
 
-    # 7️⃣ Merge global totals + team-specific info
-    merged_blob = merge_team_and_global(static_blob, team_blob)
-    logger.debug(f"Merged blob length={len(merged_blob)}")
-
     # 8️⃣ Handle special tables
     if table == "talisman":
+        print("Talisman table")
         # filter and sort merges first and second argument. But no team_blob required for this route...
-        #
-        players, _ = filter_and_sort_players(static_blob, {}, request.args)
+        players, _, is_truncated, price_range = filter_and_sort_players(
+            static_blob, {}, request.args)
         seen = set()
         talisman_list = []
         for p in players:
@@ -705,10 +545,12 @@ def get_sorted_players():
                 talisman_list.append(p)
         images = [{"photo": p["photo"], "team_code": p["team_code"]}
                   for p in talisman_list[:5]]
-        return jsonify(players=talisman_list, players_images=images, manager=g.manager)
+        return jsonify(players=talisman_list, players_images=images, is_truncated=False, manager=g.manager, price_range=price_range)
 
     if table == "teams":
-        stats = aggregate_team_stats(static_blob)
+        print("Teams table")
+        merged = merge_team_and_global(static_blob, team_blob)
+        stats = aggregate_team_stats(merged)
         sorted_stats = sorted(
             (team for team in stats.values() if team.get(sort_by, 0) != 0),
             key=lambda team: team.get(sort_by, 0),
@@ -725,10 +567,16 @@ def get_sorted_players():
                     break
         return jsonify(players=sorted_stats, players_images=top5, manager=g.manager)
 
-    # 9️⃣ Default tables (offence, defence, points)
-    players, images = filter_and_sort_players(
-        merged_blob, team_blob, request.args)
-    return jsonify(players=players, players_images=images, manager=g.manager)
+    # 9️⃣ Default tables (summary, defence, offence, points)
+    print("Default tables.")
+    app.logger.info("GW=%s, mins=%s–%s",
+                    session.get("current_gw"),
+                    request.args.get("min_minutes"),
+                    request.args.get("max_minutes"))
+
+    players, images, is_truncated, price_range = filter_and_sort_players(
+        static_blob, team_blob, request.args)
+    return jsonify(players=players, players_images=images, is_truncated=is_truncated, manager=g.manager, price_range=price_range)
 
 
 if __name__ == "__main__":

@@ -112,6 +112,7 @@
         url: `/get-sorted-players?table=talisman&team_id={{ team_id }}`,
         tbodySelector: "#talisman-table tbody",
         loadingSelector: "#talisman-loading",
+        currentGw: {{ (current_gw or 1)| int }},
         sortBy: "{{ sort_by }}",
         sortOrder: "{{ order }}",
         lookup: lookup,
