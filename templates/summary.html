@@ -8,7 +8,7 @@
             class="interactive-table table table-borderless table-striped text-center text-nowrap">
             <thead class="th-bg-primary text-center">
                 <tr class="sticky-top">
-                    <th id="top-players" class="sticky-col align-middle round-border-top-left">↑ Top Five
+                    <th colspan="1" id="top-players" class="sticky-col align-middle round-border-top-left">↑ Top Five
                     </th>
                     <th colspan="2" class="round-border-top-right"></th>
                     <th colspan="12" class="bg-team round-border-top ps-3 text-start text-md-center"
@@ -241,22 +241,26 @@
                     return `
                     <td class="sticky-col vert-border-end vert-border">
                         <div class="d-flex align-items-center">
-                            <div class="text-center vert-border-end d-none d-lg-inline" flex:0 0 auto;">${idx + 1}</div> 
-                            <img 
-                                src="${badgeUrl}"
-                                alt="${p.team_name} badge"
-                                class="img-fluid overlap-badge ms-1"
-                                data-bs-toggle="tooltip"
-                                title="${p.team_name}"
-                                style="width: 20px; height: 20px; flex:0 0 auto;"
-                                onerror="this.onerror=null;this.src='https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png';"
+                            <div class="rank d-none d-lg-block text-center">${idx + 1}</div>
+                            <img
+                            src="${badgeUrl}"
+                            alt="${p.team_name} badge"
+                            class="img-fluid overlap-badge ms-1 badge-20"
+                            data-bs-toggle="tooltip"
+                            title="${p.team_name}"
+                            onerror="this.onerror=null;this.src='https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png';"
                             >
-                            <div class="d-flex align-items-end">
-                                <div class="ms-1 text-truncate">${short}</div>
-                                <div class="small text-muted d-none d-xl-inline">&nbsp;${positionMap[p.element_type] || p.element_type}</div>
+
+                            <!-- name + position -->
+                            <div class="d-flex align-items-end ms-1">
+                            <div class="text-truncate">${short}</div>
+                            <div class="small text-muted d-none d-xl-inline">
+                                &nbsp;${positionMap[p.element_type] || p.element_type}
+                            </div>
                             </div>
                         </div>
-                    </td>`;
+                        </td>
+                        `;
                 }
             },
 
