@@ -261,6 +261,7 @@ def manager(team_id):
             manager=g.manager,
             chips_state=manager_history["chips_state"],
             history=manager_history["history"],
+            current_rows=manager_history["current_rows"],
             current_page='manager'
         )
 

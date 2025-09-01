@@ -360,7 +360,7 @@ td {
 
 
 /* Chips page */
-td.team-player { /* photo */
+.team-player { /* photo */
   width: 100%;
   max-width: 200px;
   position: relative;
@@ -646,6 +646,6 @@ body {
 }
 
 
-/* .sort-team {
-  background-color: rgb(217,114, 44, 0.2) !important;
-} */
+.team {
+  background-color: rgb(217,114, 44, 0.1) ;
+}

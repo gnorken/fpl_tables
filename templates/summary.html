@@ -241,7 +241,7 @@
                     return `
                     <td class="sticky-col vert-border-end vert-border">
                         <div class="d-flex align-items-center">
-                            <div class="rank d-none d-lg-block text-center">${idx + 1}</div>
+                            <div class="rank d-none d-lg-block text-center  ">${idx + 1}</div>
                             <img
                             src="${badgeUrl}"
                             alt="${p.team_name} badge"
@@ -267,7 +267,7 @@
             { key: "selected_by_percent", className: "sort", dataColumn: "selected_by_percent", formatter: v => `${parseFloat(v).toFixed(0)}%` },
             { key: "now_cost", className: "sort ", dataColumn: "now_cost", formatter: v => `£${(v / 10).toFixed(1)}m` },
             // team‐specific (primary) columns:
-            { key: "total_points_team", className: "sort-team vert-border-secondary", sortLevel: "primary", dataColumn: "total_points", formatter: v => `${parseFloat(v)}p` },
+            { key: "total_points_team", className: "sort-team team vert-border-secondary", sortLevel: "primary", dataColumn: "total_points", formatter: v => `${parseFloat(v)}p` },
             { key: "starts_team", className: "sort-team", sortLevel: "primary", dataColumn: "starts" },
             { key: "minutes_team", className: "sort-team vert-border-end", sortLevel: "primary", dataColumn: "minutes" },
             { key: "defensive_contribution_count_team", className: "sort-team", sortLevel: "primary", dataColumn: "defcon_count" },

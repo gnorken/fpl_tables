@@ -339,8 +339,8 @@
     
       currentSeasonFull: {
         tableContainerId: "current-season-table-container",
-        chartId: "currentSeasonGraphFull",
-        ajaxRoute: "/api/current-season",
+        ajaxRoute: null,
+        initialData: {{ current_rows | tojson }},
         columns: [
           { label: "GW", key: "gw", thAttrs: 'data-bs-toggle="tooltip" title="Gameweek"' },
           { label: "OR", key: "or", thAttrs: 'data-bs-toggle="tooltip" title="Overall Rank"', formatter: v => compact.format(v) },
@@ -438,7 +438,8 @@
       currentSeasonFirstHalf: {
         tableContainerId: "current-season-table-container",
         chartId: "currentSeasonGraphFirstHalf",
-        ajaxRoute: "/api/current-season?half=1",
+        ajaxRoute: null,
+        initialData: {{ current_rows | tojson }},
         columns: [
           { label: "GW", key: "gw", thAttrs: 'data-bs-toggle="tooltip" title="Gameweek"' },
           { label: "OR", key: "or", thAttrs: 'data-bs-toggle="tooltip" title="Overall Rank"', formatter: v => compact.format(v) },
@@ -548,7 +549,8 @@
       currentSeasonSecondHalf: {
         tableContainerId: "current-season-table-container",
         chartId: "currentSeasonGraphSecondHalf",
-        ajaxRoute: "/api/current-season?half=2",
+        ajaxRoute: null,
+        initialData: {{ current_rows | tojson }},
         columns: [
           { label: "GW", key: "gw", thAttrs: 'data-bs-toggle="tooltip" title="Gameweek"' },
           { label: "OR", key: "or", thAttrs: 'data-bs-toggle="tooltip" title="Overall Rank"', formatter: v => compact.format(v) },
