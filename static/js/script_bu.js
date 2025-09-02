@@ -39,6 +39,57 @@ window.getSelectedPriceRange = () => {
   return { minCost: min, maxCost: max };
 };
 
+// Dynamic price slider
+function updatePriceSliderRange(min, max, snap = true) {
+  const el = document.getElementById("price-slider");
+  if (!el?.noUiSlider) return;
+
+  const [curMin, curMax] = el.noUiSlider
+    .get()
+    .map((v) => parseFloat(String(v).replace("£", "")));
+  el.noUiSlider.updateOptions({ range: { min, max } }, false);
+
+  if (snap) {
+    el.noUiSlider.set([min, max]); // snap to edges
+  } else {
+    el.noUiSlider.set([
+      Math.min(Math.max(curMin, min), max), // keep user choice, clamp
+      Math.min(Math.max(curMax, min), max),
+    ]);
+  }
+}
+
+window.getSelectedMinutesRange = () => {
+  const slider = document.getElementById("minutes-slider");
+  if (!slider || !slider.noUiSlider) return { minMin: 0, maxMin: 3480 };
+  const [min, max] = slider.noUiSlider
+    .get()
+    .map((v) => parseFloat(v.replace(" min", "")));
+  return { minMin: min, maxMin: max };
+};
+
+// ─────────────── 2.5) Reset Filters ─────────────────
+window.resetFilters = function () {
+  // uncheck positions
+  document
+    .querySelectorAll('#checkboxForm input[type="checkbox"]')
+    .forEach((cb) => (cb.checked = true));
+
+  // reset minutes
+  const minSlider = document.getElementById("minutes-slider");
+  if (minSlider?.noUiSlider) {
+    const maxMinutes = (window.tableConfig?.currentGw || 1) * 90;
+    minSlider.noUiSlider.updateOptions(
+      { range: { min: 0, max: maxMinutes } },
+      false
+    );
+    minSlider.noUiSlider.set([0, maxMinutes]);
+  }
+
+  // reload table
+  window.fetchData(tableConfig.sortBy, tableConfig.sortOrder);
+};
+
 // ─────────────── 3) Sort‐arrow indicator ─────────────────
 window.updateSortIndicator = (sortBy, sortOrder, containerSelector = null) => {
   const root = containerSelector
@@ -219,14 +270,15 @@ async function fetchMiniLeague(sortBy, sortOrder) {
 }
 
 // ─────────────── 7) Generic data fetch ─────────────
-async function fetchData(sortBy, sortOrder) {
+async function fetchData(sortBy, sortOrder, opts = {}) {
+  const { snapPrice = true } = opts;
   if (await fetchMiniLeague(sortBy, sortOrder)) return;
 
   const sortEl = document.getElementById("current-sort");
   const orderEl = document.getElementById("current-order");
   if (sortEl)
     sortEl.textContent = window.tableConfig.lookup?.[sortBy] || sortBy;
-  if (orderEl) orderEl.textContent = sortOrder === "desc" ? "" : "(ascending)";
+  if (orderEl) orderEl.textContent = sortOrder === "desc" ? "" : "(asc)";
 
   const cfg = window.tableConfig;
   const tbody = document.querySelector(cfg.tbodySelector);
@@ -235,6 +287,7 @@ async function fetchData(sortBy, sortOrder) {
   const params = { sort_by: sortBy, order: sortOrder };
 
   if (cfg.table !== "am") {
+    // Don't have table am anymore!
     const { minCost, maxCost } = getSelectedPriceRange();
     const selectedPositions = getSelectedPositions();
 
@@ -243,15 +296,39 @@ async function fetchData(sortBy, sortOrder) {
     }
     params.min_cost = minCost;
     params.max_cost = maxCost;
+
+    // ← NEW: minutes filter
+    const { minMin, maxMin } = getSelectedMinutesRange();
+    // console.log("🔍 Minutes slider values:", minMin, maxMin);
+    params.min_minutes = minMin;
+    params.max_minutes = maxMin;
   }
 
   const qs = new URLSearchParams(params);
   const resp = await fetch(`${cfg.url}&${qs}`);
-  const { players, players_images, manager } = await resp.json();
+  const { players, players_images, is_truncated, manager, price_range } =
+    await resp.json();
 
+  if (price_range && price_range.min != null && price_range.max != null) {
+    updatePriceSliderRange(
+      price_range.min / 10,
+      price_range.max / 10,
+      snapPrice
+    );
+  }
+
+  // Update #entries element to show "100+ entries" when truncated
+  const table = cfg.table; // e.g., "defence", "offence", "points", "talisman", "teams", "mini_league"
   document.getElementById("entries").textContent =
-    players.length === 1 ? "1 entry" : `${players.length} entries`;
-  updateTopPlayersText(players.length);
+    players.length === 1
+      ? "1 entry"
+      : ["teams", "talisman"].includes(table) || !is_truncated
+      ? `${players.length} entries`
+      : players.length === 100
+      ? "100+ entries"
+      : `${players.length} entries`;
+
+  updateTopPlayersText(players.length, is_truncated, table);
 
   tbody.innerHTML = "";
   players.forEach((p, idx) => {
@@ -298,6 +375,39 @@ async function fetchData(sortBy, sortOrder) {
   if (loading) loading.style.display = "none";
   tbody.style.display = "";
 }
+
+// Updated updateTopPlayersText to handle "100+ top players"
+function updateTopPlayersText(count, isTruncated, table) {
+  const topPlayersElement = document.getElementById("top-players");
+  if (topPlayersElement) {
+    topPlayersElement.textContent =
+      count === 1
+        ? "1 top player"
+        : ["teams", "talisman"].includes(table) || !isTruncated
+        ? `${count} top players`
+        : count === 100
+        ? "100+ top players"
+        : `${count} top players`;
+  }
+}
+
+window.fetchData = fetchData;
+
+// Updated updateTopPlayersText to handle "100+ top players"
+function updateTopPlayersText(count, isTruncated, table) {
+  const topPlayersElement = document.getElementById("top-players");
+  if (topPlayersElement) {
+    topPlayersElement.textContent =
+      count === 1
+        ? "1 top player"
+        : ["teams", "talisman"].includes(table) || !isTruncated
+        ? `${count} top players`
+        : count === 100
+        ? "100+ top players"
+        : `${count} top players`;
+  }
+}
+
 window.fetchData = fetchData;
 
 // ─────────────── 8) DOMContentLoaded ─────────────────
@@ -314,85 +424,6 @@ document.addEventListener("DOMContentLoaded", () => {
       window.tableConfig.sortOrder
     );
   }
-
-  const hoverEl = document.getElementById("current-hover");
-  if (hoverEl) {
-    const defaultText = hoverEl.textContent;
-    document.querySelectorAll("th[data-sort]").forEach((th) => {
-      const key = th.dataset.sort;
-      const tip = window.tableConfig.lookup?.[key] || th.textContent.trim();
-      th.addEventListener("mouseenter", () => (hoverEl.textContent = tip));
-      th.addEventListener(
-        "mouseleave",
-        () => (hoverEl.textContent = defaultText)
-      );
-    });
-  }
-
-  // 8.3) Cell-hover highlighting (text-danger handling)
-  // document.querySelectorAll("table.interactive-table").forEach((table) => {
-  //   let activeCells = [];
-  //   table.addEventListener("mouseover", (e) => {
-  //     const td = e.target.closest("td[data-column][data-sort-level]");
-  //     if (!td) return;
-
-  //     const col = td.dataset.column;
-  //     const sortLevel = td.dataset.sortLevel;
-  //     const row = td.closest("tr");
-
-  //     if (activeCells.length) {
-  //       activeCells.forEach((cell) => {
-  //         cell.style.backgroundColor = "";
-  //         cell.style.color = "";
-  //         if (cell.dataset.wasTextDanger === "true") {
-  //           cell.classList.add("text-danger");
-  //           delete cell.dataset.wasTextDanger;
-  //         }
-  //         cell.style.borderRadius = "";
-  //       });
-  //       activeCells = [];
-  //     }
-
-  //     const primaryBg = sortLevel === "primary" ? "#e90052" : "#38003c";
-  //     const matchBg = sortLevel === "primary" ? "#38003c" : "#e90052";
-
-  //     if (td.classList.contains("text-danger")) {
-  //       td.dataset.wasTextDanger = "true";
-  //       td.classList.remove("text-danger");
-  //     }
-  //     td.style.backgroundColor = primaryBg;
-  //     td.style.color = "#fff";
-  //     td.style.borderRadius = "3px";
-  //     activeCells.push(td);
-
-  //     row.querySelectorAll(`td[data-column="${col}"]`).forEach((other) => {
-  //       if (other === td) return;
-  //       if (other.classList.contains("text-danger")) {
-  //         other.dataset.wasTextDanger = "true";
-  //         other.classList.remove("text-danger");
-  //       }
-  //       other.style.backgroundColor = matchBg;
-  //       other.style.color = "#fff";
-  //       other.style.borderRadius = "3px";
-  //       activeCells.push(other);
-  //     });
-  //   });
-
-  //   table.addEventListener("mouseleave", () => {
-  //     if (activeCells.length) {
-  //       activeCells.forEach((cell) => {
-  //         cell.style.backgroundColor = "";
-  //         cell.style.color = "";
-  //         if (cell.dataset.wasTextDanger === "true") {
-  //           cell.classList.add("text-danger");
-  //           delete cell.dataset.wasTextDanger;
-  //         }
-  //         cell.style.borderRadius = "";
-  //       });
-  //       activeCells = [];
-  //     }
-  //   });
-  // });
 
   // 8.3) New cell-hover highlighting
   document.querySelectorAll("table.interactive-table").forEach((table) => {
@@ -416,8 +447,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const col = td.dataset.column;
       const sortLevel = td.dataset.sortLevel;
 
-      const primaryBg = sortLevel === "primary" ? "#e90052" : "#38003c";
-      const matchBg = sortLevel === "primary" ? "#38003c" : "#e90052";
+      const primaryBg = sortLevel === "primary" ? "#D9722C" : "#203C73";
+      const matchBg = sortLevel === "primary" ? "#203C73" : "#D9722C";
 
       // Current cell
       if (td.classList.contains("text-danger")) {
@@ -479,15 +510,36 @@ document.addEventListener("DOMContentLoaded", () => {
   const slider = document.getElementById("price-slider");
   if (slider && window.noUiSlider && !slider.noUiSlider) {
     noUiSlider.create(slider, {
-      start: [3, 15],
+      start: [4, 14.5],
       connect: true,
-      range: { min: 3, max: 15 },
+      range: { min: 4, max: 14.5 },
       step: 0.1,
       tooltips: true,
       format: wNumb({ decimals: 1, prefix: "£" }),
     });
     slider.noUiSlider.on("change", () =>
-      window.fetchData(tableConfig.sortBy, tableConfig.sortOrder)
+      window.fetchData(tableConfig.sortBy, tableConfig.sortOrder, {
+        snapPrice: false,
+      })
+    );
+  }
+
+  // --- MINUTES SLIDER ---
+  const minSlider = document.getElementById("minutes-slider");
+  const maxMinutes = (window.tableConfig?.currentGw || 1) * 90;
+  if (minSlider && window.noUiSlider && !minSlider.noUiSlider) {
+    noUiSlider.create(minSlider, {
+      start: [0, maxMinutes],
+      connect: true,
+      range: { min: 0, max: maxMinutes },
+      step: 1,
+      tooltips: true,
+      format: wNumb({ decimals: 0 }),
+    });
+    minSlider.noUiSlider.on("change", () =>
+      window.fetchData(tableConfig.sortBy, tableConfig.sortOrder, {
+        snapPrice: false,
+      })
     );
   }
 
@@ -500,23 +552,32 @@ document.addEventListener("DOMContentLoaded", () => {
       )
     );
 
+  // Reset button(s)
+  document.querySelectorAll(".reset-filters").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      window.resetFilters();
+    });
+  });
+
   // Initial AJAX load
   if (window.tableConfig && window.tableConfig.url) {
     window.fetchData(tableConfig.sortBy, tableConfig.sortOrder);
   }
   initComponents();
-});
 
-// Tooltip setup for table headers
-if (window.tableConfig && window.tableConfig.lookup) {
-  document.querySelectorAll("table thead th").forEach((th) => {
-    const sortKey = th.getAttribute("data-sort");
-    if (sortKey && window.tableConfig.lookup[sortKey]) {
-      th.setAttribute("title", window.tableConfig.lookup[sortKey]);
-      th.setAttribute("data-bs-toggle", "tooltip");
-    }
-  });
-}
+  // Tooltip setup for table headers
+  if (window.tableConfig && window.tableConfig.lookup) {
+    document.querySelectorAll("table thead th").forEach((th) => {
+      const sortKey = th.getAttribute("data-sort");
+      if (sortKey && window.tableConfig.lookup[sortKey]) {
+        th.setAttribute("title", window.tableConfig.lookup[sortKey]);
+        th.setAttribute("data-bs-toggle", "tooltip");
+      }
+    });
+  }
+  window.initTooltips();
+});
 
 // ──────────── 9) popstate (back/forward) ─────────────
 window.addEventListener("popstate", () => {

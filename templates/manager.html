@@ -7,10 +7,10 @@
   <!-- Past Seasons -->
   {% if history.past %}
 
-  <section id="previous-seasons-section" class="mt-3 mb-5">
-    <h2>Past Seasons</h2>
+  <section id="previous-seasons-section" class="mt-3 mb-5 p-3 card-graph shadow rounded">
+    <h2 class="text-center p-3">Past Seasons</h2>
     <div class="row">
-      <div class="col-12 col-lg-6">
+      <div class="col-12 col-xl-6">
         <div class="chart-container mb-5 position-relative">
           <div class="btn-group btn-group-sm toggle-group">
             <button type="button" id="past-linear-btn" class="btn btn-outline-secondary">
@@ -25,9 +25,9 @@
       </div>
       
       <!-- Past Seasons Table -->
-      <div class="col-12 col-lg-6">
+      <div class="col-12 col-xl-6">
         <!-- <h3 class="mb-2">Past Seasons Table</h3> -->
-        <div class="table-responsive manager-scrollable-table">
+        <div class=" table-responsive manager-scrollable-table">
           <div id="previous-seasons-table-container">
           </div>
         </div>
@@ -37,12 +37,12 @@
   {% endif %}
 
   <!-- Current Season -->
-  <section id="current-season-section" class="my-5">
-    <h2>Current Season</h2>
+  <section id="current-season-section" class="mb-5 p-3 shadow rounded">
+    <h2 class="text-center p-3">Current Season</h2>
   
     <div class="row">
       <!-- GRAPH column -->
-      <div class="col-12 col-lg-9">
+      <div class="col-12 col-xl-6 mb-5">
         <!-- Full graph for large screens -->
         <div class="chart-container position-relative d-none d-lg-block">
           <div class="btn-group btn-group-sm toggle-group">
@@ -53,12 +53,12 @@
         </div>
   
         <!-- Small screen graphs -->
-        <div class="chart-container position-relative d-lg-none mb-5">
+        <div class="chart-container position-relative d-lg-none">
           <div class="btn-group btn-group-sm toggle-group">
             <button type="button" id="current-linear-btn-small" class="btn btn-outline-secondary">Linear</button>
             <button type="button" id="current-log-btn-small" class="btn btn-outline-secondary active">Log</button>
           </div>
-          <canvas id="currentSeasonGraphFirstHalf"></canvas>
+          <canvas id="currentSeasonGraphFirstHalf" class="mb-3"></canvas>
         </div>
         <div class="chart-container position-relative d-lg-none {% if current_gw is none or current_gw < 20 %}d-none{% endif %}" id="second-half-wrapper">
           <canvas id="currentSeasonGraphSecondHalf"></canvas>
@@ -68,23 +68,22 @@
 
   
       <!-- TABLE column -->
-      <div class="col-12 col-lg-3">
-        <div class="d-flex align-items-center justify-content-between mb-2">
+      <div class="col-12 col-xl-6">
+        <div class="table-responsive manager-scrollable-table">
+          <div id="current-season-table-container"></div>
+        </div>
+        <div class="p-3">
           <button type="button" class="btn btn-sm btn-outline-secondary info-btn" data-bs-toggle="popover"
             data-bs-trigger="focus" data-bs-html="true" title="Column Explanations" data-bs-content="...">
             <i class="bi bi-info-circle"></i> Info
           </button>
-        </div>
-  
-        <div class="table-responsive manager-scrollable-table">
-          <div id="current-season-table-container"></div>
         </div>
       </div>
     </div>
   </section>
 
   <!-- CHIPS -->
-  <section>
+  <section class="p-3 shadow rounded">
     <!-- Chips Tables -->
     <div class="row mt-4">
       <H2>Chips</H2>
@@ -163,8 +162,8 @@
     <!-- Triple Captains Section -->
     <div class="row">
       <!-- Triple Captain 1 Column -->
-      <div class="col-12 col-lg-6">
-        <div id="3xc_1" class="mb-3 shadow rounded" style="overflow: hidden;">
+      <div class="col-12 col-xl-6">
+        <div id="3xc_1" class="mb-3" style="overflow: hidden;">
           <div class="bg-purple p-2">
             <div class="px-3 fw-bold">
               Triple Captain 1 {% if chips_state['3xc_1']['used'] %} | {{ chips_state['3xc_1']['total_points']
@@ -172,7 +171,7 @@
             </div>
             <div class="px-3 fw-bold">
               {% if chips_state['3xc_1']['used'] %} GW {{ chips_state['3xc_1']['gw'] }} {% else %} <span
-                style="color: var(--purple)">.</span> {% endif %}
+                style="color: var(--purple)"></span> {% endif %}
             </div>
           </div>
           <div class="team-{{ chips_state['3xc_1']['team_code'] }} p-0 pt-1 text-end">
@@ -193,7 +192,7 @@
       </div>
       <!-- Triple Captain 2 Column -->
       <div class="col-12 col-lg-6">
-        <div id="3xc_2" class="mb-3 shadow rounded" style="overflow: hidden;">
+        <div id="3xc_2" class="mb-3 " style="overflow: hidden;">
           <div class="bg-purple p-2">
             <div class="px-3 fw-bold">
               Triple Captain 2 {% if chips_state['3xc_2']['used'] %} | {{ chips_state['3xc_2']['total_points']
@@ -201,7 +200,7 @@
             </div>
             <div class="px-3 fw-bold">
               {% if chips_state['3xc_2']['used'] %} GW {{ chips_state['3xc_2']['gw'] }} {% else %} <span
-                style="color: var(--purple)">.</span> {% endif %}
+                style="color: var(--purple)"></span> {% endif %}
             </div>
           </div>
           <div class="team-{{ chips_state['3xc_2']['team_code'] }} p-0 pt-1 text-end">
@@ -224,7 +223,7 @@
     
     <!-- Bench Boosts section -->
     <!-- Bench Boost 1 -->
-    <div class="shadow rounded p-0 mb-5 overflow-hidden">
+    <div class="  p-0 mb-5 overflow-hidden">
       <div class="row g-0">
         <div id="bboost_1" class="bg-purple d-flex p-2 fw-bold w-100">
           <div>
@@ -263,7 +262,7 @@
     </div>
     
     <!-- Bench boost 2 -->
-    <div class="shadow rounded p-0 mb-5 overflow-hidden">
+    <div class="  p-0 mb-5 overflow-hidden">
       <div class="row g-0">
         <div id="bboost_2" class="bg-purple d-flex p-2 fw-bold w-100">
           <div>
@@ -295,7 +294,6 @@
               </div>
             </div>
           </div>
-    
         </div>
         {% endfor %}
       </div>
@@ -304,429 +302,315 @@
 {% endblock %}
 {% block scripts %}
   <script>
-      console.log(
-          '[inline] initManagerPage defined?',
-          typeof initManagerPage
-        );
+    console.log('[inline] initManagerPage defined?', typeof initManagerPage);
 
-        // Utility: performance emoji for past seasons table
-        function performanceEmoji(p) {
-          if (p === null) return "–";
-          if (p > 70) return "💩";
-          if (p > 60) return "😭";
-          if (p > 50) return "😢";
-          if (p > 40) return "☹️";
-          if (p > 30) return "🙁";
-          if (p > 20) return "😐";
-          if (p > 15) return "😌";
-          if (p > 10) return "🙂";
-          if (p > 5) return "😁";
-          if (p > 1) return "😎";
-          if (p === 1) return "🥰";
-          if (p > 0.5) return "😍";
-          if (p > 0.1) return "🤩";
-          return "🤯";
-        }
-        
+    // Utility: performance emoji for past seasons table
+    function performanceEmoji(p) {
+      if (p === null) return "–";
+      if (p > 70) return "💩";
+      if (p > 60) return "😭";
+      if (p > 50) return "😢";
+      if (p > 40) return "☹️";
+      if (p > 30) return "🙁";
+      if (p > 20) return "😐";
+      if (p > 15) return "😌";
+      if (p > 10) return "🙂";
+      if (p > 5) return "😁";
+      if (p > 1) return "😎";
+      if (p === 1) return "🥰";
+      if (p > 0.5) return "😍";
+      if (p > 0.1) return "🤩";
+      return "🤯";
+    }
+
     // Formatters
-    const nf = new Intl.NumberFormat();               // 1234567 -> 1,234,567
-    const compact = new Intl.NumberFormat("en", {     // 1234567 -> 1.2M
-        notation: "compact",
-        maximumFractionDigits: 1
-      });
+    const nf = new Intl.NumberFormat();
+    const compact = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 });
 
+    // ----- Data injected from server -----
+    const currentRows = {{ current_rows | tojson }};
+    const historyPast = {{ history.past | tojson }};
+
+    // Total managers cap for current season charts (fallback ~12M if not found)
+    const TOTAL_MANAGERS_CAP = (() => {
+      const vals = historyPast.map(s => Number(s.total_managers) || 0);
+      const maxVal = vals.length ? Math.max(...vals) : 0;
+      return maxVal > 0 ? maxVal : 12000000;
+    })();
+
+    // Build Top 1% and Top 10% HORIZONTAL annotation lines (rank thresholds)
+    function buildRankThresholdAnnotations(totalManagers) {
+      const top1 = Math.max(1, Math.round(totalManagers * 0.01));
+      const top10 = Math.max(1, Math.round(totalManagers * 0.10));
+      return {
+        top1: {
+          type: "line",
+          yMin: top1, yMax: top1,
+          borderColor: "#2e7d32",
+          borderDash: [6, 6],
+          borderWidth: 2,
+          label: { enabled: true, content: "Top 1%", position: "end" }
+        },
+        top10: {
+          type: "line",
+          yMin: top10, yMax: top10,
+          borderColor: "#fbc02d",
+          borderDash: [6, 6],
+          borderWidth: 2,
+          label: { enabled: true, content: "Top 10%", position: "end" }
+        }
+      };
+    }
+
+    // Shared columns for current-season tables
+    const currentSeasonColumns = [
+      { label: "GW", key: "gw", thAttrs: 'data-bs-toggle="tooltip" title="Gameweek"' },
+      { label: "OR", key: "or", thAttrs: 'data-bs-toggle="tooltip" title="Overall Rank"', formatter: v => compact.format(v) },
+      { label: "#", key: "rank_change", thAttrs: 'data-bs-toggle="tooltip" title="Movement"' },
+      { label: "OP", key: "op", thAttrs: 'data-bs-toggle="tooltip" title="Overall Points"' },
+      { label: "GWR", key: "gwr", thAttrs: 'data-bs-toggle="tooltip" title="Gameweek Rank"', formatter: v => compact.format(v) },
+      { label: "GWP", key: "gwp", thAttrs: 'data-bs-toggle="tooltip" title="Gameweek Points"' },
+      { label: "PB", key: "pb", thAttrs: 'data-bs-toggle="tooltip" title="Points Benched"' },
+      { label: "TM", key: "tm", thAttrs: 'data-bs-toggle="tooltip" title="Transfers Made"' },
+      { label: "TC", key: "tc", thAttrs: 'data-bs-toggle="tooltip" title="Transfers Cost"' },
+      { label: "£", key: "£", thAttrs: 'data-bs-toggle="tooltip" title="Team Value"' },
+    ];
+
+    // Factory to build a current-season config (used for full, first-half, second-half)
+    function makeCurrentSeasonConfig({ chartId, rows, xMin, xMax, toggleBtns, tableContainerId = null }) {
+      const xScale = {
+        type: "linear",
+        title: { display: true, text: "Gameweek" },
+        grid: { drawTicks: true, drawBorder: false, drawOnChartArea: false },
+        bounds: "ticks",
+        ticks: {
+          callback: (v) => Number.isInteger(v) ? v : "",
+          stepSize: 1,
+          precision: 0
+        }
+      };
+      if (typeof xMin === "number") xScale.min = xMin;
+      if (typeof xMax === "number") xScale.max = xMax;
+
+      const yScale = {
+        position: "left",
+        type: "logarithmic",
+        reverse: true,
+        min: 1,
+        max: TOTAL_MANAGERS_CAP,
+        title: { display: true, text: "Rank" },
+        grid: { drawTicks: true, drawBorder: false, drawOnChartArea: true },
+        ticks: {
+          maxTicksLimit: 6,
+          callback: (value) => (typeof value === "number" ? compact.format(value) : value)
+        }
+      };
+
+      // Build annotation lines for the current charts using the same total-managers figure
+      const annotations = buildRankThresholdAnnotations(TOTAL_MANAGERS_CAP);
+
+      return {
+        tableContainerId, // only set for the "full" view
+        chartId,
+        ajaxRoute: null,
+        initialData: rows,
+        columns: currentSeasonColumns,
+        dataKey: "gw",
+        sortBy: "gw",
+        sortOrder: "asc",
+        toggleBtns,
+        hoverDs: "Overall Rank",
+        buildDatasets: (data) => ([
+          {
+            type: "line",
+            label: "Overall Rank",
+            data: data.map(d => ({ x: Number(d.gw), y: Number(d.or) >= 1 ? Number(d.or) : null })),
+            borderColor: "purple",
+            backgroundColor: "purple",
+            tension: 0.3,
+            pointRadius: 5,
+            yAxisID: "y",
+            order: 1,
+          },
+          {
+            type: "line",
+            pointStyle: "rectRounded",
+            label: "GW Rank",
+            data: data.map(d => ({ x: Number(d.gw), y: Number(d.gwr) >= 1 ? Number(d.gwr) : null })),
+            borderColor: "green",
+            backgroundColor: "green",
+            borderWidth: 0,
+            tension: 0.3,
+            pointRadius: 5,
+            yAxisID: "y",
+            order: 2,
+          },
+
+          // --- Legend-only entries to match the annotation lines ---
+          {
+            type: "line",
+            label: "Top 1%",
+            data: [],                  // no points → won’t draw; legend still shows
+            borderColor: "#2e7d32",
+            borderDash: [6, 6],
+            borderWidth: 2,
+            pointRadius: 0,
+            fill: false,
+            order: 0
+          },
+          {
+            type: "line",
+            label: "Top 10%",
+            data: [],
+            borderColor: "#fbc02d",
+            borderDash: [6, 6],
+            borderWidth: 2,
+            pointRadius: 0,
+            fill: false,
+            order: 0
+          }
+        ]),
+
+        scales: { x: xScale, y: yScale },
+        options: {
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { filter: (li) => li.text !== "GW Points" } },
+            tooltip: {
+              callbacks: {
+                title: (items) => `GW ${items[0].label}`,
+                label: ({ dataset, parsed }) => `${dataset.label}: ${nf.format(parsed.y)}`
+              }
+            },
+            // 👇 add the Top 1% / Top 10% horizontal lines (like pastSeasons)
+            annotation: { annotations }
+          }
+        },
+      };
+    }
+
+    // ----- Build slices for the three charts -----
+    const fullRows = currentRows;
+    const firstHalf = currentRows.filter(r => r.gw >= 1 && r.gw <= 19);
+    const secondHalf = currentRows.filter(r => r.gw >= 20 && r.gw <= 38);
+
+    // X ranges per your spec:
+    // full:   xMax = min(38, maxGW + 1)
+    // first:  xMax = min(19, maxGW_in_first + 1)
+    // second: xMax = min(38, maxGW_in_second + 1)
+    const maxGW_full = fullRows.length ? Math.max(...fullRows.map(r => r.gw)) : 1;
+    const maxGW_first = firstHalf.length ? Math.max(...firstHalf.map(r => r.gw)) : 1;
+    const maxGW_second = secondHalf.length ? Math.max(...secondHalf.map(r => r.gw)) : 20; // sensible default before GW20
+
+    const fullXMin = 1;
+    const fullXMax = Math.min(38, maxGW_full + 1);
+
+    const firstXMin = 1;
+    const firstXMax = Math.min(19, maxGW_first + 1);
+
+    const secondXMin = 20;
+    const secondXMax = Math.min(38, maxGW_second + 1);
+
+    // Ensure a global graphs holder exists (if your script.js uses it)
+    window.graphs = window.graphs || {};
+
+    // ----- Build pageConfigs -----
     window.pageConfigs = {
-    
-      currentSeasonFull: {
-        tableContainerId: "current-season-table-container",
-        ajaxRoute: null,
-        initialData: {{ current_rows | tojson }},
-        columns: [
-          { label: "GW", key: "gw", thAttrs: 'data-bs-toggle="tooltip" title="Gameweek"' },
-          { label: "OR", key: "or", thAttrs: 'data-bs-toggle="tooltip" title="Overall Rank"', formatter: v => compact.format(v) },
-          { label: "#", key: "rank_change", thAttrs: 'data-bs-toggle="tooltip" title="Movement"' },
-          { label: "OP", key: "op", thAttrs: 'data-bs-toggle="tooltip" title="Overall Points"' },
-          { label: "GWR", key: "gwr", thAttrs: 'data-bs-toggle="tooltip" title="Gameweek Rank"', formatter: v => compact.format(v) },
-          { label: "GWP", key: "gwp", thAttrs: 'data-bs-toggle="tooltip" title="Gameweek Points"' },
-          { label: "PB", key: "pb", thAttrs: 'data-bs-toggle="tooltip" title="Points Benched"' },
-          { label: "TM", key: "tm", thAttrs: 'data-bs-toggle="tooltip" title="Transfers Made"', },
-          { label: "TC", key: "tc", thAttrs: 'data-bs-toggle="tooltip" title="Transfers Cost"', },
-          { label: "£", key: "£", thAttrs: 'data-bs-toggle="tooltip" title="Team Value"' },
-        ],
-        dataKey: "gw",
-        sortBy: "gw",
-        sortOrder: "asc",
+      // Current Season (Full: owns the table)
+      currentSeasonFull: makeCurrentSeasonConfig({
+        chartId: "currentSeasonGraphFull",
+        rows: fullRows,
+        xMin: fullXMin,
+        xMax: fullXMax,
         toggleBtns: ["current-linear-btn", "current-log-btn"],
-        hoverDs: "Overall Rank",
-        buildDatasets: (data) => {
-          const gw = data.map(d => d.gw),
-            or = data.map(d => d.or),
-            gwr = data.map(d => d.gwr);
+        tableContainerId: "current-season-table-container"
+      }),
 
-          return [
-            {
-              type: "line",
-              label: "Overall Rank",
-              data: or,
-              borderColor: "purple",
-              backgroundColor: "purple",
-              tension: .3,
-              pointRadius: 5,
-              yAxisID: "y",
-              order: 1,
-            },
-            {
-              type: "line",
-              pointStyle: "rectRounded",
-              label: "GW Rank",
-              data: gwr,
-              borderColor: "green",
-              backgroundColor: "green",
-              borderWidth: 0,
-              tension: 0.3,
-              pointRadius: 5,
-              yAxisID: "y",
-              order: 2,
-            },
-          ];
-        },
-        scales: {
-          x: {
-            title: { display: true, text: "Gameweek" },
-            grid: {
-              drawTicks: true,
-              drawBorder: false,
-              drawOnChartArea: false,
-            },
-          },
-          y: {
-            position: "left",
-            type: "logarithmic",
-            reverse: true,
-            title: { display: true, text: "Rank" },
-            grid: {
-              drawTicks: true,
-              drawBorder: false,
-              drawOnChartArea: true,
-            },
-            ticks: {
-              maxTicksLimit: 6,
-              callback: (value) =>
-                typeof value === "number" ? compact.format(value) : value
-            }
-          },
-        },
-        options: {
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              labels: {
-                filter: (legendItem) => legendItem.text !== "GW Points"
-              }
-            },
-            tooltip: {
-              callbacks: {
-                title: (items) => `GW ${items[0].label}`,
-                label: ({ dataset, parsed }) =>
-                  `${dataset.label}: ${nf.format(parsed.y)}`
-              }
-            }
-          }
-        },
-      },
-
-      currentSeasonFirstHalf: {
-        tableContainerId: "current-season-table-container",
+      // Current Season (First Half: no table)
+      currentSeasonFirstHalf: makeCurrentSeasonConfig({
         chartId: "currentSeasonGraphFirstHalf",
-        ajaxRoute: null,
-        initialData: {{ current_rows | tojson }},
-        columns: [
-          { label: "GW", key: "gw", thAttrs: 'data-bs-toggle="tooltip" title="Gameweek"' },
-          { label: "OR", key: "or", thAttrs: 'data-bs-toggle="tooltip" title="Overall Rank"', formatter: v => compact.format(v) },
-          { label: "#", key: "rank_change", thAttrs: 'data-bs-toggle="tooltip" title="Movement"' },
-          { label: "OP", key: "op", thAttrs: 'data-bs-toggle="tooltip" title="Overall Points"' },
-          { label: "GWR", key: "gwr", thAttrs: 'data-bs-toggle="tooltip" title="Gameweek Rank"', formatter: v => compact.format(v) },
-          { label: "GWP", key: "gwp", thAttrs: 'data-bs-toggle="tooltip" title="Gameweek Points"' },
-          { label: "PB", key: "pb", thAttrs: 'data-bs-toggle="tooltip" title="Points Benched"' },
-          { label: "TM", key: "tm", thAttrs: 'data-bs-toggle="tooltip" title="Transfers Made"', },
-          { label: "TC", key: "tc", thAttrs: 'data-bs-toggle="tooltip" title="Transfers Cost"', },
-          { label: "£", key: "£", thAttrs: 'data-bs-toggle="tooltip" title="Team Value"' },
-        ],
-        dataKey: "gw",
-        sortBy: "gw",
-        sortOrder: "asc",
+        rows: firstHalf,
+        xMin: firstXMin,
+        xMax: firstXMax,
         toggleBtns: ["current-linear-btn-small", "current-log-btn-small"],
-        hoverDs: "Overall Rank",
-        buildDatasets: (data) => {
-          // slice the data first
-          const firstHalf = data.slice(0, 19);
+        tableContainerId: null
+      }),
 
-          const gw = firstHalf.map(d => d.gw),
-            or = firstHalf.map(d => d.or),
-            gwr = firstHalf.map(d => d.gwr);
-
-          return [
-            {
-              type: "line",
-              label: "Overall Rank",
-              data: or,
-              borderColor: "purple",
-              backgroundColor: "purple",
-              tension: .3,
-              pointRadius: 5,
-              yAxisID: "y",
-              order: 1,
-            },
-            {
-              type: "line",
-              pointStyle: "rectRounded",
-              label: "GW Rank",
-              data: gwr,
-              borderColor: "green",
-              backgroundColor: "green",
-              borderWidth: 0,
-              tension: 0.3,
-              pointRadius: 5,
-              yAxisID: "y",
-              order: 2,
-            },
-          ];
-        },
-        scales: {
-          x: {
-            title: { display: true, text: "Gameweek" },
-            grid: {
-              drawTicks: true,
-              drawBorder: false,
-              drawOnChartArea: false,
-            },
-            min: 1,   // 👈 for first half
-            max: 19,  // 👈 for first half
-          },
-          y: {
-            position: "left",
-            type: "logarithmic",
-            reverse: true,
-            title: { display: true, text: "Rank" },
-            grid: {
-              drawTicks: true,
-              drawBorder: false,
-              drawOnChartArea: true,
-            },
-            ticks: {
-              maxTicksLimit: 6,
-              callback: (value) =>
-                typeof value === "number" ? compact.format(value) : value
-            }
-          },
-        },
-        options: {
-          maintainAspectRatio: false,
-          plugins: {
-          title: {
-            display: false, // 👈 Only show if second half will show too
-            text: "First Half",  // 👈 title text
-            font: { size: 16, weight: 'bold' },   // optional styling
-            color: '#38003c',       // optional (use your purple?)
-            padding: { top: 10, bottom: 20 },     // spacing
-          },
-            legend: {
-              labels: {
-                filter: (legendItem) => legendItem.text !== "GW Points"
-              }
-            },
-            tooltip: {
-              callbacks: {
-                title: (items) => `GW ${items[0].label}`,
-                label: ({ dataset, parsed }) =>
-                  `${dataset.label}: ${nf.format(parsed.y)}`
-              }
-            }
-          }
-        },
-      },
-
-      currentSeasonSecondHalf: {
-        tableContainerId: "current-season-table-container",
+      // Current Season (Second Half: no table; keep hidden until GW ≥ 20 if you like)
+      currentSeasonSecondHalf: makeCurrentSeasonConfig({
         chartId: "currentSeasonGraphSecondHalf",
-        ajaxRoute: null,
-        initialData: {{ current_rows | tojson }},
-        columns: [
-          { label: "GW", key: "gw", thAttrs: 'data-bs-toggle="tooltip" title="Gameweek"' },
-          { label: "OR", key: "or", thAttrs: 'data-bs-toggle="tooltip" title="Overall Rank"', formatter: v => compact.format(v) },
-          { label: "#", key: "rank_change", thAttrs: 'data-bs-toggle="tooltip" title="Movement"' },
-          { label: "OP", key: "op", thAttrs: 'data-bs-toggle="tooltip" title="Overall Points"' },
-          { label: "GWR", key: "gwr", thAttrs: 'data-bs-toggle="tooltip" title="Gameweek Rank"', formatter: v => compact.format(v) },
-          { label: "GWP", key: "gwp", thAttrs: 'data-bs-toggle="tooltip" title="Gameweek Points"' },
-          { label: "PB", key: "pb", thAttrs: 'data-bs-toggle="tooltip" title="Points Benched"' },
-          { label: "TM", key: "tm", thAttrs: 'data-bs-toggle="tooltip" title="Transfers Made"', },
-          { label: "TC", key: "tc", thAttrs: 'data-bs-toggle="tooltip" title="Transfers Cost"', },
-          { label: "£", key: "£", thAttrs: 'data-bs-toggle="tooltip" title="Team Value"' },
-        ],
-        dataKey: "gw",
-        sortBy: "gw",
-        sortOrder: "asc",
+        rows: secondHalf,
+        xMin: secondXMin,
+        xMax: secondXMax,
         toggleBtns: ["current-linear-btn-small", "current-log-btn-small"],
-        hoverDs: "Overall Rank",
+        tableContainerId: null
+      }),
+
+      // ------ Past Seasons (unchanged) ------
+      pastSeasons: {
+        tableContainerId: "previous-seasons-table-container",
+        chartId: "previousSeasonsChart",
+        ajaxRoute: null,
+        initialData: historyPast,
+        columns: [
+          { label: "Season", key: "season_name", thAttrs: 'title="Year"' },
+          {
+            label: `<span class="d-lg-none"></span><span class="d-none d-lg-inline">Vibes</span>`,
+            key: "percentile", thAttrs: 'title="Emojis"', formatter: (v) => performanceEmoji(v)
+          },
+          {
+            label: `<span class="d-lg-none">%</span><span class="d-none d-lg-inline">Percentile</span>`,
+            thAttrs: 'data-bs-html="true" data-bs-toggle="tooltip" title="Percentile finish <br> Lower is better"',
+            key: "percentile",
+            formatter: (v) => {
+              if (v == null) return "";
+              const num = parseFloat(v).toFixed(1);
+              return (num.endsWith(".0") ? num.slice(0, -2) : num) + "%";
+            }
+          },
+          {
+            label: `<span class="d-lg-none">OR</span><span class="d-none d-lg-inline">Overall Rank</span>`,
+            key: "rank", thAttrs: 'data-bs-toggle="tooltip" title="Overall Rank"', formatter: v => nf.format(v)
+          },
+          { label: "Managers", key: "total_managers", thAttrs: 'data-bs-toggle="tooltip" title="Total Managers"', formatter: v => compact.format(v) },
+          { label: "Total Points", key: "total_points", thAttrs: 'data-bs-toggle="tooltip" title="Total points for the season"' },
+        ],
+        dataKey: "season_name",
+        sortBy: "season_name",
+        sortOrder: "desc",
+        toggleBtns: ["past-linear-btn", "past-log-btn"],
+        hoverDs: 0,
         buildDatasets: (data) => {
-          // slice the data for GW 20–38
-          const secondHalf = data.slice(19);
-          console.log('secondHalf data array:', secondHalf); // 👈 LOG HERE
-
-          const gw = secondHalf.map(d => d.gw),
-            or = secondHalf.map(d => d.or),
-            gwr = secondHalf.map(d => d.gwr);
-
+          const percentiles = data.map(r => r.percentile);
+          const ranks = data.map(r => r.rank);
           return [
-            {
-              type: "line",
-              label: "Overall Rank",
-              data: secondHalf.map((d, i) => ({ x: 20 + i, y: d.or })), // 👈 x starts at 20
-              borderColor: "purple",
-              backgroundColor: "purple",
-              tension: .3,
-              pointRadius: 5,
-              yAxisID: "y",
-              order: 1,
-            },
-            {
-              type: "line",
-              pointStyle: "rectRounded",
-              label: "GW Rank",
-               data: secondHalf.map((d, i) => ({ x: 20 + i, y: d.gwr })), // 👈 x starts at 20
-              borderColor: "green",
-              backgroundColor: "green",
-              borderWidth: 0,
-              tension: 0.3,
-              pointRadius: 5,
-              yAxisID: "y",
-              order: 2,
-            },
+            { type: "line", label: "You (%)", data: percentiles, rankData: ranks, fill: false, backgroundColor: "purple", borderColor: "purple", pointRadius: 6 },
+            { type: "line", label: "Top 1%", data: [], borderColor: "#2e7d32", borderDash: [6, 6] },
+            { type: "line", label: "Top 10%", data: [], borderColor: "#fbc02d", borderDash: [6, 6] }
           ];
         },
         scales: {
-          x: {
-            title: { display: true, text: "Gameweek" },
-            grid: {
-              drawTicks: true,
-              drawBorder: false,
-              drawOnChartArea: false,
-            },
-            min: 20,
-            max: 38
-          },
           y: {
-            position: "left",
             type: "logarithmic",
+            min: 0.08,
+            max: 100,
             reverse: true,
-            title: { display: true, text: "Rank" },
-            grid: {
-              drawTicks: true,
-              drawBorder: false,
-              drawOnChartArea: true,
-            },
-            ticks: {
-              maxTicksLimit: 6,
-              callback: (value) =>
-                typeof value === "number" ? compact.format(value) : value
-            }
-          },
-        },
-        options: {
-          maintainAspectRatio: false,
-          plugins: {
-          title: {
-            display: false,          // 👈 enables title
-            text: "Second Half",  // 👈 title text
-            font: { size: 16, weight: 'bold' },   // optional styling
-            color: '#38003c',       // optional (use your purple?)
-            padding: { top: 10, bottom: 20 },     // spacing
-            },
-            legend: {
-              labels: {
-                filter: (legendItem) => legendItem.text !== "GW Points"
-              }
-            },
-            tooltip: {
-              callbacks: {
-                title: (items) => `GW ${items[0].label}`,
-                label: ({ dataset, parsed }) =>
-                  `${dataset.label}: ${nf.format(parsed.y)}`
-              }
-            }
-          }
-        },
-      },
-      
-
-
-        pastSeasons: {
-          tableContainerId: "previous-seasons-table-container",
-          chartId: "previousSeasonsChart",
-          ajaxRoute: null,
-          initialData: {{ history.past | tojson }},
-          columns: [
-              { label: "Season", key: "season_name", thAttrs: 'title="Year"' },
-              { label: `<span class="d-lg-none"></span>
-                        <span class="d-none d-lg-inline">Vibes</span>`, 
-                key: "percentile", thAttrs: 'title="Emojis"', formatter: (v) => performanceEmoji(v) },
-              { label: `
-                        <span class="d-lg-none">%</span>
-                        <span class="d-none d-lg-inline">Percentile</span>`, 
-                thAttrs: 'data-bs-html="true" data-bs-toggle="tooltip" title="Percentile finish <br> Lower is better"',
-                key: "percentile",   formatter: (v) => {
-                  if (v == null) return "";
-                  const num = parseFloat(v).toFixed(1);
-                  return (num.endsWith(".0") ? num.slice(0, -2) : num) + "%";
-                }  },
-              { label: `<span class="d-lg-none">OR</span>
-                        <span class="d-none d-lg-inline">Overall Rank</span>`,
-                key: "rank",  thAttrs: 'data-bs-toggle="tooltip" title="Overall Rank"', formatter: v => nf.format(v) },
-              { label: "Managers", key: "total_managers", thAttrs: 'data-bs-toggle="tooltip" title="Total Managers"', formatter: v => compact.format(v) },
-              { label: "Total Points", key: "total_points", thAttrs: 'data-bs-toggle="tooltip" title="Total points for the season"' },
-            ],
-          dataKey: "season_name",
-          sortBy: "season_name",
-          sortOrder: "desc",
-          toggleBtns: ["past-linear-btn", "past-log-btn"],
-          hoverDs: 0,   // dataset index
-          buildDatasets: (data) => {
-            const labels = data.map(r => r.season_name),
-              percentiles = data.map(r => r.percentile);
-              ranks = data.map(r => r.rank); 
-            return [
-              { type: "line", label: "You (%)", data: percentiles, rankData: ranks, fill: false, backgroundColor: "purple", borderColor: "purple", pointRadius: 6 },
-              { type: 'line', label: 'Top 1%', data: [], borderColor: '#2e7d32', borderDash: [6, 6] },
-              { type: 'line', label: 'Top 10%', data: [], borderColor: '#fbc02d', borderDash: [6, 6] }
-        ];
-      },
-      scales: {
-          y: {
-            type: "logarithmic",
-              min: 0.08,
-                max: 100,
-                  reverse: true,
-                    ticks: {
-              maxTicksLimit: 6,
-                callback: v => `${v}%`,
-                  font: { size: 10 }
-            }
+            ticks: { maxTicksLimit: 6, callback: v => `${v}%`, font: { size: 10 } }
           },
           x: {
             reverse: true,
-              title: { display: true, text: "Season" },
+            title: { display: true, text: "Season" },
             ticks: { font: { size: 10 } }
           }
         },
-        // ← **NEW**: your entire custom options block
         options: {
           maintainAspectRatio: false,
-            plugins: {
+          plugins: {
             tooltip: {
               callbacks: {
                 label: (context) => {
                   const percentile = context.parsed.y,
-                        rank = context.dataset.rankData[context.dataIndex];
+                    rank = context.dataset.rankData[context.dataIndex];
                   return [
                     percentile != null ? `Percentile: ${percentile}%` : "No data",
                     rank != null ? `Rank: ${rank.toLocaleString()}` : ""
@@ -736,22 +620,8 @@
             },
             annotation: {
               annotations: {
-                top1: {
-                  type: "line",
-                    yMin: 1,
-                      yMax: 1,
-                        borderColor: "#2e7d32",
-                          borderWidth: 2,
-                            borderDash: [6, 6]
-                },
-                top10: {
-                  type: "line",
-                    yMin: 10,
-                      yMax: 10,
-                        borderColor: "#fbc02d",
-                          borderWidth: 2,
-                            borderDash: [6, 6]
-                }
+                top1: { type: "line", yMin: 1, yMax: 1, borderColor: "#2e7d32", borderWidth: 2, borderDash: [6, 6] },
+                top10: { type: "line", yMin: 10, yMax: 10, borderColor: "#fbc02d", borderWidth: 2, borderDash: [6, 6] }
               }
             }
           }
@@ -760,19 +630,14 @@
     };
 
     console.log('[inline] pageConfigs is', window.pageConfigs);
-    console.log('pageConfigs.currentSeasonSecondHalf', window.pageConfigs.currentSeasonSecondHalf);
 
-
-
-  // ✅ THEN call initManagerPage
-  if (typeof initManagerPage === 'function') {
-    console.log('[inline] calling initManagerPage()');
-    initManagerPage(window.pageConfigs);
-  } else {
-    console.warn('[inline] initManagerPage is not a function, skipping');
-  }
-
-
+    // ✅ THEN call initManagerPage
+    if (typeof initManagerPage === 'function') {
+      console.log('[inline] calling initManagerPage()');
+      initManagerPage(window.pageConfigs);
+    } else {
+      console.warn('[inline] initManagerPage is not a function, skipping');
+    }
   </script>
 
 {% endblock %}

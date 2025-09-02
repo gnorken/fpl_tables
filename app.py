@@ -12,7 +12,6 @@ from modules.utils import (
     millions,
     territory_icon,
     get_overall_league_leader_total,
-    performance_emoji,
     get_event_status_state
 )
 from modules.aggregate_data import merge_team_and_global, filter_and_sort_players, sort_table_data
@@ -98,7 +97,6 @@ app.jinja_env.filters["ordinalformat"] = ordinalformat
 app.jinja_env.filters["thousands"] = thousands
 app.jinja_env.filters["millions"] = millions
 app.jinja_env.filters["territory_icon"] = territory_icon
-app.jinja_env.filters["performance_emoji"] = performance_emoji
 
 DATABASE = "page_views.db"
 
@@ -386,13 +384,6 @@ def mini_leagues(league_id):
     # 1️⃣ ensure we know the current GW
     current_gw = session.get("current_gw") or get_current_gw()
     session["current_gw"] = current_gw
-
-    # if current_gw is None:
-    #     flash("Mini-leagues are unavailable before the season starts.", "warning")
-    #     team_id = session.get("team_id")
-    #     if team_id:
-    #         return redirect(url_for("manager", team_id=team_id))
-    #     return redirect(url_for("index"))
 
     # 2️⃣ pull sort params out of the query (for JS to re‐use)
     sort_by = request.args.get("sort_by", "rank")

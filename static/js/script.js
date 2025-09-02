@@ -713,10 +713,10 @@ function disposeTooltips(context = document) {
 
 // Builder function for manager tables + charts
 async function buildManagerTableAndChart(cfg) {
-  // print("▶️ Building table & chart for:", cfg.tableContainerId);
-
-  const container = document.getElementById(cfg.tableContainerId);
-  if (!container) return;
+  // Allow “chart-only” configs (no table)
+  const container = cfg.tableContainerId
+    ? document.getElementById(cfg.tableContainerId)
+    : null;
 
   try {
     // 1️⃣ Data: either initialData or fetch
@@ -735,72 +735,77 @@ async function buildManagerTableAndChart(cfg) {
           return dir * (A - B);
         return dir * String(A).localeCompare(String(B));
       });
-    } else {
+    } else if (cfg.ajaxRoute) {
       const url = new URL(cfg.ajaxRoute, location);
       url.searchParams.set("sort_by", cfg.sortBy);
       url.searchParams.set("order", cfg.sortOrder);
       const resp = await fetch(url);
       data = await resp.json();
+    } else {
+      data = []; // nothing to render
     }
 
-    // Clean up old tooltips before replacing the table
-    disposeTooltips(container);
+    // 2️⃣ TABLE (optional)
+    if (container) {
+      // Clean up old tooltips before replacing the table
+      disposeTooltips(container);
 
-    // 2️⃣ Build table
-    container.innerHTML = buildSortableTable(data, cfg.columns, cfg.dataKey);
+      container.innerHTML = buildSortableTable(data, cfg.columns, cfg.dataKey);
 
-    // 3️⃣ Manually dispose tooltips & re-init
-    container.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => {
-      const instance = bootstrap.Tooltip.getInstance(el);
-      if (instance) instance.dispose();
-    });
+      // Re-init tooltips and popovers
+      window.initTooltips(container);
+      initComponents(container);
 
-    // Re-initialise tooltips and popovers
-    window.initTooltips(container);
-    initComponents(container); // popovers
-
-    // 4️⃣ Header sorting
-    const table = container.querySelector("table");
-    if (table) {
-      table.querySelectorAll("th[data-sort]").forEach((th) => {
-        th.addEventListener("click", () => {
-          const key = th.dataset.sort;
-          const dir =
-            cfg.sortBy === key && cfg.sortOrder === "desc" ? "asc" : "desc";
-          cfg.sortBy = key;
-          cfg.sortOrder = dir;
-          buildManagerTableAndChart(cfg); // re-render
+      // Header sorting (local re-render)
+      const table = container.querySelector("table");
+      if (table) {
+        table.querySelectorAll("th[data-sort]").forEach((th) => {
+          th.addEventListener("click", () => {
+            const key = th.dataset.sort;
+            const dir =
+              cfg.sortBy === key && cfg.sortOrder === "desc" ? "asc" : "desc";
+            cfg.sortBy = key;
+            cfg.sortOrder = dir;
+            buildManagerTableAndChart(cfg); // re-render
+          });
         });
-      });
+      }
+
+      updateSortIndicator(
+        cfg.sortBy,
+        cfg.sortOrder,
+        `#${cfg.tableContainerId}`
+      );
     }
 
-    // 5️⃣ Update sort indicator
-    updateSortIndicator(cfg.sortBy, cfg.sortOrder, `#${cfg.tableContainerId}`);
-
-    // 6️⃣ Rebuild chart
-    const oldChart = Chart.getChart(cfg.chartId);
-    if (oldChart) oldChart.destroy();
-
-    // Safely grab the canvas
+    // 3️⃣ CHART (always)
     const canvasEl = document.getElementById(cfg.chartId);
     if (!canvasEl) {
       console.warn(`⚠️ No <canvas> found with id="${cfg.chartId}"`);
       return;
     }
 
-    // Build new one
+    const oldChart = Chart.getChart(cfg.chartId);
+    if (oldChart) oldChart.destroy();
+
     const ctx = canvasEl.getContext("2d");
     const chart = new Chart(ctx, {
       data: {
         labels: data.map((r) => r[cfg.dataKey]),
         datasets: cfg.buildDatasets(data),
       },
-      options: Object.assign({ scales: cfg.scales }, cfg.options || {}),
+      // Merge scales first, then options (so options can still override if needed)
+      options: Object.assign({ scales: cfg.scales || {} }, cfg.options || {}),
     });
 
-    // 7️⃣ Toggle & hover
-    addScaleToggle(chart, ...cfg.toggleBtns);
-    attachTableGraphHover(cfg.chartId, `#${cfg.tableContainerId}`, cfg.hoverDs);
+    // 4️⃣ toggles + hover (table hover only if we actually have a table)
+    if (cfg.toggleBtns?.length === 2) addScaleToggle(chart, ...cfg.toggleBtns);
+    if (container)
+      attachTableGraphHover(
+        cfg.chartId,
+        `#${cfg.tableContainerId}`,
+        cfg.hoverDs
+      );
   } catch (err) {
     console.warn("⚠️ Manager page failed:", err);
   }

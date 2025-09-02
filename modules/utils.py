@@ -491,41 +491,6 @@ def get_overall_league_leader_total():
 
     return leader.get("total")
 
-# emojis for manager history performance
-
-
-def performance_emoji(percentile):
-    if percentile is None:
-        return "–"
-    if percentile > 70:
-        return "💩"
-    elif percentile > 60:
-        return "😭"
-    elif percentile > 50:
-        return "😢"
-    elif percentile > 40:
-        return "☹️"
-    elif percentile > 30:
-        return "🙁"
-    elif percentile > 20:
-        return "😐"
-    elif percentile > 15:
-        return "😌"
-    elif percentile > 10:
-        return "🙂"
-    elif percentile > 5:
-        return "😁"
-    elif percentile > 1:
-        return "😎"
-    elif percentile == 1:
-        return "🥰"
-    elif percentile > 0.5:
-        return "😍"
-    elif percentile > 0.1:
-        return "🤩"
-    else:
-        return "🤯"
-
 
 EXPLAIN_TO_FIELD = {
     "minutes": "minutes_points",

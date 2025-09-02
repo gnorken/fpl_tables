@@ -358,6 +358,7 @@ td {
   background: rgb(13, 110, 253); 
 }
 
+/* SLIDERS END */
 
 /* Chips page */
 .team-player { /* photo */
@@ -648,4 +649,8 @@ body {
 
 .team {
   background-color: rgb(217,114, 44, 0.1) ;
+}
+
+.card-graph {
+
 }
