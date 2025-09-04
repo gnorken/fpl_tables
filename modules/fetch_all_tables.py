@@ -100,7 +100,7 @@ def build_player_info(static_data):
             "clean_sheets_per_90_team": 0,
             "clean_sheets_points_team": 0,
             "clean_sheets_rate_team": 0,
-            "captained_points_team": 0,
+            "captain_points_team": 0,
             "captained_team": 0,
             "dreamteam_count_team": 0,
             "defensive_contribution_team": 0,
@@ -345,19 +345,26 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
                     ti['assists_team'] - ti['expected_assists_team'], 2)
                 ti['goals_assists_performance_team'] = round(
                     ti['goals_assists_team'] -
-                    ti['expected_goal_involvements_team'], 2
-                )
+                    ti['expected_goal_involvements_team'], 2)
 
+                # Handle captain stats for multipliers 2 (captain) or 3 (triple captain)
                 if mult in (2, 3):
+                    # Increment captain selection count
+                    ti['captained_team'] += 1
                     ti['goals_captained_team'] += goals
                     ti['assists_captained_team'] += assists
-                    ti['captained_team'] += 1
+                    base_points = stats.get('total_points', 0)
+                    ti['captain_points_team'] += base_points * \
+                        (mult - 1)  # 1x for captain, 2x for triple captain
 
-                # team points via explain (with multiplier)
+                # Team points via explain (with multiplier)
                 add_explain_points(ti, explain, suffix="_team",
                                    mult=mult, pid=pid, gw=gw, tag="TEAM")
 
-                ti['total_points_team'] += stats.get('total_points', 0) * mult
+                # Base points without captain multiplier
+                ti['total_points_team'] += stats.get('total_points', 0)
+
+                # Calculate points per million (ppm)
                 cost = ti.get('now_cost', 0)
                 if cost:
                     ti['ppm_team'] = round(

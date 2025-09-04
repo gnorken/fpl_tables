@@ -64,7 +64,7 @@ a:active {
 }
 
 /* for dropdown leagues */
-.red-text a {color:var(--secondary);}
+.red-text a {color:var(--danger);}
 .green-text a {color:green;}
 
 .btn-outline-primary {
@@ -191,8 +191,14 @@ td {
 .vert-border-secondary {
   border-left: 0.1px solid var(--secondary);
 }
+.vert-border-primary {
+  border-left: 0.1px solid var(--primary);
+}
 .vert-border-end {
   border-right: 1px solid rgb(222, 226, 230);
+}
+.vert-border-end-primary {
+  border-right: 0.1px solid var(--primary);
 }
 .vert-border-white {
   border-left: 1px solid whitesmoke;
@@ -473,7 +479,7 @@ th.sorted {
 
 /* mini league cell highlighter */
 .highlight {
-  background-color: #fff3b0 !important;
+  /* background-color: #fff3b0 !important; */
 }
 
 /* Loading... */
@@ -651,6 +657,6 @@ body {
   background-color: rgb(217,114, 44, 0.1) ;
 }
 
-.card-graph {
-
+.th-padding th {
+  padding: 0.6rem ;
 }

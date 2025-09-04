@@ -5,7 +5,7 @@
         <div id="header-logo-gw" class="{{ '' if request.endpoint == 'index' else 'd-none d-md-block' }} me-2">
             <a href="/" class="d-flex align-items-end text-light text-decoration-none p-2">
                 <h1 id="header-logo" class="m-0 h6 fw-bold">FPL Tables</h1>
-                <span id="header-gw" class="d-none d-sm-block px-2 text-center fst-italic fw-lighter">
+                <span id="header-gw" class="d-none d-sm-block px-2 text-center fw-lighter">
                     {% if current_gw is none %}
                         Preseason
                     {% else %}

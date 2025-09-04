@@ -216,18 +216,37 @@ def flash_if_preseason():
 def index():
     MAX_USERS = get_max_users()
     current_gw = session.get('current_gw', '__')
+
     # GET
     if request.method == "GET":
-        # session.pop("team_id", None)
         return render_template("index.html",
                                max_users=MAX_USERS,
                                current_gw=current_gw)
+
     # POST
+    # Handle league_id form
+    league_id = request.form.get("league_id")
+    if league_id:
+        try:
+            league_id = int(league_id)
+            if league_id <= 0:
+                raise ValueError("League ID must be positive")
+            return redirect(url_for("mini_leagues", league_id=league_id))
+        except (ValueError, TypeError):
+            # Invalid league_id, re-render with error (or silently ignore)
+            return render_template("index.html",
+                                   max_users=MAX_USERS,
+                                   current_gw=current_gw,
+                                   error="Invalid League ID")
+
+    # Handle team_id form
     team_id = validate_team_id(request.form.get("team_id"), MAX_USERS)
     if team_id is None:
         return render_template("index.html",
                                max_users=MAX_USERS,
-                               current_gw=current_gw)
+                               current_gw=current_gw,
+                               error="Invalid Team ID")
+
     session['team_id'] = team_id
     return redirect(url_for("summary", team_id=team_id))
 
