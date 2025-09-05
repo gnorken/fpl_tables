@@ -23,8 +23,9 @@
         <!-- Manager info-->
         <!-- <th id="last_deadline_value" data-sort="last_deadline_value" class="sort text-start">Team Value</th> -->
         <th id="years_active" data-sort="years_active" class="sort text-start">Season</th>
-
+        
         <th id="player_name" data-sort="player_name" class="sort sticky-col text-start text-lg-center">Name</th>
+        <th id="captain_current_points" data-sort="captain_current_points" class="sort" colspan="2">GW{{ current_gw }} Captain</th>
 
         <!-- Rank -->
         <th id="rank" data-sort="rank" class="sort">Rank</th>
@@ -47,7 +48,6 @@
         <th id="transfer_cost" data-sort="transfer_cost" class="sort">Hits</th>
 
         <!-- Breakdown -->
-        <th id="captain_current_points" data-sort="captain_current_points" class="sort" colspan="2">GW{{ current_gw }} Captain</th>
         <th id="captain_points_team" data-sort="captain_points_team" class="sort">CP</th>
         <th id="goals_scored_team" data-sort="goals_scored_team" class="sort ">G</th>
         <th id="assists_team" data-sort="assists_team" class="sort ">A</th>
@@ -175,6 +175,27 @@
               </a>
             </td>
           `
+      },
+            {
+        key: "captain_current",
+        render: t =>
+          `
+          <td class="text-center pe-1 ps-3 vert-border-primary">
+            <img
+              src="https://resources.premierleague.com/premierleague/badges/100/t${t.captain_current_team_code}@x2.png"
+              alt="${t.captain_current_team} badge"
+              class="badge_mini_league"
+              data-bs-toggle="tooltip"  
+              title="${t.captain_current_team}"
+            >
+        </td>
+        <td>
+            <div class="pe-2">
+              <div class="fw-bold small">${t.captain_current_name}</div>
+              <div class="small">${t.captain_current_points} points</div>
+            </div>
+          </td>
+        `
       },
       {
         key: "rank",
@@ -314,30 +335,7 @@
         }
       },
       { key: "last_deadline_total_transfers", className: "vert-border-primary"},
-      { key: "transfer_cost", className: "text-danger" },
-
-
-      {
-        key: "captain_current",
-        render: t =>
-          `
-          <td class="text-center pe-1 ps-3 vert-border-primary">
-            <img
-              src="https://resources.premierleague.com/premierleague/badges/100/t${t.captain_current_team_code}@x2.png"
-              alt="${t.captain_current_team} badge"
-              class="badge_mini_league"
-              data-bs-toggle="tooltip"
-              title="${t.captain_current_team}"
-            >
-        </td>
-        <td>
-            <div class="pe-2">
-              <div class="fw-bold small">${t.captain_current_name}</div>
-              <div class="small">${t.captain_current_points} points</div>
-            </div>
-          </td>
-        `
-      },
+      { key: "transfer_cost", className: "text-danger" },,
       { key: "captain_points_team", className: "vert-border-primary" },
       { key: "goals_scored_team", className: "" },
       // { key: "expected_goals_team", formatter: v => v.toFixed(1) },

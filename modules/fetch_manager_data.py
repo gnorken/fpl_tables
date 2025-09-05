@@ -148,7 +148,7 @@ def get_manager_data(team_id):
     return manager
 
 
-DEFAULT_PHOTO = "Photo-Missing"
+DEFAULT_PHOTO = "placeholder"
 
 
 def _add_past_percentiles(history_data: dict) -> None:
@@ -354,8 +354,8 @@ def get_manager_history(team_id):
                                     "team_code")
                                 photo = player.get("photo", "")
                                 if photo:
-                                    if not photo.startswith("p"):
-                                        photo = "p" + photo
+                                    # if not photo.startswith("p"):
+                                    #     photo = "p" + photo
                                     chips_state[chip_key]["photo"] = photo.replace(
                                         ".jpg", "")
                                 else:
@@ -407,8 +407,8 @@ def get_manager_history(team_id):
                     if player.get("id") == element_id:
                         candidate = player.get("photo", "")
                         if candidate:
-                            if not candidate.startswith("p"):
-                                candidate = "p" + candidate
+                            # if not candidate.startswith("p"):
+                            #     candidate = "p" + candidate
                             photo = candidate.replace(".jpg", "")
                         web_name = player.get("web_name", "")
                         team_code = player.get("team_code", "")
