@@ -47,6 +47,7 @@
         <th id="transfer_cost" data-sort="transfer_cost" class="sort">Hits</th>
 
         <!-- Breakdown -->
+        <th id="captain_current_points" data-sort="captain_current_points" class="sort" colspan="2">GW{{ current_gw }} Captain</th>
         <th id="captain_points_team" data-sort="captain_points_team" class="sort">CP</th>
         <th id="goals_scored_team" data-sort="goals_scored_team" class="sort ">G</th>
         <th id="assists_team" data-sort="assists_team" class="sort ">A</th>
@@ -67,7 +68,7 @@
     </tbody>
     <tfoot class="th-bg-primary">
       <tr>
-        <th colspan="23" class="round-border-btm text-center"><div id="loading" style="display:none">Loading</div></th>
+        <th colspan="24" class="round-border-btm text-center"><div id="loading" style="display:none">Loading</div></th>
       </tr>
     </tfoot>
   </table>
@@ -107,7 +108,7 @@
     team_name: "Team name", years_active: "Nationality and years active as an FPL manager", player_name: "Manager name and team name", last_deadline_value: "Team value and money in the bank",
     total_points: "Total points", pts_behind_league_leader: "Trailing mini league leader by", pts_behind_overall: "Trailing overall leader by",
     minutes_team: "Total minutes played", last_deadline_total_transfers: "Total transfers made", transfer_cost: "Minus points for hits",
-    captain_points_team: "Additional points for captain", clean_sheets_team: "Clean sheets", goals_scored_team: "Goals scored", goals_benched_team: "Goals benched",
+    captain_points_team: "Captain ponts for the season", captain_current_points: "Total points for the captain this GW", clean_sheets_team: "Clean sheets", goals_scored_team: "Goals scored", goals_benched_team: "Goals benched",
     assists_team: "Assists", dc_team: "Defensive contributions",
     wildcard1_gw: "Wildcards", ['3xc_gw']: "Triple captains", bboost_gw: "Bench boosts", freehit_gw: "Free hits",
     expected_goals_team: "Expected Goals", bonus_team: "Bonus Points", 
@@ -316,6 +317,27 @@
       { key: "transfer_cost", className: "text-danger" },
 
 
+      {
+        key: "captain_current",
+        render: t =>
+          `
+          <td class="text-center pe-1 ps-3 vert-border-primary">
+            <img
+              src="https://resources.premierleague.com/premierleague/badges/100/t${t.captain_current_team_code}@x2.png"
+              alt="${t.captain_current_team} badge"
+              class="badge_mini_league"
+              data-bs-toggle="tooltip"
+              title="${t.captain_current_team}"
+            >
+        </td>
+        <td>
+            <div class="pe-2">
+              <div class="fw-bold small">${t.captain_current_name}</div>
+              <div class="small">${t.captain_current_points} points</div>
+            </div>
+          </td>
+        `
+      },
       { key: "captain_points_team", className: "vert-border-primary" },
       { key: "goals_scored_team", className: "" },
       // { key: "expected_goals_team", formatter: v => v.toFixed(1) },

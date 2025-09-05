@@ -270,23 +270,63 @@ async function fetchMiniLeague(sortBy, sortOrder) {
 }
 
 // ─────────────── 7) Generic data fetch ─────────────
+// ─────────────── 7) Generic data fetch ─────────────
 async function fetchData(sortBy, sortOrder, opts = {}) {
   const { snapPrice = true } = opts;
-  if (await fetchMiniLeague(sortBy, sortOrder)) return;
 
-  const sortEl = document.getElementById("current-sort");
-  const orderEl = document.getElementById("current-order");
+  // Use tableConfig.sortBy/Order, fall back to defaultSort/Order
+  sortBy =
+    sortBy ||
+    window.tableConfig.sortBy ||
+    window.tableConfig.defaultSort ||
+    "total_points";
+  sortOrder =
+    sortOrder ||
+    window.tableConfig.sortOrder ||
+    window.tableConfig.defaultOrder ||
+    "asc";
 
-  // Debugging: Log sortBy, sortOrder, and lookup availability
-  console.log("fetchData called with:", {
-    sortBy,
-    sortOrder,
-    lookup: window.tableConfig.lookup,
-  });
+  // Function to update sort display
+  const updateSortDisplay = () => {
+    const sortEl = document.getElementById("current-sort");
+    const orderEl = document.getElementById("current-order");
 
-  if (sortEl)
-    sortEl.textContent = window.tableConfig.lookup?.[sortBy] || sortBy;
-  if (orderEl) orderEl.textContent = sortOrder === "desc" ? "" : "(asc)";
+    console.log("fetchData called with:", {
+      sortBy,
+      sortOrder,
+      lookup: window.tableConfig.lookup,
+    });
+
+    if (sortEl) {
+      const displayName = window.tableConfig.lookup?.[sortBy] || sortBy;
+      sortEl.textContent = displayName;
+      console.log(
+        `Updating current-sort: sortBy=${sortBy}, displayName=${displayName}`
+      );
+    } else {
+      console.warn("Element with ID 'current-sort' not found in DOM");
+    }
+
+    if (orderEl) {
+      orderEl.textContent = sortOrder === "desc" ? "" : "(asc)";
+    } else {
+      console.warn("Element with ID 'current-order' not found in DOM");
+    }
+  };
+
+  updateSortDisplay(); // Try immediately
+
+  // Retry after 100ms and 500ms if DOM elements are missing
+  if (!document.getElementById("current-sort")) {
+    console.log("Retrying current-sort update after 100ms");
+    setTimeout(updateSortDisplay, 100);
+    setTimeout(updateSortDisplay, 500); // Additional retry for slower loads
+  }
+
+  // Handle mini_league table via fetchMiniLeague
+  if (await fetchMiniLeague(sortBy, sortOrder)) {
+    return; // Mini-league handled
+  }
 
   const cfg = window.tableConfig;
   const tbody = document.querySelector(cfg.tbodySelector);
@@ -295,7 +335,6 @@ async function fetchData(sortBy, sortOrder, opts = {}) {
   const params = { sort_by: sortBy, order: sortOrder };
 
   if (cfg.table !== "am") {
-    // Don't have table am anymore!
     const { minCost, maxCost } = getSelectedPriceRange();
     const selectedPositions = getSelectedPositions();
 
@@ -305,9 +344,7 @@ async function fetchData(sortBy, sortOrder, opts = {}) {
     params.min_cost = minCost;
     params.max_cost = maxCost;
 
-    // ← NEW: minutes filter
     const { minMin, maxMin } = getSelectedMinutesRange();
-    // console.log("🔍 Minutes slider values:", minMin, maxMin);
     params.min_minutes = minMin;
     params.max_minutes = maxMin;
   }
@@ -325,18 +362,16 @@ async function fetchData(sortBy, sortOrder, opts = {}) {
     );
   }
 
-  // Update #entries element to show "100+ entries" when truncated
-  const table = cfg.table; // e.g., "defence", "offence", "points", "talisman", "teams", "mini_league"
   document.getElementById("entries").textContent =
     players.length === 1
       ? "1 entry"
-      : ["teams", "talisman"].includes(table) || !is_truncated
+      : ["teams", "talisman"].includes(cfg.table) || !is_truncated
       ? `${players.length} entries`
       : players.length === 100
       ? "100+ entries"
       : `${players.length} entries`;
 
-  updateTopPlayersText(players.length, is_truncated, table);
+  updateTopPlayersText(players.length, is_truncated, cfg.table);
 
   tbody.innerHTML = "";
   players.forEach((p, idx) => {
@@ -373,8 +408,8 @@ async function fetchData(sortBy, sortOrder, opts = {}) {
     window.initTooltips();
   });
 
-  if (window.tableConfig.table === "teams") {
-    updateBadges({ players_images });
+  if (cfg.table === "teams") {
+    updateBadges({ players_images }); // teams table have just club badges
   } else {
     updatePlayerImages({ players_images });
   }
@@ -383,23 +418,6 @@ async function fetchData(sortBy, sortOrder, opts = {}) {
   if (loading) loading.style.display = "none";
   tbody.style.display = "";
 }
-
-// Updated updateTopPlayersText to handle "100+ top players"
-function updateTopPlayersText(count, isTruncated, table) {
-  const topPlayersElement = document.getElementById("top-players");
-  if (topPlayersElement) {
-    topPlayersElement.textContent =
-      count === 1
-        ? "1 top player"
-        : ["teams", "talisman"].includes(table) || !isTruncated
-        ? `${count} top players`
-        : count === 100
-        ? "100+ top players"
-        : `${count} top players`;
-  }
-}
-
-window.fetchData = fetchData;
 
 // Updated updateTopPlayersText to handle "100+ top players"
 function updateTopPlayersText(count, isTruncated, table) {

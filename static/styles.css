@@ -103,6 +103,12 @@ a:active {
   flex: 0 0 20px;
   object-fit: contain;
 }
+
+/* Badge in the mini league table */
+.badge_mini_league {
+  width: 2rem;
+}
+
  
 /* TABLE */
 /* table colours */
@@ -244,7 +250,7 @@ td {
 /* All child wrappers should be absolute */
 .player-image-container div {
   position: absolute;
-  /* top: 20px; */
+  top: 20px;
 }
 
 /* .player-image-container div:after {
