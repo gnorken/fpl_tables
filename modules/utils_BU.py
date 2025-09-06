@@ -1,12 +1,15 @@
+
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
-from flask import flash, request
+from flask import g, flash, request
 import json
 import logging
 import pycountry
 from markupsafe import Markup
 from modules.fetch_all_tables import build_player_info
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util import Retry
 import sqlite3
 
 logger = logging.getLogger(__name__)
@@ -25,13 +28,38 @@ _ES_CACHE = {
 LIVE_TTL_SECONDS = 30  # advance freshness at most every 30s while live
 STATIC_TTL_SECONDS = 60 * 60  # 1 hour is plenty (even 6–12h is fine)
 
+TIMEOUT_SHORT = (3, 6)   # connect, read
+TIMEOUT_MED = (3, 8)
+TIMEOUT_LONG = (3, 12)
 
-headers = {
-    # This header identifies the client making the request. By setting it to a typical browser string, you're making your server-side request appear as though it's coming from a regular browser. Some APIs might behave differently or restrict requests that don't look like they're coming from a browser.
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:40.0) Gecko/20100101 Firefox/40.0",
-    # This tells the server that the client can handle gzip-compressed responses. If the server supports gzip, it can send compressed data back, which often results in faster transfers and lower bandwidth usage.
-    "Accept-Encoding": "gzip"
-}
+
+SESSION = requests.Session()
+adapter = HTTPAdapter(
+    pool_connections=10,
+    pool_maxsize=20,
+    max_retries=Retry(total=3, backoff_factor=0.3,
+                      status_forcelist=[502, 503, 504]),
+)
+SESSION.mount("https://", adapter)
+SESSION.mount("http://", adapter)
+SESSION.headers.update({
+    "User-Agent": "Mozilla/5.0",
+    "Accept": "application/json",
+    "Accept-Encoding": "gzip",
+    "Connection": "keep-alive",
+})
+
+
+def get_json_cached(url, *, timeout=10):
+    if not hasattr(g, "http_cache"):
+        g.http_cache = {}
+    if url in g.http_cache:
+        return g.http_cache[url]
+    r = SESSION.get(url, timeout=timeout)
+    r.raise_for_status()
+    js = r.json()
+    g.http_cache[url] = js
+    return js
 
 
 def open_conn(path):
@@ -50,7 +78,7 @@ def validate_team_id(team_id, max_users):
         if 1 <= team_id <= max_users:
             # Test API to check if the game is being updated
             manager_url = f"{FPL_API_BASE}/entry/{team_id}/"
-            manager_response = requests.get(manager_url)
+            manager_response = SESSION.get(manager_url)
             logger.debug(
                 f"FPL API status code: {manager_response.status_code}")
             logger.debug(f"max_users: {max_users}")
@@ -75,13 +103,18 @@ def validate_team_id(team_id, max_users):
 
 # Helper to fetch `MAX_USERS`
 def get_max_users():
+    # 1) try DB cache
     try:
-        response = requests.get(FPL_STATIC_URL, headers=headers)
-        response.raise_for_status()
-        static_data = response.json()
-        return static_data["total_players"]
-    except requests.exceptions.RequestException:
-        return 10994911  # Fallback value
+        conn = open_conn(DATABASE)
+        row = conn.execute(
+            "SELECT data FROM static_data WHERE key='bootstrap'").fetchone()
+        if row:
+            return json.loads(row[0]).get("total_players") or 11_000_000
+    except Exception:
+        pass
+    # 2) fallback network (cached by get_json_cached per-request)
+    js = get_json_cached(FPL_STATIC_URL)
+    return js.get("total_players", 11_000_000)
 
 # Helper to fetch current gameweek
 
@@ -91,7 +124,7 @@ def get_event_status(force: bool = False):
     if (not force) and _ES_CACHE["at"] and (now - _ES_CACHE["at"]).total_seconds() < 30:
         return _ES_CACHE
 
-    r = requests.get(FPL_EVENT_STATUS_URL, headers=headers, timeout=10)
+    r = SESSION.get(FPL_EVENT_STATUS_URL, timeout=10)
     r.raise_for_status()
     js = r.json()
     statuses = js.get("status", [])
@@ -124,7 +157,7 @@ def get_event_status_last_update() -> datetime:
 def get_event_status_state(force: bool = False):
     gw = get_current_gw(force=force)
     last = get_event_status_last_update()
-    return {"gw": gw, "is_live": bool(_ES_CACHE.get("live")), "last_update": last}
+    return {"gw": gw, "is_live": bool(_ES_CACHE.get("is_live")), "last_update": last}
 
 
 # Check latest entry in database
@@ -196,7 +229,7 @@ def get_static_data(force_refresh: bool = False, current_gw: int = -1, event_upd
     if need_fetch_static:
         logger.debug(
             "⚠️ [get_static_data] bootstrap-static TTL expired (or no row) → fetching")
-        resp = requests.get(FPL_STATIC_URL, headers=headers, timeout=15)
+        resp = SESSION.get(FPL_STATIC_URL, timeout=TIMEOUT_MED)
         resp.raise_for_status()
         static_data = resp.json()
         cur.execute(
@@ -281,8 +314,8 @@ def prune_stale_data(conn, event_updated):
 
 
 def get_player_detail_data():
-    response = requests.get(
-        f"https://fantasy.premierleague.com/api/element-summary/", headers=headers)
+    response = SESSION.get(
+        "https://fantasy.premierleague.com/api/element-summary/", timeout=10)
     response.raise_for_status()
     player_detail_data = response.json()
     return player_detail_data
@@ -442,7 +475,7 @@ def get_overall_league_leader_total():
     Returns None if there’s no data or no rank==1 entry.
     """
     url = f"{FPL_API_BASE}/leagues-classic/314/standings/"
-    resp = requests.get(url, headers=headers)
+    resp = SESSION.get(url, timeout=10)
     resp.raise_for_status()
     data = resp.json()
 
@@ -457,41 +490,6 @@ def get_overall_league_leader_total():
         leader = results[0]
 
     return leader.get("total")
-
-# emojis for manager history performance
-
-
-def performance_emoji(percentile):
-    if percentile is None:
-        return "–"
-    if percentile > 70:
-        return "💩"
-    elif percentile > 60:
-        return "😭"
-    elif percentile > 50:
-        return "😢"
-    elif percentile > 40:
-        return "☹️"
-    elif percentile > 30:
-        return "🙁"
-    elif percentile > 20:
-        return "😐"
-    elif percentile > 15:
-        return "😌"
-    elif percentile > 10:
-        return "🙂"
-    elif percentile > 5:
-        return "😁"
-    elif percentile > 1:
-        return "😎"
-    elif percentile == 1:
-        return "🥰"
-    elif percentile > 0.5:
-        return "😍"
-    elif percentile > 0.1:
-        return "🤩"
-    else:
-        return "🤯"
 
 
 EXPLAIN_TO_FIELD = {
@@ -533,7 +531,7 @@ def fill_global_points_from_explain(
     cur=None,
     db_path: str | None = None,
     max_workers: int = 8,
-    request_timeout: int = 10,
+    request_timeout: int = 6,
 ) -> None:
     """
     Populate per-player cumulative points by aggregating the 'explain' blocks
@@ -550,20 +548,12 @@ def fill_global_points_from_explain(
 
     # Decide DB handling mode
     close_after = False
+
+    # new fallback
     if conn is None or cur is None:
         if not db_path:
-            raise ValueError("db_path required if conn/cur not provided")
-        # Use your shared open_conn helper if you created one; fall back to plain connect otherwise
-        try:
-            from modules.db import open_conn  # your helper with WAL/busy_timeout
-            conn = open_conn(db_path)
-        except Exception:
-            conn = sqlite3.connect(db_path, timeout=30,
-                                   check_same_thread=False)
-            # Make life easier even without helper
-            conn.execute("PRAGMA journal_mode=WAL;")
-            conn.execute("PRAGMA synchronous=NORMAL;")
-            conn.execute("PRAGMA busy_timeout=10000;")
+            db_path = DATABASE  # or raise, your call
+        conn = open_conn(db_path)  # this applies all PRAGMAs
         cur = conn.cursor()
         close_after = True
 
@@ -599,7 +589,7 @@ def fill_global_points_from_explain(
         "[global_points] cache miss → fetching explain for all GWs (1..%d)", current_gw)
 
     # Build requests session
-    session = requests.Session()
+    session = SESSION
     session.headers.update({
         "User-Agent": "Mozilla/5.0",
         "Accept": "application/json",
@@ -620,8 +610,9 @@ def fill_global_points_from_explain(
 
     # Fetch concurrently with a sensible cap
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
-        futs = {ex.submit(session.get, url, timeout=request_timeout)
-                          : gw for gw, url in urls.items()}
+        # when submitting futures
+        futs = {ex.submit(session.get, url, timeout=TIMEOUT_SHORT)                : gw for gw, url in urls.items()}
+
         for fut in as_completed(futs):
             gw = futs[fut]
             try:

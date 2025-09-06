@@ -2,7 +2,7 @@
 import logging
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from flask import url_for  # Add this import
+from flask import url_for
 
 logger = logging.getLogger(__name__)
 
@@ -11,14 +11,38 @@ SESSION = requests.Session()
 SESSION.headers.update({"User-Agent": "Mozilla/5.0"})
 
 SPECIAL_FLAGS = {
-    "en": "gb-eng",         # England
-    "s1": "gb-sct",         # Scotland
-    "wa": "gb-wls",         # Wales
-    "nn": "gb-nir",         # Northern Ireland
+    "en": "gb-eng",  # England
+    "s1": "gb-sct",  # Scotland
+    "wa": "gb-wls",  # Wales
+    "nn": "gb-nir",  # Northern Ireland
+}
+
+# Add at the top of fetch_mini_league.py
+TEAM_CODE_TO_NAME = {
+    3: "Arsenal",
+    7: "Aston Villa",
+    90: "Burnley",
+    91: "Bournemouth",
+    94: "Brentford",
+    36: "Brighton",
+    7: "Chelsea",
+    31: "Crystal Palace",
+    11: "Everton",
+    54: "Fulham",
+    2: "Leeds",
+    14: "Liverpool",
+    43: "Manchester City",
+    1: "Manchester United",
+    4: "Newcastle",
+    17: "Nottingham Forest",
+    56: "Sunderland",
+    6: "Tottenham",
+    21: "West Ham",
+    39: "Wolves"
 }
 
 
-def get_entry_history(entry_id: int) -> list[dict]:
+def get_entry_history(entry_id: int) -> dict:
     url = f"{FPL_API}/entry/{entry_id}/history/"
     resp = SESSION.get(url)
     if not resp.ok:
@@ -40,6 +64,47 @@ def get_entry_history(entry_id: int) -> list[dict]:
     }
 
 
+def get_current_gameweek():
+    url = f"{FPL_API}/bootstrap-static/"
+    resp = SESSION.get(url)
+    if not resp.ok:
+        logger.error("Failed to fetch bootstrap-static for current gameweek")
+        return None
+    data = resp.json()
+    for event in data.get("events", []):
+        if event.get("is_current"):
+            return event.get("id")
+    return None
+
+
+def get_player_data():
+    url = f"{FPL_API}/bootstrap-static/"
+    resp = SESSION.get(url)
+    if not resp.ok:
+        logger.error("Failed to fetch bootstrap-static for player data")
+        return {}
+    return {p["id"]: p for p in resp.json().get("elements", [])}
+
+
+def get_live_points(event_id: int):
+    url = f"{FPL_API}/event/{event_id}/live/"
+    resp = SESSION.get(url)
+    if not resp.ok:
+        logger.error("Failed to fetch live points for event %s", event_id)
+        return {}
+    return {p["id"]: p["stats"] for p in resp.json().get("elements", [])}
+
+
+def get_picks(entry_id: int, event_id: int):
+    url = f"{FPL_API}/entry/{entry_id}/event/{event_id}/picks/"
+    resp = SESSION.get(url)
+    if not resp.ok:
+        logger.warning(
+            "Failed to fetch picks for entry %s, event %s", entry_id, event_id)
+        return []
+    return resp.json().get("picks", [])
+
+
 def build_manager(me: dict, league_entry: dict | None = None) -> dict:
     raw = me.get("player_region_iso_code_short", "").strip().lower()
     country_code = SPECIAL_FLAGS.get(raw, raw)
@@ -57,6 +122,7 @@ def build_manager(me: dict, league_entry: dict | None = None) -> dict:
         "player_name": f"{me.get('player_first_name', '')} {me.get('player_last_name', '')}".strip(),
         "total_points": me.get("summary_overall_points", 0),
         "years_active": me.get("years_active") + 1 or 0,
+        "years_active_label": me.get("years_active") + 1 or 0,
     }
 
     if league_entry:
@@ -65,15 +131,57 @@ def build_manager(me: dict, league_entry: dict | None = None) -> dict:
             "last_rank": league_entry.get("entry_last_rank", league_entry.get("last_rank", 0)),
         })
 
-    # Build national league URL
-    country_name = me.get("player_region_name", "")
-    for league in me.get("leagues", {}).get("classic", []):
-        if league.get("name", "").lower() == country_name.lower():
-            base["national_league_url"] = url_for(
-                'mini_leagues', league_id=league['id'])
-            break
-    else:
-        base["national_league_url"] = None
+    # National league URL
+    country_name = me.get("player_region_name", "").strip().lower()
+    classic_leagues = me.get("leagues", {}).get("classic", [])
+    base["national_league_url"] = None
+    if country_name and classic_leagues:
+        for league in classic_leagues:
+            league_name = league.get("name", "").strip().lower()
+            if league_name == country_name:
+                try:
+                    base["national_league_url"] = url_for(
+                        'mini_leagues', league_id=league['id'])
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to generate URL for league {league.get('id')}: {e}")
+                    base["national_league_url"] = None
+
+    # Fetch current gameweek and captain data
+    current_gw = get_current_gameweek()
+    player_data = get_player_data()
+    live_points = get_live_points(current_gw) if current_gw else {}
+    picks = get_picks(base["entry"], current_gw) if current_gw else []
+
+    # Initialize captain fields
+    base["captain_current_name"] = "N/A"
+    base["captain_current_team"] = "N/A"
+    base["captain_current_team_code"] = 0
+    base["captain_current_points"] = 0
+
+    if picks and current_gw:
+        # Check for Triple Captain chip
+        history = get_entry_history(base["entry"])
+        chips = history.get("chips", [])
+        is_triple_captain = any(
+            chip["name"] == "3xc" and chip["event"] == current_gw for chip in chips)
+        multiplier = 3 if is_triple_captain else 2
+
+        for pick in picks:
+            if pick.get("is_captain"):
+                element_id = pick.get("element")
+                player = player_data.get(element_id, {})
+                points_data = live_points.get(element_id, {})
+                base["captain_current_name"] = f"{player.get('web_name', '')}".strip(
+                ) or "N/A"
+
+                # In build_manager, replace player_data.get("teams", ...) with:
+                base["captain_current_team"] = TEAM_CODE_TO_NAME.get(
+                    player.get("team_code", 0), "N/A")
+                base["captain_current_team_code"] = player.get("team_code", 0)
+                base["captain_current_points"] = points_data.get(
+                    "total_points", 0) * multiplier
+                break
 
     history = get_entry_history(base["entry"])
     base["chips"] = history["chips"]

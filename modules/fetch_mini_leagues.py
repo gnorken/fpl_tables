@@ -249,7 +249,7 @@ def append_current_manager(managers: list[dict], team_id: int, league_id: int, l
                 break
 
 
-def get_team_mini_league_summary(team_id: int, static_data: dict) -> dict:
+def get_team_mini_league_summary(team_id: int, static_data: dict, live_data_map: dict) -> dict:
     SESSION = requests.Session()
     SESSION.headers.update({"User-Agent": "Mozilla/5.0"})
 
@@ -260,7 +260,9 @@ def get_team_mini_league_summary(team_id: int, static_data: dict) -> dict:
 
     if current_gw is None:
         logger.warning("No current gameweek found in the data.")
+        return {}
 
+    # Fetch all picks for this manager (still per manager)
     pick_urls = {
         gw: f"{FPL_API}/entry/{team_id}/event/{gw}/picks/"
         for gw in range(1, current_gw + 1)
@@ -294,49 +296,35 @@ def get_team_mini_league_summary(team_id: int, static_data: dict) -> dict:
         "total_points_team": 0,
     }
 
-    live_urls = {
-        gw: f"{FPL_API}/event/{gw}/live/" for gw in picks_map if picks_map[gw]}
-    with ThreadPoolExecutor(max_workers=8) as ex:
-        future_to_gw = {ex.submit(SESSION.get, url)
-                                  : gw for gw, url in live_urls.items()}
-        for fut in as_completed(future_to_gw):
-            gw = future_to_gw[fut]
-            try:
-                elements = fut.result().json().get("elements", [])
-            except Exception:
+    # Use pre-fetched live_data_map instead of fetching again
+    for gw, multipliers in picks_map.items():
+        elements = live_data_map.get(gw, [])
+        for el in elements:
+            pid = el.get("id")
+            mult = multipliers.get(pid)
+            if mult is None:
+                continue
+            stats = el.get("stats", {})
+
+            if mult == 0:
+                summary["goals_benched_team"] += stats.get("goals_scored", 0)
                 continue
 
-            multipliers = picks_map.get(gw, {})
-            for el in elements:
-                pid = el.get("id")
-                mult = multipliers.get(pid)
-                if mult is None:
-                    continue
-                stats = el.get("stats", {})
+            base_points = stats.get("total_points", 0)
+            if mult == 2:
+                summary["captain_points_team"] += base_points
+            elif mult == 3:
+                summary["captain_points_team"] += base_points * 2
 
-                if mult == 0:
-                    summary["goals_benched_team"] += stats.get(
-                        "goals_scored", 0)
-                    continue
-
-                base_points = stats.get("total_points", 0)
-                if mult == 2:
-                    summary["captain_points_team"] += base_points
-                elif mult == 3:
-                    summary["captain_points_team"] += base_points * 2
-
-                summary["goals_scored_team"] += stats.get(
-                    "goals_scored", 0) * mult
-                summary["assists_team"] += stats.get("assists", 0) * mult
-                summary["clean_sheets_team"] += stats.get(
-                    "clean_sheets", 0) * mult
-                summary["bps_team"] += stats.get("bps", 0) * mult
-                summary["yellow_cards_team"] += stats.get(
-                    "yellow_cards", 0) * mult
-                summary["red_cards_team"] += stats.get("red_cards", 0) * mult
-                summary["minutes_team"] += stats.get("minutes", 0) * mult
-                if stats.get("in_dreamteam", False):
-                    summary["dreamteam_count_team"] += mult
-                summary["total_points_team"] += base_points * mult
+            summary["goals_scored_team"] += stats.get("goals_scored", 0) * mult
+            summary["assists_team"] += stats.get("assists", 0) * mult
+            summary["clean_sheets_team"] += stats.get("clean_sheets", 0) * mult
+            summary["bps_team"] += stats.get("bps", 0) * mult
+            summary["yellow_cards_team"] += stats.get("yellow_cards", 0) * mult
+            summary["red_cards_team"] += stats.get("red_cards", 0) * mult
+            summary["minutes_team"] += stats.get("minutes", 0) * mult
+            if stats.get("in_dreamteam", False):
+                summary["dreamteam_count_team"] += mult
+            summary["total_points_team"] += base_points * mult
 
     return summary
