@@ -10,7 +10,7 @@
                     <th id="top-players" class="sticky-col align-middle round-border-top-left">↑ Top Five
                     </th>
                     <th colspan="2" class="round-border-top-right"></th>
-                    <th colspan="18" class="bg-team round-border-top ps-3 text-start text-md-center"
+                    <th colspan="19" class="bg-team round-border-top ps-3 text-start text-md-center"
                         title="Players that are or have been in {{ manager.team_name }} this season">
                         Stats for {{ manager.team_name }}
                     </th>
@@ -25,8 +25,9 @@
                     <th data-sort="total_points_team" class="sort-team bg-team">P</th>
                     <th data-sort="starts_team" class="sort-team bg-team">S</th>
                     <th data-sort="minutes_team" class="sort-team bg-team">M</th>
+                    <th data-sort="defensive_contribution_count_team" class="sort-team bg-team">DC</th>
                     <th data-sort="defensive_contribution_points_team" class="sort-team bg-team">DC P</th>
-                    <th data-sort="defensive_contribution_team" class="sort-team bg-team">DC</th>
+                    <th data-sort="defensive_contribution_team" class="sort-team bg-team">DC Tot</th>
                     <th data-sort="defensive_contribution_per_90_team" class="sort-team bg-team">DC90</th>
                     <th data-sort="cbi_team" class="sort-team bg-team">CBI</th>
                     <th data-sort="tackles_team" class="sort-team bg-team">T</th>
@@ -48,8 +49,9 @@
                     <th data-sort="total_points" class="sort">P</th>
                     <th data-sort="starts" class="sort">S</th>
                     <th data-sort="minutes" class="sort">M</th>
+                    <th data-sort="defensive_contribution_count" class="sort">DC</th>
                     <th data-sort="defensive_contribution_points" class="sort">DC P</th>
-                    <th data-sort="defensive_contribution" class="sort">DC</th>
+                    <th data-sort="defensive_contribution" class="sort">D Tot</th>
                     <th data-sort="defensive_contribution_per_90" class="sort">DC90</th>
                     <th data-sort="cbi" class="sort">CBI</th>
                     <th data-sort="tackles" class="sort">T</th>
@@ -75,7 +77,7 @@
                 <tr class="th-bg-primary text-center">
                     <th class="sticky-col round-border-btm-left"></th>
                     <th colspan="2" class="th-bg-primary round-border-btm-right">
-                    <th colspan="18" class="bg-team round-border-btm">
+                    <th colspan="19" class="bg-team round-border-btm">
                         <div id="loading" style="display:none;">Loading…</div>
                     </th>
                     <th colspan="23" class="round-border-btm"></th>
@@ -98,6 +100,7 @@
         "total_points_team": `Points for ${managerName}`,
         "starts_team": `Starts for ${managerName}`,
         "minutes_team": `Minutes played for ${managerName}`,
+        "defensive_contribution_count_team": `Times achieved defensive contributions bonus for ${managerName}`,
         "defensive_contribution_points_team": `Defensive contributions points for ${managerName}`,
         "defensive_contribution_team": `Defensive contributions for ${managerName}`,
         "defensive_contribution_per_90_team": `Defensive contributions per 90 for ${managerName}`,
@@ -122,6 +125,7 @@
         "total_points": "Total points",
         "starts": "Total starts",
         "minutes": "Total minutes",
+        "defensive_contribution_count": "Times achieved bonus for defensive contributions",
         "defensive_contribution_points": "Total points for defensive contributions",
         "defensive_contribution": "Total defensive contributions",
         "defensive_contribution_per_90": "Defensive contributions per 90",
@@ -197,6 +201,7 @@
             { key: "total_points_team", className: "sort-team vert-border vert-border-end", sortLevel: "primary", dataColumn: "total_points", formatter: v => `${parseFloat(v)}p`  },
             { key: "starts_team", className: "sort-team", sortLevel: "primary", dataColumn: "starts" },
             { key: "minutes_team", className: "sort-team vert-border-end", sortLevel: "primary", dataColumn: "minutes" },
+            { key: "defensive_contribution_count_team", className: "sort-team", sortLevel: "primary", dataColumn: "defcon_count" },
             { key: "defensive_contribution_points_team", className: "sort-team", sortLevel: "primary", dataColumn: "defcon_points" },
             { key: "defensive_contribution_team", className: "sort-team", sortLevel: "primary", dataColumn: "defcon" },
             { key: "defensive_contribution_per_90_team", className: "sort-team", sortLevel: "primary", dataColumn: "defcon_90", formatter: v => (v).toFixed(1) },
@@ -219,6 +224,7 @@
             { key: "total_points", className: "sort vert-border", sortLevel: "secondary", dataColumn: "total_points", formatter: v => `${parseFloat(v)}p` },
             { key: "starts", className: "sort", sortLevel: "secondary", dataColumn: "starts" },
             { key: "minutes", className: "sort vert-border-end", sortLevel: "secondary", dataColumn: "minutes" },
+            { key: "defensive_contribution_count", className: "sort", sortLevel: "secondary", dataColumn: "defcon_count" },
             { key: "defensive_contribution_points", className: "sort", sortLevel: "secondary", dataColumn: "defcon_points" },
             { key: "defensive_contribution", className: "sort", sortLevel: "secondary", dataColumn: "defcon" },
             { key: "defensive_contribution_per_90", className: "sort", sortLevel: "secondary", dataColumn: "defcon_90" },

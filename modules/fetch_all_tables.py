@@ -33,6 +33,7 @@ def build_player_info(static_data):
             "selected_by_percent": p["selected_by_percent"],
 
             # Season stats (so far)
+            "appearances": 0,  # not implemented yet
             "assists": p["assists"],
             "assists_performance": round(p["assists"] - float(p.get("expected_assists", 0)), 2),
             "bps": p["bps"],
@@ -119,7 +120,6 @@ def build_player_info(static_data):
             "goals_captained_team": 0,
             "goals_conceded_points_team": 0,
             "goals_assists_team": 0,
-            "goals_points_team": 0,
             "goals_conceded_team": 0,
             "goals_assists_performance_team": 0,
             "minutes_team": 0,
@@ -154,14 +154,30 @@ def add_explain_points(pi: dict, explain_blocks, suffix: str = "", mult: int = 1
             ident = s.get("identifier")
             pts = s.get("points", 0)
             key = f"{ident}_points{suffix}"
-            if key in pi:
-                before = pi[key]
-                pi[key] += pts * mult
-                after = pi[key]
-                # logging.debug(
-                #     f"[GW {gw}] PID {pid} {tag} fixture={fixture_id} "
-                #     f"ident={ident} pts={pts} mult={mult} key={key} {before}→{after}"
-                # )
+
+            # Special debug for goals_scored
+            if ident == "goals_scored":
+                logger.debug(
+                    f"[GW {gw}] PID {pid} fixture={fixture_id} {tag} → "
+                    f"trying to update {key} by {pts} (mult={mult}), "
+                    f"before={pi.get(key)}"
+                )
+
+            if key not in pi:
+                logger.warning(
+                    f"[GW {gw}] PID {pid} fixture={fixture_id} {tag} → "
+                    f"missing key={key}, skipping"
+                )
+                continue
+
+            before = pi[key]
+            pi[key] = before + pts * mult
+            after = pi[key]
+
+            logger.debug(
+                f"[GW {gw}] PID {pid} fixture={fixture_id} {tag} → "
+                f"{key}: {before} + {pts}*{mult} = {after}"
+            )
 
 
 def populate_player_info_all_with_live_data(team_id, player_info, static_data):
@@ -217,10 +233,11 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
     # 4) IMPORTANT: reset GLOBAL *_points (we're about to re-sum all GWs)
     GLOBAL_POINTS_KEYS = (
         "minutes_points", "defensive_contribution_points", "clean_sheets_points",
-        "assists_points", "goals_points", "save_points", "own_goals_points",
+        "assists_points", "goals_scored_points", "saves_points", "own_goals_points",
         "goals_conceded_points", "penalties_saved_points", "penalties_missed_points",
-        "yellow_cards_points", "red_cards_points"
+        "yellow_cards_points", "red_cards_points",
     )
+
     for pi in player_info.values():
         for k in GLOBAL_POINTS_KEYS:
             if k in pi:
@@ -293,6 +310,7 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
                 ti['assists_benched_team'] += stats.get('assists', 0)
                 ti['starts_benched_team'] += stats.get('starts', 0)
                 ti['minutes_benched_team'] += stats.get('minutes', 0)
+                ti['benched_points_team'] += stats.get('total_points', 0)
 
             # starter / (triple) captain
             if mult > 0:
@@ -304,6 +322,7 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
                 bps = stats.get('bps', 0)
                 cs = stats.get('clean_sheets', 0)
                 cbi = stats.get('clearances_blocks_interceptions', 0)
+                # total defcons, underlying
                 dc = stats.get('defensive_contribution', 0)
                 goals = stats.get('goals_scored', 0)
                 gc = stats.get('goals_conceded', 0)
@@ -358,6 +377,7 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
                         (mult - 1)  # 1x for captain, 2x for triple captain
 
                 # Team points via explain (with multiplier)
+                mult = 1 if mult > 0 else 0  # No captain multiplier
                 add_explain_points(ti, explain, suffix="_team",
                                    mult=mult, pid=pid, gw=gw, tag="TEAM")
 
@@ -375,10 +395,6 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
         apps = ti.get("appearances_team", 0)
         ti["points_per_game_team"] = round(
             ti["total_points_team"] / apps, 2) if apps else 0
-
-        # ✅ derive the count from points (with multipliers, as you wanted)
-        pts_team = int(ti.get("defensive_contribution_points_team", 0) or 0)
-        ti["defensive_contribution_count_team"] = pts_team // 2
 
         # Calculate per 90s
         mins_total = ti.get("minutes_team", 0)

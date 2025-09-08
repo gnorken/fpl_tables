@@ -11,7 +11,6 @@ from modules.utils import (
     thousands,
     millions,
     territory_icon,
-    get_overall_league_leader_total,
     get_event_status_state
 )
 from modules.aggregate_data import merge_team_and_global, filter_and_sort_players, sort_table_data
@@ -20,6 +19,7 @@ from modules.fetch_mini_leagues import (
     get_team_ids_from_league,
     get_team_mini_league_summary,
     append_current_manager,
+    enrich_points_behind,
 )
 from modules.fetch_teams_table import aggregate_team_stats
 from modules.fetch_all_tables import (
@@ -453,13 +453,10 @@ def get_sorted_players():
     if table != "mini_league" and team_id is None:
         return jsonify({"error": "Missing team_id"}), 400
 
-    # 3) MINI-LEAGUE branch (runs before static_player_info)
     if table == "mini_league":
-        app.logger.debug(
-            "[mini_league] entered branch league_id=%s, team_id=%s, max_show=%s",
-            league_id, team_id, max_show
+        logger.debug(
+            f"[mini_league] entered branch league_id={league_id}, team_id={team_id}, max_show={max_show}"
         )
-
         conn = sqlite3.connect(DATABASE, check_same_thread=False)
         cur = conn.cursor()
 
@@ -474,29 +471,28 @@ def get_sorted_players():
         if not current_gw:
             return jsonify({"error": "No current gameweek"}), 500
 
-        # Check cache first
+        # ── Cache check ────────────────────────────────
         cur.execute(
             """
             SELECT data, last_fetched
             FROM mini_league_cache
-            WHERE league_id = ? AND gameweek = ? AND team_id = ? AND max_show = ?
+            WHERE league_id = ? AND gameweek = ? AND team_id = 0 AND max_show = ?
             """,
-            (league_id, current_gw, team_id, max_show),
+            (league_id, current_gw, max_show),
         )
         row = cur.fetchone()
 
         if row:
-            app.logger.debug(
-                "[mini_league] cache hit league=%s gw=%s", league_id, current_gw)
-            players = json.loads(row[0])
+            logger.debug(
+                f"[mini_league] cache hit league={league_id} gw={current_gw}")
+            rows = json.loads(row[0])
         else:
-            app.logger.debug(
-                "[mini_league] cache miss league=%s gw=%s", league_id, current_gw)
+            logger.debug(
+                f"[mini_league] cache miss league={league_id} gw={current_gw}")
 
             # Fetch managers from API
             managers = get_team_ids_from_league(league_id, max_show)
-            append_current_manager(
-                managers, team_id, league_id, logger=app.logger)
+            append_current_manager(managers, team_id, league_id, logger=logger)
 
             # 🔄 Prefetch live data ONCE per GW
             live_data_map = {}
@@ -508,34 +504,35 @@ def get_sorted_players():
                     live_data_map[gw] = resp.json().get("elements", [])
                 except Exception as e:
                     app.logger.warning(
-                        "Failed to fetch live data for gw=%s: %s", gw, e)
+                        f"Failed to fetch live data for gw={gw}: {e}")
                     live_data_map[gw] = []
 
-            # Build manager summaries
-            players = []
+            # Build rows (manager info + summary)
+            rows = []
             for m in managers:
                 try:
                     summary = get_team_mini_league_summary(
                         m["entry"], static_data, live_data_map)
-                    summary.update({"team_id": m["entry"], **m})
-                    players.append(summary)
+                    row_data = {**m, **summary, "team_id": m["entry"]}
+                    rows.append(row_data)
                 except Exception as e:
-                    app.logger.warning(
-                        "Failed to build summary for %s: %s", m.get("entry"), e)
+                    logger.warning(
+                        f"Failed to build summary for {m.get('entry')}: {e}")
 
-            # Save to cache
+            rows = enrich_points_behind(rows)
+
+            # Store full list as JSON blob
             cur.execute(
                 """
                 INSERT OR REPLACE INTO mini_league_cache
                 (league_id, gameweek, team_id, max_show, data, last_fetched)
-                VALUES (?,?,?,?,?,?)
+                VALUES (?, ?, 0, ?, ?, ?)
                 """,
                 (
                     league_id,
                     current_gw,
-                    team_id,
                     max_show,
-                    json.dumps(players),
+                    json.dumps(rows),
                     datetime.now(timezone.utc).isoformat(),
                 ),
             )
@@ -543,13 +540,13 @@ def get_sorted_players():
 
         conn.close()
 
-        # Sort the managers in-memory
-        players.sort(
+        # ── Sort ───────────
+        rows.sort(
             key=lambda m: m.get(sort_by) or 0,
             reverse=(order == "desc"),
         )
 
-        return jsonify(players=players, manager=g.manager)
+        return jsonify(players=rows, manager=g.manager)
 
     # 3) FAST PATH: use cached static_player_info for current GW (refresh only if stale)
     conn = sqlite3.connect(DATABASE, check_same_thread=False)

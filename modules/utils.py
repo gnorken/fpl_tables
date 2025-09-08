@@ -467,34 +467,10 @@ def territory_icon(key: str) -> Markup:
 # Get OR leader (to have the trailing behind leader col)
 
 
-def get_overall_league_leader_total():
-    """
-    Fetch the classic‐league standings for `league_id` and return
-    the `total` points held by the manager in 1st place.
-
-    Returns None if there’s no data or no rank==1 entry.
-    """
-    url = f"{FPL_API_BASE}/leagues-classic/314/standings/"
-    resp = SESSION.get(url, timeout=10)
-    resp.raise_for_status()
-    data = resp.json()
-
-    results = data.get("standings", {}).get("results", [])
-    if not results:
-        return None
-
-    # Try to find the entry whose 'rank' is 1
-    leader = next((r for r in results if r.get("rank") == 1), None)
-    if leader is None:
-        # Fallback to the first element in case the API guarantees sorted order
-        leader = results[0]
-
-    return leader.get("total")
-
-
+# Lookup table for matching *_points keys
 EXPLAIN_TO_FIELD = {
     "minutes": "minutes_points",
-    "goals_scored": "goals_points",
+    "goals_scored": "goals_scored_points",
     "assists": "assists_points",
     "clean_sheets": "clean_sheets_points",
     "saves": "save_points",
@@ -611,7 +587,7 @@ def fill_global_points_from_explain(
     # Fetch concurrently with a sensible cap
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
         # when submitting futures
-        futs = {ex.submit(session.get, url, timeout=TIMEOUT_SHORT): gw for gw, url in urls.items()}
+        futs = {ex.submit(session.get, url, timeout=TIMEOUT_SHORT)                : gw for gw, url in urls.items()}
 
         for fut in as_completed(futs):
             gw = futs[fut]

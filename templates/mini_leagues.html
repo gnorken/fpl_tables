@@ -22,7 +22,7 @@
       <tr class="text-center th-padding">
         <!-- Manager info-->
         <!-- <th id="last_deadline_value" data-sort="last_deadline_value" class="sort text-start">Team Value</th> -->
-        <th id="years_active" data-sort="years_active" class="sort text-start">Season</th>
+        <th id="years_active" data-sort="years_active" class="sort text-start round-border-top-left">Season</th>
         
         <th id="player_name" data-sort="player_name" class="sort sticky-col text-start text-lg-center">Name</th>
         <th id="captain_current_points" data-sort="captain_current_points" class="sort" colspan="2">GW{{ current_gw }} Captain</th>
@@ -52,14 +52,14 @@
         <th id="goals_scored_team" data-sort="goals_scored_team" class="sort ">G</th>
         <th id="assists_team" data-sort="assists_team" class="sort ">A</th>
         <th id="minutes_team" data-sort="minutes_team" class="sort ">Mi</th>
-        <th id="dc-team" data-sort="dc_team" class="sort ">DC</th>
+        <th id="defensive_contribution_team" data-sort="defensive_contribution_team" class="sort ">DC</th>
         <th id="clean_sheets_team" data-sort="clean_sheets_team" class="sort">CS</th>
         <th id="bonus_team" data-sort="bonus_team" class="sort">B</th>
-        <!-- <th id="dreamteam_count_team" data-sort="dreamteam_count_team" class="sort">DT</th> -->
+        <th id="dreamteam_count_team" data-sort="dreamteam_count_team" class="sort">DT</th>
 
         <!-- Negatives -->
         <th id="yellow_cards_team" data-sort="yellow_cards_team" class="sort ">Y</th>
-        <th id="red_cards_team" data-sort="red_cards_team" class="sort">R</th>
+        <th id="red_cards_team" data-sort="red_cards_team" class="sort round-border-top-right">R</th>
         <!-- <th id="own_goals_team" data-sort="own_goals_team" class="sort">OGs</th>
         <th id="penalties_missed_team" data-sort="penalties_missed_team" class="sort">PM</th> -->
       </tr>
@@ -68,7 +68,7 @@
     </tbody>
     <tfoot class="th-bg-primary">
       <tr>
-        <th colspan="24" class="round-border-btm text-center"><div id="loading" style="display:none">Loading</div></th>
+        <th colspan="25" class="round-border-btm text-center"><div id="loading" style="display:none">Loading</div></th>
       </tr>
     </tfoot>
   </table>
@@ -85,6 +85,14 @@
 </div>
 
 <script>
+  // ─── Helpers ──────────────────────────────
+    function formatRank(v) {
+      if (v == null) return "";
+      if (v >= 1_000_000) return (v / 1_000_000).toFixed(1) + "M";
+      if (v >= 1_000) return (v / 1_000).toFixed(1) + "K";
+      return v.toLocaleString("de-CH"); // same style as your other ranks
+    }
+
   // ─── Mini‐League Page Config ───────────────────────────────
   window.tableConfig = {
     // base endpoint — script.js will append sort_by, order, max_show for us
@@ -107,7 +115,7 @@
     rank: "Minileague rank", overall_rank: "Overall rank", player_name: "Manager", 
     team_name: "Team name", years_active: "Nationality and years active as an FPL manager", player_name: "Manager name and team name", last_deadline_value: "Team value and money in the bank",
     total_points: "Total points", pts_behind_league_leader: "Trailing mini league leader by", pts_behind_overall: "Trailing overall leader by",
-    minutes_team: "Total minutes played", last_deadline_total_transfers: "Total transfers made", transfer_cost: "Minus points for hits",
+    minutes_team: "Total minutes played", defensive_contribution_team: "Points for defensive contribution", last_deadline_total_transfers: "Total transfers made", transfer_cost: "Minus points for hits",
     captain_points_team: "Captain ponts for the season", captain_current_points: "Total points for the captain this GW", clean_sheets_team: "Clean sheets", goals_scored_team: "Goals scored", goals_benched_team: "Goals benched",
     assists_team: "Assists", dc_team: "Defensive contributions",
     wildcard1_gw: "Wildcards", ['3xc_gw']: "Triple captains", bboost_gw: "Bench boosts", freehit_gw: "Free hits",
@@ -126,7 +134,7 @@
       "last_deadline_total_transfers", "transfer_cost", 
       "captain_points_team", 
       "goals_scored_team", "expected_goals_team", "goals_benched_team",
-      "minutes_team", "clean_sheets_team", 
+      "minutes_team", "clean_sheets_team", "defensive_contribution_team",
       "assists_team", "expected_assists_team",
       
       "minutes_team", "clean_sheets_team", "bonus_team", "dreamteam_count_team", 
@@ -201,40 +209,50 @@
         key: "rank",
         title: "Rank",
         render: t => {
-          const v = t.rank
-          if (v == null) return `<td></td>`
+          const v = t.rank;
+          if (v == null) return "<td></td>";
 
-          // Swiss-German formatting
-          const formatted = v.toLocaleString("de-CH")
+          const formatted = formatRank(v);
 
-          // compare against t.last_rank
-          let arrow = ""
+          let arrow = "";
           if (typeof t.last_rank === "number") {
             if (v < t.last_rank) {
-              arrow = ' <span class="text-success">&#9650;</span>'
+              arrow = ' <span class="text-success">&#9650;</span>'; // green up
             } else if (v > t.last_rank) {
-              arrow = ' <span class="text-danger">&#9660;</span>'
+              arrow = ' <span class="text-danger">&#9660;</span>'; // red down
+            } else {
+              arrow = ' <span class="text-muted">&#8211;</span>'; // grey dash 
             }
           }
-          return `<td class="vert-border-primary">${formatted}${arrow}</td>`
+
+          return `<td class="vert-border-primary">${formatted}${arrow}</td>`;
         }
       },
       {
         key: "overall_rank",
-        formatter: v => {
-          if (v == null) return "";
-          if (v >= 1_000_000) {
-            // round to one decimal in millions, e.g. 2.3M
-            return (v / 1_000_000).toFixed(1) + "M";
+        title: "Overall Rank",
+        render: t => {
+          const v = t.overall_rank;
+          if (v == null) return "<td></td>";
+
+          const formatted = formatRank(v);
+
+          let arrow = "";
+          if (typeof t.overall_last_rank === "number") {
+            if (v < t.overall_last_rank) {
+              arrow = ' <span class="text-success">&#9650;</span>'; // green up
+            } else if (v > t.overall_last_rank) {
+              arrow = ' <span class="text-danger">&#9660;</span>'; // red down
+            } else {
+              arrow = ' <span class="text-muted">&#8211;</span>'; // grey dash
+            }
           }
-          if (v >= 1_000) {
-            // round to one decimal in thousands, e.g. 4.5K
-            return (v / 1_000).toFixed(1) + "K";
-          }
-          // for anything under 1,000, use full locale formatting
-          return v.toLocaleString("de-CH");
+
+          return `<td class="vert-border-primary">${formatted}${arrow}</td>`;
         }
-      },
+      }
+,
+
       { key: "total_points", className: "vert-border-primary" },
       { key: "pts_behind_league_leader" },
       { key: "pts_behind_overall"},
@@ -343,9 +361,10 @@
       { key: "assists_team" },
       // { key: "expected_assists_team", formatter: v => v.toFixed(1) },
       { key: "minutes_team", className: "vert-border" },
+      { key: "defensive_contribution_team" },
       { key: "clean_sheets_team" },
-      { key: "bps_team" },
-      { key: "dreamteam_count_team" }, // Defensive contributions 
+      { key: "bonus_team" },
+      { key: "dreamteam_count_team" }, 
       { key: "yellow_cards_team", className: "vert-border text-danger" },
       { key: "red_cards_team", className: "text-danger vert-border-end-primary" },
       // { key: "own_goals_team", className: "text-danger" },
