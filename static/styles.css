@@ -465,7 +465,8 @@ td {
 .sticky-col {
   position: -webkit-sticky; /* For Safari */
   position: sticky;
-
+  box-shadow: 2px 0 0 #dee2e6;
+    /* instead of border-right */
   /* box-shadow: 4px 0 0 red !important; */
       /* test shadow, 4px solid red */
   left: 0;
