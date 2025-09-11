@@ -294,7 +294,7 @@ td {
 @media (min-width: 768px) {
   .player-image-container div {
       position: absolute;
-      top: 20px;
+      top: 0px;
     }
 }
 
@@ -316,23 +316,23 @@ td {
 
 /* Overlap effect with different left offsets and stacking orders */
 .player-image-1 {
-  left: 0%;
+  left: 0;
   z-index: 10;
 }
 .player-image-2 {
-  left: 15%;  /* Adjust this value for desired overlap */
+  left: 17%;  /* Adjust this value for desired overlap */
   z-index: 9;
 }
 .player-image-3 {
-  left: 30%;
+  left: 34%;
   z-index: 8;
 }
 .player-image-4 {
-  left: 45%;
+  left: 51%;
   z-index: 7;
 }
 .player-image-5 {
-  left: 60%;
+  left: 68%;
   z-index: 6;
 }
 

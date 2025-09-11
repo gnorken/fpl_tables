@@ -192,36 +192,38 @@
         </div>
       </div>
       <!-- Triple Captain 2 Column -->
-      <div class="col-12 col-md-6">
-        <div id="3xc_2" class="mb-3 " style="overflow: hidden;">
-          <div class="bg-purple text-light p-2 d-flex">
-            <div class="px-3 fw-bold">
-              Second Triple Captain {% if chips_state['3xc_2']['used'] %} | {{ chips_state['3xc_2']['total_points']
-              }} points 
-              {% endif %}
-            </div>
-            <div class="px-3 fw-bold ms-auto">
-              {% if chips_state['3xc_2']['used'] %} GW {{ chips_state['3xc_2']['gw'] }}  {% endif %}
-            </div>
-          </div>
-          <div class="team-{{ chips_state['3xc_2']['team_code'] }} p-0 pt-1 text-end">
-            <div class="position-relative">
-              <img class="team-player " loading="lazy"
-                src="https://resources.premierleague.com/premierleague25/photos/players/110x140/{{ chips_state['3xc_2']['photo'] }}.png"
-                alt="Triple Captain">
-              <div class="position-absolute chips-text text-overlay">
-                {% if chips_state['3xc_2']['used'] %} {{ chips_state['3xc_2']['web_name'] }} {% endif %}
-              </div>
-              <div class="position-absolute chips-text-points text-overlay">
-                {% if chips_state['3xc_2']['used'] %} {{ chips_state['3xc_2']['total_points'] * 3 }} Points
-                {% else %}
-                  Unused
+      {% if chips_state['3xc_2']['used'] %}
+        <div class="col-12 col-md-6">
+          <div id="3xc_2" class="mb-3 " style="overflow: hidden;">
+            <div class="bg-purple text-light p-2 d-flex">
+              <div class="px-3 fw-bold">
+                Second Triple Captain {% if chips_state['3xc_2']['used'] %} | {{ chips_state['3xc_2']['total_points']
+                }} points 
                 {% endif %}
+              </div>
+              <div class="px-3 fw-bold ms-auto">
+                {% if chips_state['3xc_2']['used'] %} GW {{ chips_state['3xc_2']['gw'] }}  {% endif %}
+              </div>
+            </div>
+            <div class="team-{{ chips_state['3xc_2']['team_code'] }} p-0 pt-1 text-end">
+              <div class="position-relative">
+                <img class="team-player " loading="lazy"
+                  src="https://resources.premierleague.com/premierleague25/photos/players/110x140/{{ chips_state['3xc_2']['photo'] }}.png"
+                  alt="Triple Captain">
+                <div class="position-absolute chips-text text-overlay">
+                  {% if chips_state['3xc_2']['used'] %} {{ chips_state['3xc_2']['web_name'] }} {% endif %}
+                </div>
+                <div class="position-absolute chips-text-points text-overlay">
+                  {% if chips_state['3xc_2']['used'] %} {{ chips_state['3xc_2']['total_points'] * 3 }} Points
+                  {% else %}
+                    Unused
+                  {% endif %}
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      {% endif %}
     </div>
     
     <!-- Bench Boosts section -->
@@ -267,44 +269,46 @@
     </div>
     
     <!-- Bench boost 2 -->
-    <div class="  p-0 mb-5 overflow-hidden">
-      <div class="row g-0">
-        <div id="bboost_2" class="bg-purple text-light d-flex p-2 fw-bold w-100">
-          <div>
-            Bench Boost 2
-            {% if chips_state.bboost_2.used %} | {{ chips_state.bboost_2.total_points }} points {% endif %}
-          </div>
-          <div class="ms-auto">
-            {% if chips_state.bboost_2.used %} GW {{ chips_state.bboost_2.gw }} {% endif %}
-          </div>
-        </div>
-      </div>
-    
-      <div class="row g-0 text-center">
-        {% for player in chips_state.bboost_2.players %}
-        <div class="col-12 col-md-6 col-lg-3 {% if not loop.last %} border-end {% endif %}">
-    
-          <div class="team-{{ player.team_code }}   ">
-            <div class="position-relative">
-              <img class="team-player" loading="lazy"
-                src="http://resources.premierleague.com/premierleague25/photos/players/110x140/{{ player.photo }}.png"
-                alt="Bench Boost Player">
-              <div class="position-absolute chips-text text-overlay">
-                {% if chips_state.bboost_2.used %} {{ player.web_name }} {% endif %}
-              </div>
-    
-              <div class="position-absolute chips-text-points text-overlay">
-                {% if chips_state.bboost_2.used %} {{ player.total_points }} points 
-                {% else %}
-                Unused
-                {% endif %}
-              </div>
+    {% if chips_state.bboost_2.used %}
+      <div class="  p-0 mb-5 overflow-hidden">
+        <div class="row g-0">
+          <div id="bboost_2" class="bg-purple text-light d-flex p-2 fw-bold w-100">
+            <div>
+              Bench Boost 2
+              {% if chips_state.bboost_2.used %} | {{ chips_state.bboost_2.total_points }} points {% endif %}
+            </div>
+            <div class="ms-auto">
+              {% if chips_state.bboost_2.used %} GW {{ chips_state.bboost_2.gw }} {% endif %}
             </div>
           </div>
         </div>
-        {% endfor %}
+      
+        <div class="row g-0 text-center">
+          {% for player in chips_state.bboost_2.players %}
+          <div class="col-12 col-md-6 col-lg-3 {% if not loop.last %} border-end {% endif %}">
+      
+            <div class="team-{{ player.team_code }}   ">
+              <div class="position-relative">
+                <img class="team-player" loading="lazy"
+                  src="http://resources.premierleague.com/premierleague25/photos/players/110x140/{{ player.photo }}.png"
+                  alt="Bench Boost Player">
+                <div class="position-absolute chips-text text-overlay">
+                  {% if chips_state.bboost_2.used %} {{ player.web_name }} {% endif %}
+                </div>
+      
+                <div class="position-absolute chips-text-points text-overlay">
+                  {% if chips_state.bboost_2.used %} {{ player.total_points }} points 
+                  {% else %}
+                  Unused
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
       </div>
-    </div>
+    {% endif %}
   </section>
 {% endblock %}
 {% block scripts %}
