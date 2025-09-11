@@ -237,15 +237,45 @@ td {
 .round-border-top-right {
   border-radius: 0 20px 0 0;
 }
+
 .round-border-btm {
   border-radius: 0 0 20px 20px;
 }
+
 .round-border-btm-left {
   border-radius: 0 0 0 20px;
 }
+
 .round-border-btm-right {
   border-radius: 0 0 20px 0;
 }
+
+@media (min-width: 768px) {
+  .round-border-lg-top {
+    border-radius: 20px 20px 0 0;
+  }
+
+  .round-border-lg-top-left {
+    border-radius: 20px 0 0 0;
+  }
+
+  .round-border-lg-top-right {
+    border-radius: 0 20px 0 0;
+  }
+
+  .round-border-lg-btm {
+    border-radius: 0 0 20px 20px;
+  }
+
+  .round-border-lg-btm-left {
+    border-radius: 0 0 0 20px;
+  }
+
+  .round-border-lg-btm-right {
+    border-radius: 0 0 20px 0;
+  }
+}
+
 
 .player-image-container {
   position: relative;
@@ -809,3 +839,9 @@ body {
 }
 
 /* Fallback */
+
+.interactive-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  /* ingen “glippe” rundt tabellen */
+}

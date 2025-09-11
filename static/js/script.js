@@ -404,7 +404,7 @@ async function fetchData(sortBy, sortOrder, opts = {}) {
     tr.classList.add(
       "vert-border",
       "align-middle",
-      `team-${p.team_code}`,
+      // `team-${p.team_code}`,
       `element-type-${p.element_type}`
     );
 

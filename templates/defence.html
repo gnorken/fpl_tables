@@ -2,12 +2,12 @@
 {% block title %}Defence{% endblock %}
 
 {% block page_content %}
-<div class="container-fluid px-3">
+<div class="container-fluid">
     <div class="table-responsive"><!-- horizontal scroll -->
         <table id="defence-table" class="interactive-table table table-borderless table-striped text-center text-nowrap">
             <thead class="th-bg-primary text-center">
                 <tr class="sticky-top">
-                    <th id="top-players" class="sticky-col align-middle round-border-top-left">↑ Top Five
+                    <th id="top-players" class="sticky-col align-middle">↑ Top Five
                     </th>
                     <th colspan="2" class="round-border-top-right"></th>
                     <th colspan="19" class="bg-team round-border-top ps-3 text-start text-md-center"
@@ -170,7 +170,7 @@
         columns: [
             // rank + name
             { render: (p, idx) => {
-                const short = p.web_name.length > 11 ? p.web_name.slice(0, 13) + '…' : p.web_name;
+                const short = p.web_name.length > 11 ? p.web_name.slice(0, 11) + '…' : p.web_name;
                 const badgeUrl = `https://resources.premierleague.com/premierleague/badges/100/t${p.team_code}@x2.png`;
 
                 return `
@@ -187,7 +187,7 @@
                                 onerror="this.onerror=null;this.src='https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png';"
                             >
                             <div class="d-flex align-items-end">
-                                <div class="ms-1 text-truncate">${short}</div>
+                                <div class="ms-1 ">${short}</div>
                                 <div class="small text-muted d-none d-lg-inline">&nbsp;${positionMap[p.element_type] || p.element_type}</div>
                             </div>
                         </div>
