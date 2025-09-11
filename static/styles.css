@@ -250,6 +250,7 @@ td {
   border-radius: 0 0 20px 0;
 }
 
+/* lg - round borders */
 @media (min-width: 768px) {
   .round-border-lg-top {
     border-radius: 20px 20px 0 0;
@@ -287,7 +288,14 @@ td {
 /* All child wrappers should be absolute */
 .player-image-container div {
   position: absolute;
-  top: 20px;
+  /* top: 20px; */
+}
+
+@media (min-width: 768px) {
+  .player-image-container div {
+      position: absolute;
+      top: 20px;
+    }
 }
 
 /* .player-image-container div:after {
@@ -452,15 +460,6 @@ td {
 
 
 
-/* Sticky cols */
-/* General style for sticky columns */
-.sticky-col {
-  position: -webkit-sticky; /* For Safari */
-  position: sticky;
-  background: #fff; /* Ensure the background covers underlying content */
-  left: 0;
-  z-index: 3; /* Higher z-index so it overlaps the second column if needed */
-}
 
 /* 1) Outer coloured background */
 th.sorted.sort-team::before {
@@ -599,18 +598,6 @@ th.sorted {
   }
 }
 
-
-/* make the table header stick to the top of that scrollable box */
-.manager-scrollable-table thead th {
-  position: sticky;
-  top: 0;
-  background: white;
-  /* or whatever your table’s bg is */
-  z-index: 2;
-  /* sit above the body rows */
-  /* optional: add a little shadow so you see the separation */
-  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
-}
 
 
 /* Trying to fix the rubber banding dislodging my NAV */
