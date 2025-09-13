@@ -587,7 +587,7 @@ def fill_global_points_from_explain(
     # Fetch concurrently with a sensible cap
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
         # when submitting futures
-        futs = {ex.submit(session.get, url, timeout=TIMEOUT_SHORT)                : gw for gw, url in urls.items()}
+        futs = {ex.submit(session.get, url, timeout=TIMEOUT_SHORT): gw for gw, url in urls.items()}
 
         for fut in as_completed(futs):
             gw = futs[fut]

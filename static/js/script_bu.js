@@ -155,12 +155,37 @@ window.updatePlayerImages = (data) => {
     img.classList.add("img-fluid", "overlap-img");
     img.loading = "lazy";
     img.alt = "Player Photo";
-    img.src = `https://resources.premierleague.com/premierleague/photos/players/110x140/${pi.photo}`;
+
+    // Remove 'p' prefix from photo
+    const photoId = pi.photo.startsWith("p") ? pi.photo.slice(1) : pi.photo;
+
+    // Base URL for 2025/26 season
+    const baseUrl = `https://resources.premierleague.com/premierleague25/photos/players/110x140/${photoId}`;
+    let retryCount = 0;
+    const maxRetries = 1;
+
+    // Set initial URL
+    img.src = baseUrl;
+
     img.onerror = () => {
-      img.onerror = null;
-      img.src =
-        "https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png";
+      if (retryCount < maxRetries) {
+        // Retry with cache-busting
+        retryCount++;
+        img.src = `${baseUrl}?_=${Date.now()}`;
+        console.log(
+          `Retrying image load for ${photoId}, attempt ${retryCount}, url: ${baseUrl}`
+        );
+      } else {
+        // Fallback to Photo-Missing
+        img.onerror = null;
+        img.src =
+          "https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png";
+        console.warn(
+          `Failed to load image for ${photoId} after ${maxRetries} retries`
+        );
+      }
     };
+
     div.appendChild(img);
     container.appendChild(div);
   });
@@ -379,7 +404,7 @@ async function fetchData(sortBy, sortOrder, opts = {}) {
     tr.classList.add(
       "vert-border",
       "align-middle",
-      `team-${p.team_code}`,
+      // `team-${p.team_code}`,
       `element-type-${p.element_type}`
     );
 

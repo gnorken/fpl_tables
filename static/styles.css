@@ -577,9 +577,9 @@ th.sorted {
   }
 }
 
-@media (max-width: 991.98px) {
+@media (max-width: 768px) {
 
-  /* below lg */
+  /* below md */
   .tooltip {
     display: none !important;
   }

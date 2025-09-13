@@ -327,8 +327,7 @@ def get_team_mini_league_summary(team_id: int, static_data: dict, live_data_map:
     }
     picks_map = {}
     with ThreadPoolExecutor(max_workers=8) as ex:
-        future_to_gw = {ex.submit(SESSION.get, url)
-                                  : gw for gw, url in pick_urls.items()}
+        future_to_gw = {ex.submit(SESSION.get, url)                        : gw for gw, url in pick_urls.items()}
         for fut in as_completed(future_to_gw):
             gw = future_to_gw[fut]
             try:

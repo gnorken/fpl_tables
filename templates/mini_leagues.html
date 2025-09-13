@@ -93,6 +93,39 @@
       return v.toLocaleString("de-CH"); // same style as your other ranks
     }
 
+  // ✅ Multiline tooltip: "Wildcard #1" + newline + "Used in GW 3"
+  function chipIcon(label, gw, idx = null) {
+    const used = Number.isFinite(gw) && gw > 0;
+    const header = `${label}${idx ? ` #${idx}` : ""}`;
+    const body = used ? `Used in GW ${gw}` : `Not used`;
+
+    // Use data-bs-title (not title) + data-bs-html="true" for line breaks
+    const html = `${header}<br>${body}`;
+
+    return `
+    <span class="chip-icon"
+          data-bs-toggle="tooltip"
+          data-bs-html="true"
+          data-bs-title="${html.replace(/"/g, "&quot;")}"
+          aria-label="${header}: ${body}">
+      ${used ? "✅" : "⬜️"}
+    </span>
+  `;
+  }
+
+    /**
+     * Render a chip <td> with a fixed number of slots (default 2).
+     * gws = [gw1, gw2] (values may be undefined/null/0 → ⬜️)
+     */
+    function chipTd(label, gws, classes = "", slots = 2) {
+      const arr = Array.from({ length: slots }, (_, i) => gws[i] ?? null);
+      const lines = arr
+        .map((gw, i) => chipIcon(label, gw, slots > 1 ? i + 1 : null))
+        .join("<br>");
+      return `<td class="${classes}">${lines}</td>`;
+    }
+
+
   // ─── Mini‐League Page Config ───────────────────────────────
   window.tableConfig = {
     // base endpoint — script.js will append sort_by, order, max_show for us
@@ -186,24 +219,35 @@
       },
             {
         key: "captain_current",
-        render: t =>
-          `
-          <td class="text-center pe-1 ps-3 vert-border-primary">
-            <img
-              src="https://resources.premierleague.com/premierleague/badges/100/t${t.captain_current_team_code}@x2.png"
-              alt="${t.captain_current_team} badge"
-              class="badge_mini_league"
-              data-bs-toggle="tooltip"  
-              title="${t.captain_current_team}"
-            >
-        </td>
-        <td>
-            <div class="pe-2">
-              <div class="fw-bold small">${t.captain_current_name}</div>
-              <div class="small">${t.captain_current_points} points</div>
-            </div>
-          </td>
-        `
+        title: "Captain",
+        render: (t) => {
+          const teamCode = t.captain_current_team_code ?? 0;
+          const teamName = t.captain_current_team || "N/A";
+          const capName = t.captain_current_name || "N/A";
+          const ptsText = t.captain_current_points_display
+            || `${t.captain_current_points ?? 0} points`;
+
+          const badgeSrc = teamCode
+            ? `https://resources.premierleague.com/premierleague/badges/100/t${teamCode}@x2.png`
+            : `https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png`;
+
+          return `
+      <td class="text-center pe-1 ps-3 vert-border-primary">
+        <img
+          src="${badgeSrc}"
+          alt="${teamName} badge"
+          class="badge_mini_league"
+          data-bs-toggle="tooltip"
+          title="${teamName}"
+          onerror="this.onerror=null;this.src='https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png';"
+        >
+      </td>
+      <td class="text-start">
+        <div class="fw-bold small">${capName}</div>
+        <div class="small">${ptsText}</div>
+      </td>
+    `;
+        }
       },
       {
         key: "rank",
@@ -250,107 +294,45 @@
 
           return `<td class="vert-border-primary">${formatted}${arrow}</td>`;
         }
-      }
-,
-
+      },
       { key: "total_points", className: "vert-border-primary" },
       { key: "pts_behind_league_leader" },
       { key: "pts_behind_overall"},
       {
         key: "wildcards_gw",
         title: "Wildcards",
-        render: t => {
+        render: (t) => {
           const wc1 = t.wildcard1_gw;
           const wc2 = t.wildcard2_gw;
-
-          const formatGW = gw => {
-            if (!gw) return "⬜️";
-            // pad single-digit GWs with leading space or 0
-            const padded = gw < 10 ? ` ${gw}` : gw; // note: first char is &nbsp;
-            return `✅ GW<span>${padded}</span>`;
-          };
-
-          const wildcard1 = `<div>${formatGW(wc1)}</div>`;
-          const wildcard2 = `<div>${formatGW(wc2)}</div>`;
-
-          return `
-      <td class="vert-border text-start vert-border-primary">
-        ${wildcard1}${wildcard2}
-      </td>
-    `;
-        }
+          return chipTd("Wildcard", [wc1, wc2], "vert-border vert-border-primary", 2);
+        },
       },
       {
         key: ["3xc_gw"],
-        title: "3x C!!!!",
-              render: t => {
-                const t1 = t["3xc_gw"];
-                const t2 = t["3xc2_gw"]; // Need to flatten or just have a list??
-     
-                // default to empty
-                let content = "";
-
-                if (!t1 && !t2) {
-                  content = "<div>⬜️</div><div>⬜️</div>";
-                } else {
-                  const triple1 = t1 ? `<div>✅ GW ${t1}</div>` : "⬜️";
-                  const triple2 = t2 ? `<div>✅ GW ${t2}</div>` : "⬜️";
-                  content = `${triple1} ${triple2}`;
-                }
-                return `
-              <td class=" text-start">
-                <div>${content}</div>
-              </td>
-          `;
-        }
+        title: "3x C",
+        render: (t) => {
+          const c1 = t["3xc_gw"];
+          const c2 = t["3xc2_gw"];       // may be undefined → ⬜️
+          return chipTd("Triple Captain", [c1, c2], "", 2);
+        },
       },
       {
         key: "bboost_gw",
-        title: "bboost",
-        render: t => {
+        title: "Bench Boost",
+        render: (t) => {
           const bb1 = t.bboost_gw;
-          const bb2 = t.bboost2_gw; // Need to flatten or just have a list??
-
-          // default to empty
-          let content = "";
-
-          if (!bb1 && !bb2) {
-            content = "<div>⬜️</div><div>⬜️</div>";
-          } else {
-            const bboost1 = bb1 ? `<div>✅ GW ${bb1}</div>` : "⬜️";
-            const bboost2 = bb2 ? `<div>✅ GW ${bb2}</div>` : "⬜️";
-            content = `${bboost1} ${bboost2}`;
-          }
-          return `
-              <td class=" text-start">
-                <div>${content}</div>
-              </td>
-          `;
-        }
+          const bb2 = t.bboost2_gw;      // may be undefined → ⬜️
+          return chipTd("Bench Boost", [bb1, bb2], "", 2);
+        },
       },
       {
         key: "freehit_gw",
-        title: "freehit",
-        render: t => {
+        title: "Free Hit",
+        render: (t) => {
           const fh1 = t.freehit_gw;
-          const fh2 = t.freehit2_gw; // Need to flatten or just have a list??
-
-          // default to empty
-          let content = "";
-
-          if (!fh1 && !fh2) {
-            content = "<div>⬜️</div><div>⬜️</div>";
-          } else {
-            const freehit1 = fh1 ? `<div>✅ GW ${fh1}</div>` : "⬜️";
-            const freehit2 = fh2 ? `<div>✅ GW ${fh2}</div>` : "⬜️";
-            content = `${freehit1} ${freehit2}`;
-          }
-          return `
-              <td class=" text-start">
-                <div>${content}</div>
-              </td>
-          `;
-        }
+          const fh2 = t.freehit2_gw;     // may be undefined → ⬜️
+          return chipTd("Free Hit", [fh1, fh2], "", 2);
+        },
       },
       { key: "last_deadline_total_transfers", className: "vert-border-primary"},
       { key: "transfer_cost", className: "text-danger" },,
