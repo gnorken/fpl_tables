@@ -467,16 +467,16 @@ def territory_icon(key: str) -> Markup:
 # Get OR leader (to have the trailing behind leader col)
 
 
-def apply_points_payload(static_blob: dict, payload: dict) -> None:
-    # zero first (defensive)
-    for pi in static_blob.values():
-        for fld in EXPLAIN_TO_FIELD.values():
-            pi[fld] = 0
-    for pid_str, pts in payload.items():
-        pid = int(pid_str)
-        if pid in static_blob:
-            for fld, val in pts.items():
-                static_blob[pid][fld] = int(val)
+# def apply_points_payload(static_blob: dict, payload: dict) -> None:
+#     # zero first (defensive)
+#     for pi in static_blob.values():
+#         for fld in EXPLAIN_TO_FIELD.values():
+#             pi[fld] = 0
+#     for pid_str, pts in payload.items():
+    pid = int(pid_str)
+    if pid in static_blob:
+        for fld, val in pts.items():
+            static_blob[pid][fld] = int(val)
 
 # New function to add points per category for points table for player_info_static
 
@@ -570,8 +570,7 @@ def fill_global_points_from_explain(
     # Fetch concurrently with a sensible cap
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
         # when submitting futures
-        futs = {ex.submit(session.get, url, timeout=TIMEOUT_SHORT)
-                          : gw for gw, url in urls.items()}
+        futs = {ex.submit(session.get, url, timeout=TIMEOUT_SHORT)                : gw for gw, url in urls.items()}
 
         for fut in as_completed(futs):
             gw = futs[fut]
