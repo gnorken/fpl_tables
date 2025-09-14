@@ -33,6 +33,7 @@ def aggregate_team_stats(player_info):
                 "yellow_cards_team": 0,
                 "red_cards_team": 0,
                 "bps_team": 0,
+                "bonus_team": 0,
                 "dreamteam_count_team": 0,
                 "starts_benched_team": 0,
                 "minutes_benched_team": 0,
@@ -51,6 +52,7 @@ def aggregate_team_stats(player_info):
                 "yellow_cards": 0,
                 "red_cards": 0,
                 "bps": 0,
+                "bonus": 0,
                 "dreamteam_count": 0,
                 "starts_benched": 0,
                 "minutes_benched": 0,
@@ -81,6 +83,7 @@ def aggregate_team_stats(player_info):
         teams_data[team_code]["red_cards_team"] += player.get(
             "red_cards_team", 0)
         teams_data[team_code]["bps_team"] += player.get("bps_team", 0)
+        teams_data[team_code]["bonus"] += player.get("bonus_team", 0)
         teams_data[team_code]["dreamteam_count_team"] += player.get(
             "dreamteam_count_team", 0)
         teams_data[team_code]["starts_benched_team"] += player.get(
@@ -111,6 +114,7 @@ def aggregate_team_stats(player_info):
         teams_data[team_code]["yellow_cards"] += player.get("yellow_cards", 0)
         teams_data[team_code]["red_cards"] += player.get("red_cards", 0)
         teams_data[team_code]["bps"] += player.get("bps", 0)
+        teams_data[team_code]["bonus"] += player.get("bonus", 0)
         teams_data[team_code]["dreamteam_count"] += player.get(
             "dreamteam_count", 0)
         teams_data[team_code]["own_goals"] += player.get("own_goals", 0)

@@ -3,8 +3,32 @@ import json
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+
 # Logger for debugging
 logger = logging.getLogger(__name__)
+
+# === Mapping from FPL "explain" identifiers to your *_points keys ===
+EXPLAIN_TO_FIELD = {
+    "assists": "assists_points",
+    "bonus": "bonus_points",
+    "clean_sheets": "clean_sheets_points",
+    "defensive_contribution": "defensive_contribution_points",
+    "goals_scored": "goals_scored_points",
+    "goals_conceded": "goals_conceded_points",
+    "minutes": "minutes_points",
+    "own_goals": "own_goals_points",
+    "penalties_saved": "penalties_saved_points",
+    "penalties_missed": "penalties_missed_points",
+    "red_cards": "red_cards_points",
+    "saves": "saves_points",   # <- plural
+    "yellow_cards": "yellow_cards_points",
+}
+
+# Convenience sets if you want to reuse when zeroing/pre-init
+GLOBAL_POINTS_KEYS = tuple(EXPLAIN_TO_FIELD.values())
+TEAM_POINTS_KEYS = tuple(k.replace("_points", "_points_team")
+                         for k in GLOBAL_POINTS_KEYS)
+
 
 # Build base player info from static_data (bootstrap-static)
 
@@ -231,13 +255,6 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
     logger.debug(f"Fetched pick_data for GWs: {sorted(picks_data_map.keys())}")
 
     # 4) IMPORTANT: reset GLOBAL *_points (we're about to re-sum all GWs)
-    GLOBAL_POINTS_KEYS = (
-        "minutes_points", "defensive_contribution_points", "clean_sheets_points",
-        "assists_points", "goals_scored_points", "saves_points", "own_goals_points",
-        "goals_conceded_points", "penalties_saved_points", "penalties_missed_points",
-        "yellow_cards_points", "red_cards_points",
-    )
-
     for pi in player_info.values():
         for k in GLOBAL_POINTS_KEYS:
             if k in pi:
@@ -248,19 +265,38 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
     for picks in picks_data_map.values():
         all_picked_pids.update(picks.keys())
 
-    # 6) Build team_info as copies and ZERO all *_team fields
+    # 6) Build team_info as copies and ZERO / PRE-INIT all *_team fields
     team_info = {}
     for pid in all_picked_pids:
         if pid not in player_info:
             continue
         ti = player_info[pid].copy()
+
+        # Zero any existing *_team fields
         for k in list(ti.keys()):
             if k.endswith("_team"):
-                # zero numeric team aggregates/rates
                 try:
                     ti[k] = 0 if isinstance(ti[k], int) else 0.0
                 except Exception:
                     ti[k] = 0
+
+        # Pre-init TEAM *_points fields so keys always exist
+        for key_team in TEAM_POINTS_KEYS:
+            ti[key_team] = 0
+
+        # Also ensure team aggregates exist (if your downstream expects them)
+        for agg in (
+            "bonus_team", "bps_team", "clean_sheets_team", "defensive_contribution_team",
+            "expected_assists_team", "expected_goals_team", "expected_goals_conceded_team",
+            "expected_goal_involvements_team", "goals_conceded_team", "goals_scored_team",
+            "goals_assists_team", "minutes_team", "red_cards_team", "recoveries_team",
+            "starts_team", "tackles_team", "yellow_cards_team", "dreamteam_count_team",
+            "total_points_team", "captain_points_team", "goals_benched_team", "assists_benched_team",
+            "starts_benched_team", "minutes_benched_team", "benched_points_team",
+            "appearances_team"
+        ):
+            ti.setdefault(agg, 0)
+
         team_info[pid] = ti
 
     # 7) Compute per GW
@@ -277,15 +313,15 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
             if not base:
                 continue
 
-            stats = element.get('stats', {})
-            explain = element.get('explain', [])
+            stats = element.get('stats', {}) or {}
+            explain = element.get('explain', []) or []
 
             # ---- GLOBAL (non-team): deduplicate per (pid, fixture, ident) ----
             dedup_blocks = []
-            for block in (explain or []):
+            for block in explain:
                 fx = block.get("fixture")
                 kept = []
-                for s in block.get("stats", []):
+                for s in block.get("stats", []) or []:
                     ident = s.get("identifier")
                     sig = (pid, fx, ident)
                     if sig in seen_global:
@@ -317,45 +353,34 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
                 mins = stats.get('minutes', 0)
                 if mins > 0:
                     ti['appearances_team'] += 1
-                assists = stats.get('assists', 0)
-                bonus = stats.get('bonus', 0)
-                bps = stats.get('bps', 0)
-                cs = stats.get('clean_sheets', 0)
-                cbi = stats.get('clearances_blocks_interceptions', 0)
-                # total defcons, underlying
-                dc = stats.get('defensive_contribution', 0)
-                goals = stats.get('goals_scored', 0)
-                gc = stats.get('goals_conceded', 0)
-                ic = stats.get('in_dreamteam', False)
-                mins = stats.get('minutes', 0)
-                rc = stats.get('red_cards', 0)
-                r = stats.get('recoveries', 0)
-                t = stats.get('tackles', 0)
+
+                # Aggregate team stats
+                ti['assists_team'] += stats.get('assists', 0)
+                ti['bonus_team'] += stats.get('bonus', 0)  # plain bonus tally
+                ti['bps_team'] += stats.get('bps', 0)
+                ti['cbi_team'] += stats.get(
+                    'clearances_blocks_interceptions', 0)
+                ti['clean_sheets_team'] += stats.get('clean_sheets', 0)
+                ti['defensive_contribution_team'] += stats.get(
+                    'defensive_contribution', 0)
+                xa = float(stats.get('expected_assists', 0))
                 xg = float(stats.get('expected_goals', 0))
                 xgc = float(stats.get('expected_goals_conceded', 0))
-                xa = float(stats.get('expected_assists', 0))
-                yc = stats.get('yellow_cards', 0)
-
-                ti['assists_team'] += assists
-                ti['bonus_team'] += bonus
-                ti['bps_team'] += bps
-                ti['cbi_team'] += cbi
-                ti['clean_sheets_team'] += cs
-                ti['defensive_contribution_team'] += dc
                 ti['expected_assists_team'] += xa
                 ti['expected_goals_team'] += xg
                 ti['expected_goals_conceded_team'] += xgc
                 ti['expected_goal_involvements_team'] += (xg + xa)
-                ti['goals_conceded_team'] += gc
+                ti['goals_conceded_team'] += stats.get('goals_conceded', 0)
+                goals = stats.get('goals_scored', 0)
                 ti['goals_scored_team'] += goals
-                ti['goals_assists_team'] += (goals + assists)
+                ti['goals_assists_team'] += (goals + stats.get('assists', 0))
                 ti['minutes_team'] += mins
-                ti['red_cards_team'] += rc
-                ti['recoveries_team'] += r
+                ti['red_cards_team'] += stats.get('red_cards', 0)
+                ti['recoveries_team'] += stats.get('recoveries', 0)
                 ti['starts_team'] += stats.get('starts', 0)
-                ti['tackles_team'] += t
-                ti['yellow_cards_team'] += yc
-                if ic:
+                ti['tackles_team'] += stats.get('tackles', 0)
+                ti['yellow_cards_team'] += stats.get('yellow_cards', 0)
+                if stats.get('in_dreamteam', False):
                     ti['dreamteam_count_team'] += 1
 
                 ti['goals_performance_team'] = round(
@@ -364,27 +389,25 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
                     ti['assists_team'] - ti['expected_assists_team'], 2)
                 ti['goals_assists_performance_team'] = round(
                     ti['goals_assists_team'] -
-                    ti['expected_goal_involvements_team'], 2)
+                    ti['expected_goal_involvements_team'], 2
+                )
 
-                # Handle captain stats for multipliers 2 (captain) or 3 (triple captain)
+                # Captain (extra over x1)
                 if mult in (2, 3):
-                    # Increment captain selection count
                     ti['captained_team'] += 1
                     ti['goals_captained_team'] += goals
-                    ti['assists_captained_team'] += assists
+                    ti['assists_captained_team'] += stats.get('assists', 0)
                     base_points = stats.get('total_points', 0)
-                    ti['captain_points_team'] += base_points * \
-                        (mult - 1)  # 1x for captain, 2x for triple captain
+                    ti['captain_points_team'] += base_points * (mult - 1)
 
-                # Team points via explain (with multiplier)
-                mult = 1 if mult > 0 else 0  # No captain multiplier
-                add_explain_points(ti, explain, suffix="_team",
-                                   mult=mult, pid=pid, gw=gw, tag="TEAM")
+                # ✅ Team points via explain (with multiplier=1; no captain boost), using DEDUP blocks
+                add_explain_points(
+                    ti, dedup_blocks, suffix="_team", mult=1, pid=pid, gw=gw, tag="TEAM")
 
                 # Base points without captain multiplier
                 ti['total_points_team'] += stats.get('total_points', 0)
 
-                # Calculate points per million (ppm)
+                # PPM
                 cost = ti.get('now_cost', 0)
                 if cost:
                     ti['ppm_team'] = round(
@@ -396,15 +419,14 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
         ti["points_per_game_team"] = round(
             ti["total_points_team"] / apps, 2) if apps else 0
 
-        # Calculate per 90s
         mins_total = ti.get("minutes_team", 0)
         if mins_total > 0:
             ti["defensive_contribution_per_90_team"] = (
                 ti["defensive_contribution_team"] / mins_total) * 90
             ti["clean_sheets_per_90_team"] = (
                 ti["clean_sheets_team"] / mins_total) * 90
-            rate = (ti["clean_sheets_team"] / mins_total) * 90
-            ti["clean_sheets_rate_team"] = min(rate, 1.0)
+            ti["clean_sheets_rate_team"] = min(
+                (ti["clean_sheets_team"] / mins_total) * 90, 1.0)
             ti["expected_goals_per_90_team"] = (
                 ti["expected_goals_team"] / mins_total) * 90
         else:

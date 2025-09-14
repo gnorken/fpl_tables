@@ -470,7 +470,7 @@ def territory_icon(key: str) -> Markup:
 # Lookup table for matching *_points keys
 EXPLAIN_TO_FIELD = {
     "assists": "assists_points",
-    "bonus": "bonus_points",
+    "bonus": "bonus",
     "clean_sheets": "clean_sheets_points",
     "defensive_contribution": "defensive_contribution_points",
     "goals_scored": "goals_scored_points",
