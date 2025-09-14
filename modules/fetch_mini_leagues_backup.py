@@ -3,6 +3,7 @@ import logging
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from flask import url_for
+from modules.utils import ordinalformat
 
 logger = logging.getLogger(__name__)
 
@@ -46,21 +47,34 @@ def get_entry_history(entry_id: int) -> dict:
     url = f"{FPL_API}/entry/{entry_id}/history/"
     resp = SESSION.get(url)
     if not resp.ok:
-        return {"chips": [], "bench_points": 0, "transfer_cost": 0}
+        return {
+            "chips": [],
+            "bench_points": 0,
+            "transfer_cost": 0,
+            "overall_rank": None,
+            "overall_last_rank": None,
+        }
 
     data = resp.json()
-    chips = [
-        {"name": c.get("name"), "event": c.get("event")}
-        for c in data.get("chips", [])
-    ]
+    chips = [{"name": c.get("name"), "event": c.get("event")}
+             for c in data.get("chips", [])]
+
     bench_points = sum(ev.get("points_on_bench", 0)
                        for ev in data.get("current", []))
     transfer_cost = sum(ev.get("event_transfers_cost", 0)
                         for ev in data.get("current", []))
+
+    current = data.get("current", [])
+    overall_rank = current[-1]["overall_rank"] if current else None
+    overall_last_rank = current[-2]["overall_rank"] if len(
+        current) > 1 else None
+
     return {
         "chips": chips,
         "bench_points": bench_points,
         "transfer_cost": transfer_cost,
+        "overall_rank": overall_rank,
+        "overall_last_rank": overall_last_rank,
     }
 
 
@@ -105,6 +119,49 @@ def get_picks(entry_id: int, event_id: int):
     return resp.json().get("picks", [])
 
 
+def get_overall_league_leader_total():
+    """
+    Fetch the classic‐league standings for `league_id` and return
+    the `total` points held by the manager in 1st place.
+
+    Returns None if there’s no data or no rank==1 entry.
+    """
+    url = f"{FPL_API}/leagues-classic/314/standings/"
+    resp = SESSION.get(url, timeout=10)
+    resp.raise_for_status()
+    data = resp.json()
+
+    results = data.get("standings", {}).get("results", [])
+    if not results:
+        return None
+
+    # Try to find the entry whose 'rank' is 1
+    leader = next((r for r in results if r.get("rank") == 1), None)
+    if leader is None:
+        # Fallback to the first element in case the API guarantees sorted order
+        leader = results[0]
+
+    return leader.get("total")
+
+
+def enrich_points_behind(managers: list[dict]) -> list[dict]:
+    if not managers:
+        return managers
+
+    league_leader_pts = max((m.get("total_points", 0)
+                            for m in managers), default=0)
+    leader_pts = get_overall_league_leader_total()
+
+    for m in managers:
+        # negative = "behind"
+        m["pts_behind_league_leader"] = m.get(
+            "total_points", 0) - league_leader_pts
+        m["pts_behind_overall"] = m.get("total_points", 0) - (leader_pts or 0)
+        m["years_active_label"] = ordinalformat(m.get("years_active", 0))
+
+    return managers
+
+
 def build_manager(me: dict, league_entry: dict | None = None) -> dict:
     raw = me.get("player_region_iso_code_short", "").strip().lower()
     country_code = SPECIAL_FLAGS.get(raw, raw)
@@ -118,7 +175,6 @@ def build_manager(me: dict, league_entry: dict | None = None) -> dict:
         "last_deadline_bank": me.get("last_deadline_bank") or 0,
         "last_deadline_total_transfers": me.get("last_deadline_total_transfers") or 0,
         "last_deadline_value": me.get("last_deadline_value") or 0,
-        "overall_rank": me.get("summary_overall_rank", 0),
         "player_name": f"{me.get('player_first_name', '')} {me.get('player_last_name', '')}".strip(),
         "total_points": me.get("summary_overall_points", 0),
         "years_active": me.get("years_active") + 1 or 0,
@@ -187,6 +243,8 @@ def build_manager(me: dict, league_entry: dict | None = None) -> dict:
     base["chips"] = history["chips"]
     base["bench_points"] = history["bench_points"]
     base["transfer_cost"] = history["transfer_cost"]
+    base["overall_rank"] = history["overall_rank"] or 0
+    base["overall_last_rank"] = history["overall_last_rank"] or 0
 
     chip_events: dict[str, list[int]] = {}
     for c in base["chips"]:
@@ -249,7 +307,7 @@ def append_current_manager(managers: list[dict], team_id: int, league_id: int, l
                 break
 
 
-def get_team_mini_league_summary(team_id: int, static_data: dict) -> dict:
+def get_team_mini_league_summary(team_id: int, static_data: dict, live_data_map: dict) -> dict:
     SESSION = requests.Session()
     SESSION.headers.update({"User-Agent": "Mozilla/5.0"})
 
@@ -260,7 +318,9 @@ def get_team_mini_league_summary(team_id: int, static_data: dict) -> dict:
 
     if current_gw is None:
         logger.warning("No current gameweek found in the data.")
+        return {}
 
+    # Fetch all picks for this manager (still per manager)
     pick_urls = {
         gw: f"{FPL_API}/entry/{team_id}/event/{gw}/picks/"
         for gw in range(1, current_gw + 1)
@@ -278,63 +338,62 @@ def get_team_mini_league_summary(team_id: int, static_data: dict) -> dict:
                 picks_map[gw] = {}
 
     summary = {
-        "captain_points_team": 0,
-        "goals_scored_team": 0,
-        "expected_goals_team": 0.0,
-        "goals_benched_team": 0,
         "assists_team": 0,
+        "bps_team": 0,  # Change to bonus_points_team
+        "bonus_team": 0,
+        "captain_points_team": 0,
         "clean_sheets_team": 0,
-        "expected_assists_team": 0.0,
-        "bps_team": 0,
+        "defensive_contribution_team": 0,
         "dreamteam_count_team": 0,
-        "yellow_cards_team": 0,
-        "red_cards_team": 0,
+        "expected_assists_team": 0.0,
+        "expected_goals_team": 0.0,
+        "goals_scored_team": 0,
+        "goals_benched_team": 0,
         "minutes_team": 0,
         "total_points_team": 0,
+        "red_cards_team": 0,
+        "yellow_cards_team": 0,
     }
 
-    live_urls = {
-        gw: f"{FPL_API}/event/{gw}/live/" for gw in picks_map if picks_map[gw]}
-    with ThreadPoolExecutor(max_workers=8) as ex:
-        future_to_gw = {ex.submit(SESSION.get, url)                        : gw for gw, url in live_urls.items()}
-        for fut in as_completed(future_to_gw):
-            gw = future_to_gw[fut]
-            try:
-                elements = fut.result().json().get("elements", [])
-            except Exception:
+    # Use pre-fetched live_data_map instead of fetching again
+    for gw, multipliers in picks_map.items():
+        elements = live_data_map.get(gw, [])
+        for el in elements:
+            pid = el.get("id")
+            mult = multipliers.get(pid)
+            if mult is None:
+                continue
+            stats = el.get("stats", {})
+
+            if mult == 0:
+                summary["goals_benched_team"] += stats.get("goals_scored", 0)
                 continue
 
-            multipliers = picks_map.get(gw, {})
-            for el in elements:
-                pid = el.get("id")
-                mult = multipliers.get(pid)
-                if mult is None:
-                    continue
-                stats = el.get("stats", {})
+            base_points = stats.get("total_points", 0)
+            if mult == 2:
+                summary["captain_points_team"] += base_points
+            elif mult == 3:
+                summary["captain_points_team"] += base_points * 2
 
-                if mult == 0:
-                    summary["goals_benched_team"] += stats.get(
-                        "goals_scored", 0)
-                    continue
+            if mult in (1, 2, 3):
+                summary["goals_scored_team"] += stats.get("goals_scored", 0)
+                summary["assists_team"] += stats.get("assists", 0)
+                summary["clean_sheets_team"] += stats.get("clean_sheets", 0)
 
-                base_points = stats.get("total_points", 0)
-                if mult == 2:
-                    summary["captain_points_team"] += base_points
-                elif mult == 3:
-                    summary["captain_points_team"] += base_points * 2
+                # ✅ Override: use points from explain instead of value for DC
+                dc_points = 0
+                for block in el.get("explain", []):
+                    for s in block.get("stats", []):
+                        if s.get("identifier") == "defensive_contribution":
+                            dc_points += s.get("points", 0)
+                summary["defensive_contribution_team"] += dc_points
 
-                summary["goals_scored_team"] += stats.get(
-                    "goals_scored", 0) * mult
-                summary["assists_team"] += stats.get("assists", 0) * mult
-                summary["clean_sheets_team"] += stats.get(
-                    "clean_sheets", 0) * mult
-                summary["bps_team"] += stats.get("bps", 0) * mult
-                summary["yellow_cards_team"] += stats.get(
-                    "yellow_cards", 0) * mult
-                summary["red_cards_team"] += stats.get("red_cards", 0) * mult
-                summary["minutes_team"] += stats.get("minutes", 0) * mult
+                summary["bonus_team"] += stats.get("bonus", 0)
+                summary["yellow_cards_team"] += stats.get("yellow_cards", 0)
+                summary["red_cards_team"] += stats.get("red_cards", 0)
+                summary["minutes_team"] += stats.get("minutes", 0)
                 if stats.get("in_dreamteam", False):
-                    summary["dreamteam_count_team"] += mult
-                summary["total_points_team"] += base_points * mult
+                    summary["dreamteam_count_team"] += 1
+                summary["total_points_team"] += base_points
 
     return summary

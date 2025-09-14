@@ -469,18 +469,19 @@ def territory_icon(key: str) -> Markup:
 
 # Lookup table for matching *_points keys
 EXPLAIN_TO_FIELD = {
-    "minutes": "minutes_points",
-    "goals_scored": "goals_scored_points",
     "assists": "assists_points",
+    "bonus": "bonus_points",
     "clean_sheets": "clean_sheets_points",
-    "saves": "save_points",
-    "own_goals": "own_goals_points",
+    "defensive_contribution": "defensive_contribution_points",
+    "goals_scored": "goals_scored_points",
     "goals_conceded": "goals_conceded_points",
+    "minutes": "minutes_points",
+    "own_goals": "own_goals_points",
     "penalties_saved": "penalties_saved_points",
     "penalties_missed": "penalties_missed_points",
-    "yellow_cards": "yellow_cards_points",
     "red_cards": "red_cards_points",
-    "defensive_contribution": "defensive_contribution_points",
+    "saves": "save_points",
+    "yellow_cards": "yellow_cards_points",
 }
 
 

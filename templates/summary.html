@@ -1,10 +1,10 @@
 {% extends "info.html" %}
-{% block title %}Defence{% endblock %}
+{% block title %}Summary{% endblock %}
 
 {% block page_content %}
 <div class="container-fluid">
     <div class="table-responsive"><!-- horizontal scroll -->
-        <table id="defence-table"
+        <table id="summary-table"
             class="interactive-table table table-borderless table-striped text-center text-nowrap"> <!-- Interactive-table is for the cell highlighter -->
             <thead class="th-bg-primary text-center">
                 <tr class="sticky-top">
@@ -243,7 +243,7 @@
                     const badgeUrl = `https://resources.premierleague.com/premierleague/badges/100/t${p.team_code}@x2.png`;
 
                     return `
-                    <td class="sticky-col vert-border-end vert-border">
+                    <td class="sticky-col vert-border">
                         <div class="d-flex align-items-center">
                             <div class="rank d-none d-lg-block text-center">${idx + 1}</div>
                             <img
