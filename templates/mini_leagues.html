@@ -305,10 +305,10 @@
             const label = t.active_chip || "";
             const sortVal = label ? label.toLowerCase() : "\uFFFF"; // empties last
             return `
-          <td class="text-center"
+          <td class="text-center small text-wrap"
               data-column="active_chip"
               data-sort-value="${sortVal}">
-            ${label ? `<span class="badge text-bg-light">${label}</span>` : ""}
+            ${label ? `<span class="">${label}</span>` : ""}
           </td>`;
           }
         },
