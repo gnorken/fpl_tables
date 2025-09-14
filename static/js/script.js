@@ -210,7 +210,7 @@ window.updateBadges = (data) => {
     const div = document.createElement("div"),
       img = document.createElement("img");
     div.className = `badge-image-${idx + 1}`;
-    img.classList.add("img-fluid", "overlap-badge");
+    img.classList.add("img-fluid", "badge-width");
     img.loading = "lazy";
     img.alt = "Club Badge";
     img.src = `https://resources.premierleague.com/premierleague/badges/100/t${pi.team_code}@x2.png`;

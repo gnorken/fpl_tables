@@ -342,6 +342,15 @@ td {
   /* width: auto; */
 }
 
+/* info-club */
+.badge-width {
+  width: 100%;
+  /* allow it to shrink with the container */
+  max-width: 120px;
+  /* but never exceed 120px */
+  height: auto;
+  /* keep aspect ratio */
+}
 
 
 

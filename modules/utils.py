@@ -467,24 +467,6 @@ def territory_icon(key: str) -> Markup:
 # Get OR leader (to have the trailing behind leader col)
 
 
-# Lookup table for matching *_points keys
-EXPLAIN_TO_FIELD = {
-    "assists": "assists_points",
-    "bonus": "bonus",
-    "clean_sheets": "clean_sheets_points",
-    "defensive_contribution": "defensive_contribution_points",
-    "goals_scored": "goals_scored_points",
-    "goals_conceded": "goals_conceded_points",
-    "minutes": "minutes_points",
-    "own_goals": "own_goals_points",
-    "penalties_saved": "penalties_saved_points",
-    "penalties_missed": "penalties_missed_points",
-    "red_cards": "red_cards_points",
-    "saves": "save_points",
-    "yellow_cards": "yellow_cards_points",
-}
-
-
 def apply_points_payload(static_blob: dict, payload: dict) -> None:
     # zero first (defensive)
     for pi in static_blob.values():
@@ -588,7 +570,8 @@ def fill_global_points_from_explain(
     # Fetch concurrently with a sensible cap
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
         # when submitting futures
-        futs = {ex.submit(session.get, url, timeout=TIMEOUT_SHORT): gw for gw, url in urls.items()}
+        futs = {ex.submit(session.get, url, timeout=TIMEOUT_SHORT)
+                          : gw for gw, url in urls.items()}
 
         for fut in as_completed(futs):
             gw = futs[fut]
