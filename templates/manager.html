@@ -88,6 +88,7 @@
     <div class="row mt-4">
       <H2>Chips</H2>
       <div class="col">
+        <!-- Table - First half of the season -->
         <div class="table-responsive">
           <table class="my-3 table">
             <thead>
@@ -122,45 +123,7 @@
             </tbody>
           </table>
         </div>
-        <div class="table-responsive">
-          <table class="my-3 table">
-            <thead>
-              <tr>
-                <th colspan="4">
-                  Second Half of the Season
-                </th>
-              </tr>
-              <tr>
-                <caption>Gameweeks 20-38</caption>
-                <th class="text-nowrap align-top"><span class="d-sm-none">WC</span><span
-                    class="d-none d-sm-inline">Wildcard</span></th>
-                <th class="text-nowrap align-top"><span class="d-sm-none">FH</span><span
-                    class="d-none d-sm-inline">Freehit</span></th>
-                <th><span class="d-sm-none">3x Cap</span><span class="d-none d-sm-inline">Triple
-                    Captain</span></th>
-                <th><span class="d-sm-none">BB</span><span class="d-none d-sm-inline">Bench Boost</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr class="text-nowrap">
-                <td>{% if chips_state.wildcard_2.used %} GW {{ chips_state.wildcard_2.gw }} {% else %} <span
-                    class="text-muted">Unused</span> {% endif %}</td>
-                <td>{% if chips_state.freehit_2.used %} GW {{ chips_state.freehit_2.gw }} {% else %} <span
-                    class="text-muted">Unused</span> {% endif %}</td>
-                <td>{% if chips_state['3xc_2'].used %} GW {{ chips_state['3xc_2'].gw }} {% else %} <span
-                    class="text-muted">Unused</span> {% endif %}</td>
-                <td>{% if chips_state.bboost_2.used %} GW {{ chips_state.bboost_2.gw }} {% else %} <span
-                    class="text-muted">Unused</span> {% endif %}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
       </div>
-    </div>
-    
-    <!-- Triple Captains Section -->
-    <div class="row">
       <!-- Triple Captain 1 Column -->
       <div class="col-12 col-md-6">
         <div id="3xc_1" class="mb-3" style="overflow: hidden;">
@@ -184,13 +147,52 @@
               <div class="position-absolute chips-text-points text-overlay">
                 {% if chips_state['3xc_1']['used'] %} {{ chips_state['3xc_1']['total_points'] * 3 }} Points
                 {% else %}
-                  Unused
+                Unused
                 {% endif %}
               </div>
             </div>
           </div>
         </div>
       </div>
+    </div>
+    
+    <!-- Table - Second half of the season-->
+    <div class="table-responsive {% if current_gw < 20 %} d-none {% endif %}">
+      <table class="my-3 table">
+        <thead>
+          <tr>
+            <th colspan="4">
+              Second Half of the Season
+            </th>
+          </tr>
+          <tr>
+            <caption>Gameweeks 20-38</caption>
+            <th class="text-nowrap align-top"><span class="d-sm-none">WC</span><span
+                class="d-none d-sm-inline">Wildcard</span></th>
+            <th class="text-nowrap align-top"><span class="d-sm-none">FH</span><span
+                class="d-none d-sm-inline">Freehit</span></th>
+            <th><span class="d-sm-none">3x Cap</span><span class="d-none d-sm-inline">Triple
+                Captain</span></th>
+            <th><span class="d-sm-none">BB</span><span class="d-none d-sm-inline">Bench Boost</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="text-nowrap">
+            <td>{% if chips_state.wildcard_2.used %} GW {{ chips_state.wildcard_2.gw }} {% else %} <span
+                class="text-muted">Unused</span> {% endif %}</td>
+            <td>{% if chips_state.freehit_2.used %} GW {{ chips_state.freehit_2.gw }} {% else %} <span
+                class="text-muted">Unused</span> {% endif %}</td>
+            <td>{% if chips_state['3xc_2'].used %} GW {{ chips_state['3xc_2'].gw }} {% else %} <span
+                class="text-muted">Unused</span> {% endif %}</td>
+            <td>{% if chips_state.bboost_2.used %} GW {{ chips_state.bboost_2.gw }} {% else %} <span
+                class="text-muted">Unused</span> {% endif %}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+
       <!-- Triple Captain 2 Column -->
       {% if chips_state['3xc_2']['used'] %}
         <div class="col-12 col-md-6">
@@ -224,7 +226,7 @@
           </div>
         </div>
       {% endif %}
-    </div>
+
     
     <!-- Bench Boosts section -->
     <!-- Bench Boost 1 -->

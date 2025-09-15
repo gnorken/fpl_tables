@@ -11,7 +11,7 @@
                     <th colspan="1" id="top-players" class="sticky-col align-middle round-border-lg-top-left">↑ Top Five
                     </th>
                     <th colspan="2" class="round-border-lg-top-right"></th>
-                    <th colspan="13" class="bg-team round-border-lg-top ps-3 text-start text-md-center"
+                    <th colspan="14" class="bg-team round-border-lg-top ps-3 text-start text-md-center"
                         title="Players that are or have been in {{ manager.team_name }} this season">
                         Stats for {{ manager.team_name }}
                     </th>
@@ -25,6 +25,7 @@
                     {# --- Team-specific columns (primary) --- #}
                     <th data-sort="total_points_team" class="sort-team bg-team">P</th>
                     <th data-sort="captain_points_team" class="sort-team bg-team">CP</th>
+                    <th data-sort="captained_team" class="sort-team bg-team">CT</th>
                     <th data-sort="appearances_team" class="sort-team bg-team d-none">A</th>
                     <th data-sort="starts_team" class="sort-team bg-team">S</th>
                     <th data-sort="minutes_team" class="sort-team bg-team">M</th>
@@ -116,7 +117,7 @@
                 <tr class="th-bg-primary text-center">
                     <th class="sticky-col round-border-lg-btm-left"></th>
                     <th colspan="2" class="th-bg-primary round-border-lg-btm-right">
-                    <th colspan="13" class="bg-team round-border-lg-btm">
+                    <th colspan="14" class="bg-team round-border-lg-btm">
                         <div id="loading" style="display:none;">Loading…</div>
                     </th>
                     <th colspan="12" class="round-border-lg-btm"></th>
@@ -136,7 +137,7 @@
         "selected_by_percent": "Teams selected by",
         "now_cost": "Current price",
 
-        "total_points_team": `Points for ${managerName}`,
+        "total_points_team": `Points for ${managerName} (incl. captain)`,
         "captain_points_team": `Additional points for being captain for ${managerName}`,
         "appearances_team": `Appearances for ${managerName}`,
         "starts_team": `Starts for ${managerName}`,
@@ -151,7 +152,7 @@
         "clean_sheets_team": `Clean sheets for ${managerName}`,
         "clean_sheets_per_90_team": `Clean sheets per 90 for ${managerName}`,
         "clean_sheets_rate_team": `Clean sheets rate for ${managerName}. (1 = every game played)`,
-        // "captained_team": `Times captained for ${managerName}`,
+        "captained_team": `Times captained for ${managerName}`,
         "goals_scored_team": `Goals scored for ${managerName}`,
         "expected_goals_team": `Expected goals for ${managerName}`,
         "goals_performance_team": `Goals scored vs expected goals scored for ${managerName}`,
@@ -269,8 +270,9 @@
             { key: "selected_by_percent", className: "sort", dataColumn: "selected_by_percent", formatter: v => `${parseFloat(v).toFixed(0)}%` },
             { key: "now_cost", className: "sort ", dataColumn: "now_cost", formatter: v => `£${(v / 10).toFixed(1)}m` },
             // team‐specific (primary) columns:
-            { key: "total_points_team", className: "sort-team vert-border-secondary", sortLevel: "primary", dataColumn: "total_points", formatter: v => `${parseFloat(v)}p` },
-            { key: "captain_points_team", className: "sort-team vert-border-end " , formatter: v => `${parseFloat(v)}p` },
+            { key: "total_points_team", className: "sort-team vert-border-secondary", sortLevel: "primary", dataColumn: "total_points", formatter: v => `${parseFloat(v)}` },
+            { key: "captain_points_team", className: "sort-team " , formatter: v => `${parseFloat(v)}` },
+            { key: "captained_team", className: "sort-team vert-border-end"},
             // { key: "appearances_team", className: "sort-team", sortLevel: "primary", dataColumn: "appearances" },
             { key: "starts_team", className: "sort-team", sortLevel: "primary", dataColumn: "starts" },
             { key: "minutes_team", className: "sort-team vert-border-end", sortLevel: "primary", dataColumn: "minutes" },
@@ -315,7 +317,7 @@
             { key: "own_goals_team", className: "sort-team text-danger d-none", sortLevel: "primary", dataColumn: "own_goals" },
 
             // 15 overall (secondary) columns:
-            { key: "total_points", className: "sort vert-border-secondary", sortLevel: "secondary", dataColumn: "total_points", formatter: v => `${parseFloat(v)}p` },
+            { key: "total_points", className: "sort vert-border-secondary", sortLevel: "secondary", dataColumn: "total_points", formatter: v => `${parseFloat(v)}` },
             // { key: "appearances", className: "sort", sortLevel: "secondary", dataColumn: "appearances" },
             { key: "starts", className: "sort", sortLevel: "secondary", dataColumn: "starts" },
             { key: "minutes", className: "sort vert-border-end", sortLevel: "secondary", dataColumn: "minutes" },

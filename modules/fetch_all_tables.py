@@ -391,6 +391,7 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
                     ti['goals_assists_team'] -
                     ti['expected_goal_involvements_team'], 2
                 )
+                ti['total_points_team'] += stats.get('total_points', 0)
 
                 # Captain (extra over x1)
                 if mult in (2, 3):
@@ -399,13 +400,14 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
                     ti['assists_captained_team'] += stats.get('assists', 0)
                     base_points = stats.get('total_points', 0)
                     ti['captain_points_team'] += base_points * (mult - 1)
+                    ti['total_points_team'] += stats.get('total_points', 0)
 
                 # ✅ Team points via explain (with multiplier=1; no captain boost), using DEDUP blocks
                 add_explain_points(
                     ti, dedup_blocks, suffix="_team", mult=1, pid=pid, gw=gw, tag="TEAM")
 
                 # Base points without captain multiplier
-                ti['total_points_team'] += stats.get('total_points', 0)
+                # ti['total_points_team'] += stats.get('total_points', 0)
 
                 # PPM
                 cost = ti.get('now_cost', 0)

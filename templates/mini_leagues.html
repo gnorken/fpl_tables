@@ -20,20 +20,22 @@
           <!-- <th colspan="4" class="-right">Negatives</th> -->
         <!-- </tr>  -->
         <tr class="text-center th-padding">
-          <!-- Manager info-->
-          <!-- <th id="last_deadline_value" data-sort="last_deadline_value" class="sort text-start">Team Value</th> -->
-          <th id="years_active" data-sort="years_active" class="sort text-start">Season</th>
-          
-          <th id="player_name" data-sort="player_name" class="sort sticky-col text-start">Name</th>
-          <th id="captain_current_points" data-sort="captain_current_points" class="sort" colspan="2">GW{{ current_gw }} Captain</th>
-          <th id="active_chip" data-sort="active_chip_sort" class="sort">GW{{ current_gw }} Chip</th>
-
           <!-- Rank -->
           <th id="rank" data-sort="rank" class="sort">Rank</th>
           <th id="overall_rank" data-sort="overall_rank" class="sort">OR</th>
+          <!-- Manager info-->
+          <th id="last_deadline_value" data-sort="last_deadline_value" class="sort text-start">Value</th>
+          <th id="years_active" data-sort="years_active" class="sort text-start">Season</th>
+          <th id="player_name" data-sort="player_name" class="sort sticky-col text-start">Name</th>
+
+          <!-- Current GW-->
+          <th id="captain_current_points" data-sort="captain_current_points" class="sort" colspan="2">GW{{ current_gw }} Captain</th>
+          <th id="active_chip" data-sort="active_chip_sort" class="sort">GW{{ current_gw }} Chip</th>
+          <th id="summary_event_points" data-sort="summary_event_points" class="sort">GW{{ current_gw }} Pts</th>
+
 
           <!-- Points -->
-          <th id="total_points" data-sort="total_points" class="sort">Points</th>
+          <th id="total_points" data-sort="total_points" class="sort">Pts</th>
           <th id="pts_behind_league_leader" data-sort="pts_behind_league_leader" class="sort">T</th>
           <th id="pts_behind_overall" data-sort="pts_behind_overall" class="sort">T OR</th>
       
@@ -69,7 +71,7 @@
       </tbody>
       <tfoot class="th-bg-primary">
         <tr>
-          <th colspan="26" class="round-border-btm text-center"><div id="loading" style="display:none">Loading</div></th>
+          <th colspan="28" class="round-border-btm text-center"><div id="loading" style="display:none">Loading</div></th>
         </tr>
       </tfoot>
     </table>
@@ -131,7 +133,7 @@
     "minutes_team", "clean_sheets_team", "defensive_contribution_team",
     "assists_team", "expected_assists_team", "bonus_team", "dreamteam_count_team",
     "yellow_cards_team", "red_cards_team", "own_goals_team", "penalties_missed_team",
-    "years_active"
+    "years_active", "summary_event_points"
   ]); // NOTE: not including "active_chip"
 
   function compareRows(aTd, bTd, key) {
@@ -171,7 +173,7 @@
                           last_deadline_total_transfers: "Total transfers made",
                             transfer_cost: "Minus points for hits",
                               captain_points_team: "Captain points for the season",
-                                captain_current_points: "Total points for the captain this GW",
+                                captain_current_points: "Total Captain points this gameweek",
                                   clean_sheets_team: "Clean sheets",
                                     goals_scored_team: "Goals scored",
                                       goals_benched_team: "Goals benched",
@@ -189,7 +191,9 @@
                                                               wildcard2_gw: "Wildcards (second)",
                                                                 "3xc_gw": "Triple captains",
                                                                   bboost_gw: "Bench boosts",
-                                                                    freehit_gw: "Free hits"
+                                                                    freehit_gw: "Free hits",
+                                                                      summary_event_points: "Gameweek {{ current_gw }} points",
+                                                                        active_chip_sort: "Chip used this gameweek"
   },
 
   invertKeys: [
@@ -209,24 +213,52 @@
       "minutes_team", "clean_sheets_team", "defensive_contribution_team",
       "assists_team", "expected_assists_team",
       "bonus_team", "dreamteam_count_team",
-      "yellow_cards_team", "red_cards_team", "own_goals_team", "penalties_missed_team"
+      "yellow_cards_team", "red_cards_team", "own_goals_team", "penalties_missed_team", "summary_event_points"
     ],
 
       columns: [
-        // Example value/bank column (kept commented)
-        // {
-        //   key: "last_deadline_value",
-        //   render: t => {
-        //     const pounds = (t.last_deadline_value / 10).toFixed(1);
-        //     const bank = (t.last_deadline_bank / 10).toFixed(1);
-        //     return `
-        //       <td class="vert-border">
-        //         <div class="text-start">💰 £${pounds}M</div>
-        //         <div class="text-start">🏦 ${bank}M</div>
-        //       </td>`;
-        //   }
-        // },
-
+          {
+          key: "rank",
+          title: "Rank",
+          render: t => {
+            const v = t.rank;
+            if (v == null) return "<td></td>";
+            const formatted = formatRank(v);
+            let arrow = "";
+            if (typeof t.last_rank === "number") {
+              if (v < t.last_rank) arrow = ' <span class="text-success">&#9650;</span>';
+              else if (v > t.last_rank) arrow = ' <span class="text-danger">&#9660;</span>';
+              else arrow = ' <span class="text-muted">&#8211;</span>';
+            }
+            return `<td class="vert-border">${formatted}${arrow}</td>`;
+          }
+        },
+        {
+          key: "overall_rank",
+          title: "Overall Rank",
+          render: t => {
+            const v = t.overall_rank;
+            if (v == null) return "<td></td>";
+            const formatted = formatRank(v);
+            let arrow = "";
+            if (typeof t.overall_last_rank === "number") {
+              if (v < t.overall_last_rank) arrow = ' <span class="text-success">&#9650;</span>';
+              else if (v > t.overall_last_rank) arrow = ' <span class="text-danger">&#9660;</span>';
+              else arrow = ' <span class="text-muted">&#8211;</span>';
+            }
+            return `<td class="vert-border">${formatted}${arrow}</td>`;
+          }
+        },
+        {
+          key: "last_deadline_value", 
+          render: t => { 
+            const pounds = (t.last_deadline_value / 10).toFixed(1); const bank = (t.last_deadline_bank / 10).toFixed(1); 
+            return `
+            <td class="vert-border small"> 
+              <div class="text-start">💰 £${pounds}M</div> <div class="text-start">🏦 £${bank}M</div> 
+            </td>`
+          }
+        },
         {
           key: "years_active",
           render: t => {
@@ -235,7 +267,7 @@
               : '<span class="d-block text-center">';
             const linkClose = t.national_league_url ? '</a>' : '</span>';
             return `
-          <td class="vert-border">
+          <td class="">
             ${linkOpen}
               <div class="text-start"><span class="fi fi-${t.country_code}"></span> ${t.player_region_iso_code_long}</div>
               <div class="text-start text-muted small">${t.years_active_label} season</div>
@@ -253,6 +285,7 @@
           </a>
         </td>`
         },
+
         {
           key: "captain_current",
           title: "Captain",
@@ -302,7 +335,7 @@
           key: "active_chip",
           title: "Active Chip",
           render: (t) => {
-            const label = t.active_chip || "";
+            const label = t.active_chip || "-";
             const sortVal = label ? label.toLowerCase() : "\uFFFF"; // empties last
             return `
           <td class="text-center small text-wrap"
@@ -312,39 +345,8 @@
           </td>`;
           }
         },
-        {
-          key: "rank",
-          title: "Rank",
-          render: t => {
-            const v = t.rank;
-            if (v == null) return "<td></td>";
-            const formatted = formatRank(v);
-            let arrow = "";
-            if (typeof t.last_rank === "number") {
-              if (v < t.last_rank) arrow = ' <span class="text-success">&#9650;</span>';
-              else if (v > t.last_rank) arrow = ' <span class="text-danger">&#9660;</span>';
-              else arrow = ' <span class="text-muted">&#8211;</span>';
-            }
-            return `<td class="vert-border">${formatted}${arrow}</td>`;
-          }
-        },
-        {
-          key: "overall_rank",
-          title: "Overall Rank",
-          render: t => {
-            const v = t.overall_rank;
-            if (v == null) return "<td></td>";
-            const formatted = formatRank(v);
-            let arrow = "";
-            if (typeof t.overall_last_rank === "number") {
-              if (v < t.overall_last_rank) arrow = ' <span class="text-success">&#9650;</span>';
-              else if (v > t.overall_last_rank) arrow = ' <span class="text-danger">&#9660;</span>';
-              else arrow = ' <span class="text-muted">&#8211;</span>';
-            }
-            return `<td class="vert-border">${formatted}${arrow}</td>`;
-          }
-        },
-        { key: "total_points", className: "vert-border" },
+        { key: "summary_event_points", className: ""},
+        { key: "total_points", className: "vert-border"},
         { key: "pts_behind_league_leader" },
         { key: "pts_behind_overall" },
 
@@ -390,7 +392,7 @@
         { key: "captain_points_team", className: "vert-border" },
         { key: "goals_scored_team" },
         { key: "assists_team" },
-        { key: "minutes_team", className: "vert-border" },
+        { key: "minutes_team", className: "" },
         { key: "defensive_contribution_team" },
         { key: "clean_sheets_team" },
         { key: "bonus_team" },
