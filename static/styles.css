@@ -42,6 +42,8 @@ a:active {
   --accent-3: #F0D44C;
   /* Rich warm yellow accent */
 
+  --highlight: #fff3b0;
+
   --purple: #38003c;
   --purple-comp: #043C00; /* Complemantary to purple */
   --light-purple: #963cff; /* Light Purpe */
@@ -276,7 +278,7 @@ td {
     border-radius: 0 0 20px 0;
   }
 }
-
+/* Borders END */
 
 .player-image-container {
   position: relative;
@@ -465,6 +467,7 @@ td {
   border-right: 1px solid gray;
 } */
 
+/* Chips page end */
 
 
 /* Sticky cols */
@@ -502,8 +505,6 @@ td {
 
 
 /* mini league current team highlighter */
-/* <tr>itself doesn’t paint borders in HTML tables — borders belong to the cells.*/
-/* One neat outline around a striped .table row */
 .table tbody tr.highlight-current>* {
   border-top: 2px solid var(--secondary) !important;
   border-bottom: 2px solid var(--secondary) !important;
@@ -580,6 +581,7 @@ td {
   }
 }
 
+/* Media Queries END */
 
 /* log/linear scale buttons */
 .toggle-group {
@@ -630,11 +632,6 @@ body {
   /* match your nav/page bg so bounce never shows white */
 }
 
-
-.table-hover>tbody>tr:hover {
-  --bs-table-hover-bg: var(--bs-warning-bg-subtle);
-  /* soft yellow */
-}
 
 
 /* Check boxes */
@@ -694,9 +691,9 @@ body {
 }
 
 
-.team {
+/* .team {
   background-color: rgb(217,114, 44, 0.1) ;
-}
+} */
 
 .th-padding th {
   padding: 0.6rem ;
@@ -853,5 +850,107 @@ body {
 }
 
 
+/* Hover links in table */
+/* Base */
+.table .clickable-cell {
+  position: relative;
+  cursor: pointer;
+}
+
+.table .clickable-cell a {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Hover background for the whole cell */
+.table .clickable-cell:hover {
+  background-color: var(--highlight);
+}
+
+/* A) Underline when the WHOLE CELL is hovered or focused (big hit area) */
+.table .clickable-cell:hover .underline,
+.table .clickable-cell:focus-within .underline {
+  text-decoration: underline;
+}
+
+/* B) Underline only when the LINK itself is hovered or keyboard-focused */
+.table .clickable-cell a:hover .underline,
+.table .clickable-cell a:focus-visible .underline {
+  text-decoration: underline;
+}
+/**/
 
 
+
+/* Sorted TH background tab */
+/* Table header row */
+th.sorted {
+  position: relative;
+  z-index: 1;
+  /* Ensure text stays above the pseudo-element */
+}
+
+/* Curved background for the sorted team header */
+th.sorted.sort-team::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--red);
+  /* Match the table header */
+  z-index: -2;
+  /* Ensure the pseudo-element stays behind the text */
+}
+
+th.sorted.sort-team::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: white;
+  /* Your desired header background color */
+  border-radius: 10px 10px 0 0;
+  /* Match the header cell's rounded corners */
+  z-index: -1;
+  /* Ensure the pseudo-element stays behind the text */
+}
+
+/* Curved background for the sorted header (totals) */
+th.sorted::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--primary);
+  /* Match the table header */
+  z-index: -2;
+  /* Ensure the pseudo-element stays behind the text */
+}
+
+/* Curved background for the sorted header (totals) */
+th.sorted::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: white;
+  /* Your desired header background color */
+  border-radius: 10px 10px 0 0;
+  /* Match the header cell's rounded corners */
+  z-index: -1;
+  /* Ensure the pseudo-element stays behind the text */
+}
+
+th.sorted {
+  color: black !important;
+}
+/**/

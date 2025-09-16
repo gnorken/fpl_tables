@@ -110,11 +110,12 @@ window.updateSortIndicator = (sortBy, sortOrder, containerSelector = null) => {
   if (!root) return;
 
   const roundedTables = [
+    "summary-table",
     "defence-table",
     "offence-table",
     "points-table",
-    "per-90-table",
     "teams-table",
+    "talisman-table",
   ];
 
   root.querySelectorAll("th[data-sort]").forEach((th) => {

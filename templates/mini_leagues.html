@@ -232,7 +232,7 @@
               else if (v > t.last_rank) arrow = ' <span class="text-danger">&#9660;</span>';
               else arrow = ' <span class="text-muted">&#8211;</span>';
             }
-            return `<td class="vert-border vert-border-end"">${formatted}${arrow}</td>`;
+            return `<td class="vert-border">${formatted}${arrow}</td>`;
           }
         },
         {
@@ -251,17 +251,18 @@
             return `<td class="vert-border">${formatted}${arrow}</td>`;
           }
         },
-         {
+        {
           key: "player_name",
           render: t => {
-            const short = t.player_name.length > 20 ? t.player_name.slice(0, 20) + '…' : t.player_name;
-            return`
-            <td class="sticky-col vert-border">
-              <a href="/${t.entry}/team/summary" class="d-block">
-                <div class="text-start small fw-bold">${short}</div>
+            const short = t.player_name.length > 20 ? t.player_name.slice(0, 20) + "…" : t.player_name;
+            return `
+            <td class="sticky-col vert-border clickable-cell">
+              <a href="/${t.entry}/team/summary" class="stretched-link" 
+                aria-label="Open ${t.player_name}'s team summary">
+                <div class="text-start small fw-bold underline">${short}</div>
                 <div class="text-start text-muted small">${t.team_name}</div>
               </a>
-            </td>`
+            </td>`;
           }
         },
         {
@@ -282,9 +283,9 @@
               : '<span class="d-block text-center">';
             const linkClose = t.national_league_url ? '</a>' : '</span>';
             return `
-          <td class="vert-border  vert-border-end">
+          <td class="vert-border vert-border-end clickable-cell">
             ${linkOpen}
-              <div class="text-start"><span class="fi fi-${t.country_code}"></span> ${t.player_region_iso_code_long}</div>
+              <div class="text-start underline"><span class="fi fi-${t.country_code}"></span> ${t.player_region_iso_code_long}</div>
               <div class="text-start text-muted small">${t.years_active_label} season</div>
             ${linkClose}
           </td>`;
