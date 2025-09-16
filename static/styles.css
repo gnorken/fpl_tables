@@ -502,10 +502,21 @@ td {
 
 
 /* mini league current team highlighter */
-/* .highlight-current>td:nth-child(-n+4) { */
-.highlight-current {
-  border: 2px solid var(--secondary) !important;
+/* <tr>itself doesn’t paint borders in HTML tables — borders belong to the cells.*/
+/* One neat outline around a striped .table row */
+.table tbody tr.highlight-current>* {
+  border-top: 2px solid var(--secondary) !important;
+  border-bottom: 2px solid var(--secondary) !important;
 }
+
+.table tbody tr.highlight-current>*:first-child {
+  border-left: 2px solid var(--secondary) !important;
+}
+
+.table tbody tr.highlight-current>*:last-child {
+  border-right: 2px solid var(--secondary) !important;
+}
+/**/
 
 /* mini league cell highlighter */
 .highlight {

@@ -8,7 +8,7 @@
 <div class="container-fluid">
   <div class="table-responsive pe-2">
     <table id="mini-league-table" class="table table-sm interactive-table table-striped text-nowrap">
-      <thead class="th-bg-primary small ">
+      <thead class="th-bg-primary small">
         <!-- <tr class="text-center"> -->
           <!-- <th colspan="2" class="">Team</th>
           <th colspan="1" class="sticky-col  text-start text-lg-center">Manager</th>
@@ -20,13 +20,15 @@
           <!-- <th colspan="4" class="-right">Negatives</th> -->
         <!-- </tr>  -->
         <tr class="text-center th-padding">
+
           <!-- Rank -->
           <th id="rank" data-sort="rank" class="sort">Rank</th>
           <th id="overall_rank" data-sort="overall_rank" class="sort">OR</th>
+
           <!-- Manager info-->
+          <th id="player_name" data-sort="player_name" class="sort sticky-col text-start">Name</th>
           <th id="last_deadline_value" data-sort="last_deadline_value" class="sort text-start">Value</th>
           <th id="years_active" data-sort="years_active" class="sort text-start">Season</th>
-          <th id="player_name" data-sort="player_name" class="sort sticky-col text-start">Name</th>
 
           <!-- Current GW-->
           <th id="captain_current_points" data-sort="captain_current_points" class="sort" colspan="2">GW{{ current_gw }} Captain</th>
@@ -230,7 +232,7 @@
               else if (v > t.last_rank) arrow = ' <span class="text-danger">&#9660;</span>';
               else arrow = ' <span class="text-muted">&#8211;</span>';
             }
-            return `<td class="vert-border">${formatted}${arrow}</td>`;
+            return `<td class="vert-border vert-border-end"">${formatted}${arrow}</td>`;
           }
         },
         {
@@ -247,6 +249,19 @@
               else arrow = ' <span class="text-muted">&#8211;</span>';
             }
             return `<td class="vert-border">${formatted}${arrow}</td>`;
+          }
+        },
+         {
+          key: "player_name",
+          render: t => {
+            const short = t.player_name.length > 20 ? t.player_name.slice(0, 20) + '…' : t.player_name;
+            return`
+            <td class="sticky-col vert-border">
+              <a href="/${t.entry}/team/summary" class="d-block">
+                <div class="text-start small fw-bold">${short}</div>
+                <div class="text-start text-muted small">${t.team_name}</div>
+              </a>
+            </td>`
           }
         },
         {
@@ -267,7 +282,7 @@
               : '<span class="d-block text-center">';
             const linkClose = t.national_league_url ? '</a>' : '</span>';
             return `
-          <td class="">
+          <td class="vert-border  vert-border-end">
             ${linkOpen}
               <div class="text-start"><span class="fi fi-${t.country_code}"></span> ${t.player_region_iso_code_long}</div>
               <div class="text-start text-muted small">${t.years_active_label} season</div>
@@ -275,17 +290,6 @@
           </td>`;
           }
         },
-        {
-          key: "player_name",
-          render: t => `
-        <td class="sticky-col">
-          <a href="/${t.entry}/team/summary" class="d-block">
-            <div class="text-start small fw-bold">${t.player_name}</div>
-            <div class="text-start text-muted small">${t.team_name}</div>
-          </a>
-        </td>`
-        },
-
         {
           key: "captain_current",
           title: "Captain",
@@ -314,7 +318,7 @@
               : "";
 
             return `
-          <td class="text-center pe-1 ps-3">
+          <td class="text-center pe-1 ps-2">
             ${badgeSrc ? `
               <img
                 src="${badgeSrc}"
@@ -325,7 +329,7 @@
                 aria-label="${teamName}"
                 onerror="this.style.display='none';">` : ""}
           </td>
-          <td ${tdAttrs} class="pe-3">
+          <td ${tdAttrs} class="pe-2">
             <div class="fw-bold small">${capName}</div>
             <div class="small">${capText}</div>
           </td>`;
