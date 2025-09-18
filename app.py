@@ -35,6 +35,7 @@ from flask import (
     redirect,
     render_template,
     request,
+    send_from_directory,
     session,
     url_for,
     current_app as app,
@@ -208,6 +209,11 @@ def inject_manager():
 def reset_session():
     session.clear()
     return "Session cleared!"
+
+
+@app.get("/robots.txt")
+def robots():
+    return send_from_directory("static", "robots.txt", mimetype="text/plain")
 
 
 @app.before_request
