@@ -180,28 +180,28 @@ def add_explain_points(pi: dict, explain_blocks, suffix: str = "", mult: int = 1
             key = f"{ident}_points{suffix}"
 
             # Special debug for goals_scored
-            if ident == "goals_scored":
-                logger.debug(
-                    f"[GW {gw}] PID {pid} fixture={fixture_id} {tag} → "
-                    f"trying to update {key} by {pts} (mult={mult}), "
-                    f"before={pi.get(key)}"
-                )
+            # if ident == "goals_scored":
+            #     logger.debug(
+            #         f"[GW {gw}] PID {pid} fixture={fixture_id} {tag} → "
+            #         f"trying to update {key} by {pts} (mult={mult}), "
+            #         f"before={pi.get(key)}"
+            #     )
 
-            if key not in pi:
-                logger.warning(
-                    f"[GW {gw}] PID {pid} fixture={fixture_id} {tag} → "
-                    f"missing key={key}, skipping"
-                )
-                continue
+            # if key not in pi:
+            #     logger.warning(
+            #         f"[GW {gw}] PID {pid} fixture={fixture_id} {tag} → "
+            #         f"missing key={key}, skipping"
+            #     )
+            #     continue
 
-            before = pi[key]
-            pi[key] = before + pts * mult
-            after = pi[key]
+            # before = pi[key]
+            # pi[key] = before + pts * mult
+            # after = pi[key]
 
-            logger.debug(
-                f"[GW {gw}] PID {pid} fixture={fixture_id} {tag} → "
-                f"{key}: {before} + {pts}*{mult} = {after}"
-            )
+            # logger.debug(
+            #     f"[GW {gw}] PID {pid} fixture={fixture_id} {tag} → "
+            #     f"{key}: {before} + {pts}*{mult} = {after}"
+            # )
 
 
 def populate_player_info_all_with_live_data(team_id, player_info, static_data):

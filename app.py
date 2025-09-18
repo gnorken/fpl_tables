@@ -76,6 +76,7 @@ app.logger.setLevel(level)
 
 # alias for convenience
 logger = app.logger
+logger = logging.getLogger(__name__)
 
 # Also make the built-in Werkzeug request-logger DEBUG
 logging.getLogger('werkzeug').setLevel(logging.DEBUG)
@@ -104,7 +105,34 @@ DATABASE = "page_views.db"
 init_last_event_updated()
 
 
-logger = logging.getLogger(__name__)
+@app.get("/admin/gw-debug")
+def gw_debug():
+    data = get_static_data()  # no 'force' param
+    events = (data or {}).get("events", [])
+    now = datetime.now(timezone.utc)
+
+    cur = next((e for e in events if e.get("is_current")), None)
+    nxt = next((e for e in events if e.get("is_next")), None)
+
+    def brief(e):
+        if not e:
+            return None
+        return {
+            "id": e.get("id"),
+            "is_current": e.get("is_current"),
+            "is_next": e.get("is_next"),
+            "finished": e.get("finished"),
+            "deadline_time": e.get("deadline_time"),
+        }
+
+    return jsonify({
+        "now_utc": now.isoformat(),
+        "events_count": len(events),
+        "first_event_id": events[0]["id"] if events else None,
+        "last_event_id": events[-1]["id"] if events else None,
+        "is_current_event": brief(cur),
+        "is_next_event": brief(nxt),
+    })
 
 
 @app.before_request
@@ -460,14 +488,21 @@ def get_sorted_players():
         conn = sqlite3.connect(DATABASE, check_same_thread=False)
         cur = conn.cursor()
 
-        static_data = static_data or get_static_data()
+        # Always pass GW so get_static_data doesn't think it's preseason
+        static_data = static_data or get_static_data(
+            current_gw=current_gw,
+            event_updated_iso=(g.event_last_update.isoformat()
+                               if g.event_last_update else None)
+        )
+
         if not static_data:
             return jsonify({"error": "Failed to load static_data"}), 500
 
         # Current gameweek (for cache key)
-        current_gw = next(
-            (e["id"] for e in static_data["events"] if e.get("is_current")), None
-        )
+            # If g.current_gw wasn't set for some reason, fall back to events
+        if not current_gw:
+            current_gw = next(
+                (e["id"] for e in static_data["events"] if e.get("is_current")), None)
         if not current_gw:
             return jsonify({"error": "No current gameweek"}), 500
 
