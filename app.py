@@ -1,3 +1,5 @@
+import traceback
+import time
 from modules.utils import get_event_status_state
 from flask import request, session, g, jsonify
 
@@ -12,8 +14,9 @@ from modules.utils import (
     thousands,
     millions,
     territory_icon,
-    get_event_status_state
+    get_event_status_state,
 )
+
 from modules.aggregate_data import merge_team_and_global, filter_and_sort_players, sort_table_data
 from modules.fetch_mini_leagues import (
     get_league_name,
@@ -30,7 +33,6 @@ from modules.fetch_all_tables import (
 from modules.fetch_manager_data import get_manager_data, get_manager_history
 from flask import (
     Flask,
-    g,
     flash,
     jsonify,
     redirect,
@@ -40,7 +42,7 @@ from flask import (
     send_from_directory,
     session,
     url_for,
-    current_app as app,
+    g,
 )
 
 import sqlite3
@@ -108,6 +110,72 @@ DATABASE = "page_views.db"
 init_last_event_updated()
 
 
+SAFE_PATHS = {"/healthz", "/robots.txt",
+              "/favicon.ico", "/apple-touch-icon.png"}
+SAFE_PREFIXES = ("/static/",)
+
+
+@app.before_request
+def before_every_request():
+    # 0) Skip for trivial endpoints (so /healthz always works)
+    p = request.path or "/"
+    if p in SAFE_PATHS or any(p.startswith(pre) for pre in SAFE_PREFIXES):
+        return
+
+    t0 = time.perf_counter()
+    try:
+        # 1) Clear team_id on index GET
+        if request.endpoint == "index" and request.method == "GET":
+            session.pop("team_id", None)
+            app.logger.info("Cleared session team_id on GET to index route")
+
+        # 2) Resolve team_id (URL > session)
+        url_tid = (request.view_args or {}).get("team_id")
+        if url_tid is not None:
+            session["team_id"] = url_tid
+            app.logger.debug("Session team_id set to %s", url_tid)
+        g.team_id = url_tid if url_tid is not None else session.get("team_id")
+
+        # 3) Event-status snapshot (single source of truth)
+        st = get_event_status_state()  # must not raise; if it can, it’s handled below
+        g.current_gw = st.get("gw")
+        g.is_live = st.get("is_live")
+        g.event_last_update = st.get("last_update")
+        session["current_gw"] = g.current_gw
+
+        # 4) Load manager once per request
+        g.manager = None
+        if g.team_id:
+            cache = g.__dict__.setdefault("_mgr_cache", {})
+            if g.team_id not in cache:
+                try:
+                    m = get_manager_data(g.team_id) or {}
+                    m["id"] = g.team_id
+                    cache[g.team_id] = m
+                except Exception as e:
+                    app.logger.error(
+                        "Failed to load manager %s: %s", g.team_id, e)
+                    cache[g.team_id] = {
+                        "id": g.team_id,
+                        "first_name": "Unknown",
+                        "team_name": f"Manager {g.team_id}",
+                    }
+            g.manager = cache[g.team_id]
+
+    except Exception as e:
+        # Never crash the request from here; let views handle missing g.*
+        app.logger.error("before_request failed for %s: %s\n%s",
+                         p, e, traceback.format_exc())
+        g.current_gw = g.get("current_gw", None)
+        g.is_live = g.get("is_live", None)
+        g.event_last_update = g.get("event_last_update", None)
+        # do not return a response; allow the route to run
+
+    finally:
+        app.logger.debug("before_request %s done in %.1fms",
+                         p, (time.perf_counter() - t0) * 1000)
+
+
 @app.get("/admin/gw-debug")
 def gw_debug():
     data = get_static_data()  # no 'force' param
@@ -136,59 +204,6 @@ def gw_debug():
         "is_current_event": brief(cur),
         "is_next_event": brief(nxt),
     })
-
-
-@app.before_request
-def load_manager_into_g():
-    """
-    1) Clear session team_id when returning to index (GET /).
-    2) Prefer team_id from the URL; otherwise fall back to session.
-    3) Attach event-status snapshot to g (gw/is_live/last_update).
-    4) Load manager once per request and memoize on g to avoid re-fetch.
-    """
-    # Ignore static assets
-    if request.endpoint == "static":
-        return
-
-    # Step 1: clear team on index GET
-    if request.endpoint == "index" and request.method == "GET":
-        session.pop("team_id", None)
-        logger.info("Cleared session team_id on GET to index route")
-
-    # Step 2: resolve team_id (URL > session)
-    url_tid = (request.view_args or {}).get("team_id")
-    if url_tid is not None:
-        session["team_id"] = url_tid
-        logger.debug("Session team_id set to %s", url_tid)
-
-    tid = url_tid if url_tid is not None else session.get("team_id")
-    g.team_id = tid
-
-    # Step 3: event-status snapshot (cheap; utils caches)
-    # {"gw": int, "is_live": bool, "last_update": datetime}
-    st = get_event_status_state()
-    g.current_gw = st["gw"]
-    g.is_live = st["is_live"]
-    g.event_last_update = st["last_update"]
-    logger.debug("[initialize_session] gw=%s live=%s last=%s",
-                 g.current_gw, g.is_live, g.event_last_update)
-
-    # Step 4: load manager once per request, memoized on g
-    g.manager = None
-    if tid:
-        cache = g.__dict__.setdefault("_mgr_cache", {})
-        if tid not in cache:
-            try:
-                # <- inside should use SESSION/get_json_cached now
-                m = get_manager_data(tid)
-                m = m or {}
-                m["id"] = tid
-                cache[tid] = m
-            except Exception as e:
-                logger.error("Failed to load manager %s: %s", tid, e)
-                cache[tid] = {"id": tid, "first_name": "Unknown",
-                              "team_name": f"Manager {tid}"}
-        g.manager = cache[tid]
 
 
 @app.context_processor
@@ -233,19 +248,6 @@ def healthz():
 @app.get("/favicon.ico")
 def favicon():
     return send_from_directory("static", "favicon.ico", mimetype="image/x-icon")
-
-
-@app.before_request
-def initialize_session():
-    if request.endpoint == "static":
-        return
-    es = get_event_status_state()             # ← single source of truth
-    g.current_gw = es["gw"]
-    g.is_live = es["is_live"]
-    g.event_last_update = es["last_update"]
-    session["current_gw"] = g.current_gw      # optional convenience
-    app.logger.debug("[initialize_session] gw=%s live=%s last=%s",
-                     g.current_gw, g.is_live, g.event_last_update)
 
 
 @app.route("/debug/gw")
@@ -781,3 +783,5 @@ if __name__ == "__main__":
 # That will find all the print() calls inside your modules / directory (or wherever your app lives).
 
 # venv problems. git ls-files | grep -E '(^|/)\.venv(/|$)' || echo "✅ no .venv tracked"
+# curl -sS http://127.0.0.1:5000/robots.txt
+# curl -sS -i http://127.0.0.1:5000/healthz
