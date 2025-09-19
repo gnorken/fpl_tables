@@ -1,102 +1,50 @@
-import traceback
+import os
+import json
 import time
-from modules.utils import get_event_status_state
-from flask import request, session, g, jsonify
+import copy
+import logging
+import sqlite3
+import requests
+import traceback
+from datetime import datetime, timezone
+
+from flask import (
+    Flask, flash, jsonify, redirect, render_template,
+    request, Response, send_from_directory, session, url_for, g,
+)
+
+from werkzeug.exceptions import HTTPException
 
 from modules.utils import (
-    validate_team_id,
-    get_max_users,
-    get_static_data,
-    get_current_gw,
-    init_last_event_updated,
-    get_event_status_last_update,
-    ordinalformat,
-    thousands,
-    millions,
-    territory_icon,
-    get_event_status_state,
+    validate_team_id, get_max_users, get_static_data, get_current_gw,
+    init_last_event_updated, get_event_status_last_update, ordinalformat,
+    thousands, millions, territory_icon, get_event_status_state,
 )
 
 from modules.aggregate_data import merge_team_and_global, filter_and_sort_players, sort_table_data
 from modules.fetch_mini_leagues import (
-    get_league_name,
-    get_team_ids_from_league,
-    get_team_mini_league_summary,
-    append_current_manager,
-    enrich_points_behind,
+    get_league_name, get_team_ids_from_league, get_team_mini_league_summary,
+    append_current_manager, enrich_points_behind,
 )
 from modules.fetch_teams_table import aggregate_team_stats
-from modules.fetch_all_tables import (
-    build_player_info,  # Now inside get_static_data
-    populate_player_info_all_with_live_data,
-)
+from modules.fetch_all_tables import build_player_info, populate_player_info_all_with_live_data
 from modules.fetch_manager_data import get_manager_data, get_manager_history
-from flask import (
-    Flask,
-    flash,
-    jsonify,
-    redirect,
-    render_template,
-    request,
-    Response,
-    send_from_directory,
-    session,
-    url_for,
-    g,
-)
-
-import sqlite3
-import requests
-import os
-import json
-from datetime import datetime, timezone
-import copy
-import flask
-import logging
-
-logging.basicConfig(
-    level=logging.INFO,
-    # format="%(levelname)-8s %(name)s: %(message)s"
-    format="%(asctime)s %(levelname)-8s %(name)s: %(message)s"
-)
 
 
-# Create your Flask app
 app = Flask(__name__)
+app.secret_key = os.environ.get("FLASK_SECRET", "dev-secret-for-local")
+app.config["TEMPLATES_AUTO_RELOAD"] = True
 
-# pull from env, default to INFO
-log_level_name = os.environ.get("LOG_LEVEL", "INFO").upper()
-level = getattr(logging, log_level_name, logging.INFO)
-
+level = getattr(logging, os.environ.get(
+    "LOG_LEVEL", "INFO").upper(), logging.INFO)
 logging.basicConfig(
-    level=level,
-    format="%(levelname)-8s %(name)s: %(message)s",
-    # format="%(asctime)s %(levelname)-8s %(name)s: %(message)s",
-)
-
-# root logger (so your modules inherit this)
-logging.getLogger().setLevel(level)
-logging.getLogger('werkzeug').setLevel(level)
+    level=level, format="%(asctime)s %(levelname)-8s %(name)s: %(message)s")
+logging.getLogger("werkzeug").setLevel(level)
 app.logger.setLevel(level)
 
-# alias for convenience
-logger = app.logger
-logger = logging.getLogger(__name__)
-
-# Also make the built-in Werkzeug request-logger DEBUG
-logging.getLogger('werkzeug').setLevel(logging.DEBUG)
-
-
-# ... your routes, blueprints, etc. go here ...
 
 FPL_API = "https://fantasy.premierleague.com/api"
 HEADERS = {"User-Agent": "Mozilla/5.0"}
-
-# app.secret_key = os.urandom(24)  # For deployment
-app.secret_key = os.environ.get(
-    "FLASK_SECRET", "dev-secret-for-local")  # Development only
-app.config["TEMPLATES_AUTO_RELOAD"] = True
-
 
 # Jinja filters
 app.jinja_env.filters["ordinalformat"] = ordinalformat
@@ -107,7 +55,40 @@ app.jinja_env.filters["territory_icon"] = territory_icon
 DATABASE = "page_views.db"
 
 # Initialize the fallback timestamp before any requests
-init_last_event_updated()
+try:
+    init_last_event_updated()
+except Exception as e:
+    app.logger.warning("init_last_event_updated failed: %s", e)
+
+
+@app.errorhandler(Exception)
+def handle_uncaught(e):
+    if isinstance(e, HTTPException):
+        return e
+    app.logger.exception("Unhandled exception")
+    return ("Internal Server Error", 500)
+
+
+class _WSGICrashLogger:
+    def __init__(self, wsgi): self.wsgi = wsgi
+
+    def __call__(self, environ, start_response):
+        try:
+            return self.wsgi(environ, start_response)
+        except Exception:
+            app.logger.exception("WSGI-level crash")
+            raise
+
+
+app.wsgi_app = _WSGICrashLogger(app.wsgi_app)
+
+
+@app.errorhandler(Exception)
+def _catch_all(e):
+    if isinstance(e, HTTPException):
+        return e
+    app.logger.exception("Unhandled exception")
+    return ("Internal Server Error", 500)
 
 
 SAFE_PATHS = {"/healthz", "/robots.txt",
@@ -117,33 +98,28 @@ SAFE_PREFIXES = ("/static/",)
 
 @app.before_request
 def before_every_request():
-    # 0) Skip for trivial endpoints (so /healthz always works)
-    p = request.path or "/"
-    if p in SAFE_PATHS or any(p.startswith(pre) for pre in SAFE_PREFIXES):
+    p = (request.path or "/")
+    if request.method == "OPTIONS" or p in SAFE_PATHS or any(p.startswith(pre) for pre in SAFE_PREFIXES):
         return
 
     t0 = time.perf_counter()
     try:
-        # 1) Clear team_id on index GET
         if request.endpoint == "index" and request.method == "GET":
             session.pop("team_id", None)
             app.logger.info("Cleared session team_id on GET to index route")
 
-        # 2) Resolve team_id (URL > session)
         url_tid = (request.view_args or {}).get("team_id")
         if url_tid is not None:
             session["team_id"] = url_tid
             app.logger.debug("Session team_id set to %s", url_tid)
         g.team_id = url_tid if url_tid is not None else session.get("team_id")
 
-        # 3) Event-status snapshot (single source of truth)
-        st = get_event_status_state()  # must not raise; if it can, it’s handled below
+        st = get_event_status_state()   # must not raise; if it can, it’s caught below
         g.current_gw = st.get("gw")
         g.is_live = st.get("is_live")
         g.event_last_update = st.get("last_update")
         session["current_gw"] = g.current_gw
 
-        # 4) Load manager once per request
         g.manager = None
         if g.team_id:
             cache = g.__dict__.setdefault("_mgr_cache", {})
@@ -156,24 +132,16 @@ def before_every_request():
                     app.logger.error(
                         "Failed to load manager %s: %s", g.team_id, e)
                     cache[g.team_id] = {
-                        "id": g.team_id,
-                        "first_name": "Unknown",
-                        "team_name": f"Manager {g.team_id}",
-                    }
+                        "id": g.team_id, "first_name": "Unknown", "team_name": f"Manager {g.team_id}"}
             g.manager = cache[g.team_id]
 
-    except Exception as e:
-        # Never crash the request from here; let views handle missing g.*
-        app.logger.error("before_request failed for %s: %s\n%s",
-                         p, e, traceback.format_exc())
-        g.current_gw = g.get("current_gw", None)
-        g.is_live = g.get("is_live", None)
-        g.event_last_update = g.get("event_last_update", None)
-        # do not return a response; allow the route to run
-
+    except Exception:
+        app.logger.error("before_request failed for %s\n%s",
+                         p, traceback.format_exc())
+        # proceed; views must tolerate missing g.*
     finally:
-        app.logger.debug("before_request %s done in %.1fms",
-                         p, (time.perf_counter() - t0) * 1000)
+        app.logger.debug("before_request %s in %.1fms",
+                         p, (time.perf_counter()-t0)*1000)
 
 
 @app.get("/admin/gw-debug")
