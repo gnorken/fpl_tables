@@ -30,18 +30,25 @@ from modules.fetch_teams_table import aggregate_team_stats
 from modules.fetch_all_tables import build_player_info, populate_player_info_all_with_live_data
 from modules.fetch_manager_data import get_manager_data, get_manager_history
 
+# ── Logging config (controlled by env LOG_LEVEL) ─────────────────────────────
+LOG_LEVEL_NAME = os.environ.get("LOG_LEVEL", "INFO").upper()
+LOG_LEVEL = getattr(logging, LOG_LEVEL_NAME, logging.INFO)
+
+logging.basicConfig(
+    level=LOG_LEVEL,
+    format="%(asctime)s %(levelname)-8s %(name)s: %(message)s",
+)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "dev-secret-for-local")
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
-level = getattr(logging, os.environ.get(
-    "LOG_LEVEL", "INFO").upper(), logging.INFO)
-logging.basicConfig(
-    level=level, format="%(asctime)s %(levelname)-8s %(name)s: %(message)s")
-logging.getLogger("werkzeug").setLevel(level)
-app.logger.setLevel(level)
+# Keep Flask/Werkzeug in sync with our chosen level
+app.logger.setLevel(LOG_LEVEL)
+logging.getLogger("werkzeug").setLevel(LOG_LEVEL)
 
+# Global alias used across the codebase
+logger = app.logger
 
 FPL_API = "https://fantasy.premierleague.com/api"
 HEADERS = {"User-Agent": "Mozilla/5.0"}
