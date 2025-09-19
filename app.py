@@ -1,5 +1,6 @@
 from modules.utils import get_event_status_state
-from flask import request, session, g
+from flask import request, session, g, jsonify
+
 from modules.utils import (
     validate_team_id,
     get_max_users,
@@ -35,6 +36,7 @@ from flask import (
     redirect,
     render_template,
     request,
+    Response,
     send_from_directory,
     session,
     url_for,
@@ -213,7 +215,24 @@ def reset_session():
 
 @app.get("/robots.txt")
 def robots():
-    return send_from_directory("static", "robots.txt", mimetype="text/plain")
+    return Response(
+        "User-agent: *\n"
+        "Disallow: /get-sorted-players\n"
+        "Disallow: /admin/\n"
+        "Disallow: /wp-admin/\n"
+        "Disallow: /wordpress/\n",
+        mimetype="text/plain"
+    )
+
+
+@app.get("/healthz")
+def healthz():
+    return "ok", 200
+
+
+@app.get("/favicon.ico")
+def favicon():
+    return send_from_directory("static", "favicon.ico", mimetype="image/x-icon")
 
 
 @app.before_request
@@ -231,7 +250,7 @@ def initialize_session():
 
 @app.route("/debug/gw")
 def debug_gw():
-    from flask import jsonify
+
     return jsonify(current_gw=g.current_gw, session_gw=session.get("current_gw"))
 
 
@@ -760,3 +779,5 @@ if __name__ == "__main__":
 
 # grep -r "print(" modules/
 # That will find all the print() calls inside your modules / directory (or wherever your app lives).
+
+# venv problems. git ls-files | grep -E '(^|/)\.venv(/|$)' || echo "✅ no .venv tracked"

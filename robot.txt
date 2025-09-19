@@ -1,3 +1,0 @@
-User-agent: *
-Disallow: /get-sorted-players
-Disallow: /admin/
