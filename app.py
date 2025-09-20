@@ -6,7 +6,7 @@ import logging
 import sqlite3
 import requests
 import traceback
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from flask import (
     Flask, flash, jsonify, redirect, render_template,
@@ -58,6 +58,9 @@ app.jinja_env.filters["ordinalformat"] = ordinalformat
 app.jinja_env.filters["thousands"] = thousands
 app.jinja_env.filters["millions"] = millions
 app.jinja_env.filters["territory_icon"] = territory_icon
+
+LIVE_TTL = timedelta(seconds=60)
+COLD_TTL = timedelta(hours=6)
 
 DATABASE = "page_views.db"
 
@@ -565,72 +568,99 @@ def get_sorted_players():
         if not current_gw:
             return jsonify({"error": "No current gameweek"}), 500
 
-        # ── Cache check ────────────────────────────────
-        cur.execute(
-            """
-            SELECT data, last_fetched
-            FROM mini_league_cache
-            WHERE league_id = ? AND gameweek = ? AND team_id = 0 AND max_show = ?
-            """,
-            (league_id, current_gw, max_show),
-        )
+        # ── Cache check with freshness ────────────────────────────────
+        cur.execute("""
+        SELECT data, last_fetched
+        FROM mini_league_cache
+        WHERE league_id = ? AND gameweek = ? AND team_id = 0 AND max_show = ?
+        """, (league_id, current_gw, max_show))
         row = cur.fetchone()
 
+        def _is_cache_fresh(last_iso: str) -> bool:
+            try:
+                last = datetime.fromisoformat(last_iso)
+            except Exception:
+                return False
+            now = datetime.now(timezone.utc)
+            if g.is_live:
+                return (now - last) < LIVE_TTL
+            if g.event_last_update:
+                return last >= g.event_last_update
+            return (now - last) < COLD_TTL
+
+        use_cache = False
         if row:
-            logger.debug(
-                f"[mini_league] cache hit league={league_id} gw={current_gw}")
-            rows = json.loads(row[0])
+            cached_json, last_fetched_iso = row
+            use_cache = _is_cache_fresh(last_fetched_iso)
+            app.logger.debug(
+                "[mini_league] cache %s (last_fetched=%s, event_last_update=%s, live=%s)",
+                "HIT" if use_cache else "STALE",
+                last_fetched_iso,
+                (g.event_last_update.isoformat() if g.event_last_update else None),
+                g.is_live,
+            )
+
+        if use_cache:
+            rows = json.loads(cached_json)
+
         else:
-            logger.debug(
-                f"[mini_league] cache miss league={league_id} gw={current_gw}")
+            app.logger.debug(
+                "[mini_league] rebuilding league=%s gw=%s", league_id, current_gw)
 
-            # Fetch managers from API
-            managers = get_team_ids_from_league(league_id, max_show)
-            append_current_manager(managers, team_id, league_id, logger=logger)
-
-            # 🔄 Prefetch live data ONCE per GW
-            live_data_map = {}
-            for gw in range(1, current_gw + 1):
-                try:
-                    url = f"{FPL_API}/event/{gw}/live/"
-                    resp = requests.get(
-                        url, headers={"User-Agent": "Mozilla/5.0"})
-                    live_data_map[gw] = resp.json().get("elements", [])
-                except Exception as e:
-                    app.logger.warning(
-                        f"Failed to fetch live data for gw={gw}: {e}")
-                    live_data_map[gw] = []
-
-            # Build rows (manager info + summary)
+            # Build fresh rows safely
             rows = []
-            for m in managers:
-                try:
-                    summary = get_team_mini_league_summary(
-                        m["entry"], static_data, live_data_map)
-                    row_data = {**m, **summary, "team_id": m["entry"]}
-                    rows.append(row_data)
-                except Exception as e:
-                    logger.warning(
-                        f"Failed to build summary for {m.get('entry')}: {e}")
+            try:
+                # Fetch managers (top N plus current manager if missing)
+                managers = get_team_ids_from_league(league_id, max_show)
+                append_current_manager(
+                    managers, team_id, league_id, logger=logger)
 
-            rows = enrich_points_behind(rows)
+                # Prefetch live once per GW
+                live_data_map = {}
+                for gw in range(1, current_gw + 1):
+                    try:
+                        url = f"{FPL_API}/event/{gw}/live/"
+                        resp = requests.get(
+                            url, headers={"User-Agent": "Mozilla/5.0"})
+                        live_data_map[gw] = resp.json().get("elements", [])
+                    except Exception as e:
+                        app.logger.warning(
+                            "Failed to fetch live data for gw=%s: %s", gw, e)
+                        live_data_map[gw] = []
 
-            # Store full list as JSON blob
-            cur.execute(
-                """
+                # Build each manager row
+                for m in managers:
+                    try:
+                        summary = get_team_mini_league_summary(
+                            m["entry"], static_data, live_data_map)
+                        row_data = {**m, **summary, "team_id": m["entry"]}
+                        rows.append(row_data)
+                    except Exception as e:
+                        logger.warning(
+                            "Failed to build summary for %s: %s", m.get("entry"), e)
+
+                rows = enrich_points_behind(rows)
+
+                # Only write to cache if we have something coherent
+                cur.execute("""
                 INSERT OR REPLACE INTO mini_league_cache
                 (league_id, gameweek, team_id, max_show, data, last_fetched)
                 VALUES (?, ?, 0, ?, ?, ?)
-                """,
-                (
-                    league_id,
-                    current_gw,
-                    max_show,
+                """, (
+                    league_id, current_gw, max_show,
                     json.dumps(rows),
                     datetime.now(timezone.utc).isoformat(),
-                ),
-            )
-            conn.commit()
+                ))
+                conn.commit()
+
+            except Exception as e:
+                app.logger.error("[mini_league] rebuild failed: %s", e)
+                # As a fallback, if we had a cache row (even stale), serve it
+                if row:
+                    rows = json.loads(cached_json)
+                else:
+                    # last resort: empty response
+                    rows = []
 
         conn.close()
 

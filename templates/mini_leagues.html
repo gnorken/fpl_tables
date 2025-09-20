@@ -350,7 +350,26 @@
           </td>`;
           }
         },
-        { key: "summary_event_points", className: ""},
+        {
+          key: "summary_event_points",
+          header: "GW pts",
+          // If you sort on the client, coalesce null to -1 (so ⏳ stays below 0)
+          sortValue: (row) => (row.summary_event_points ?? -1),
+
+          render: (t) => {
+            const v = t.summary_event_points;
+            const pending = t.summary_event_points_pending;
+
+            const label = (v == null && pending) ? "⏳" : String(v ?? 0);
+            const title = pending ? "Gameweek in progress" : "Event points";
+
+            return `
+          <td class="${pending ? "text-muted" : ""}" title="${title}">
+            ${label}
+          </td>
+        `;
+              }
+        },
         { key: "total_points", className: "vert-border"},
         { key: "pts_behind_league_leader" },
         { key: "pts_behind_overall" },

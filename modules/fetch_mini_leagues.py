@@ -206,6 +206,17 @@ def build_manager(me: dict, league_entry: dict | None = None) -> dict:
     gw_finished = next((e["finished"]
                        for e in events if e.get("id") == current_gw), False)
 
+    # ---------- Event points (UI-friendly) ----------
+    current_SEP = int(me.get("summary_event_points") or 0)
+
+    if not gw_finished and current_SEP == 0:
+        # show ⏳ in UI when current GW isn't finished and no points yet
+        base["summary_event_points"] = None
+        base["summary_event_points_pending"] = True
+    else:
+        base["summary_event_points"] = current_SEP
+        base["summary_event_points_pending"] = False
+
     # ---------- Live + picks ----------
     live_points = get_live_points(current_gw) if current_gw else {}
     picks = get_picks(base["entry"], current_gw) if current_gw else []
@@ -362,7 +373,7 @@ def get_team_mini_league_summary(team_id: int, static_data: dict, live_data_map:
     }
     picks_map = {}
     with ThreadPoolExecutor(max_workers=8) as ex:
-        future_to_gw = {ex.submit(SESSION.get, url)                        : gw for gw, url in pick_urls.items()}
+        future_to_gw = {ex.submit(SESSION.get, url): gw for gw, url in pick_urls.items()}
         for fut in as_completed(future_to_gw):
             gw = future_to_gw[fut]
             try:
