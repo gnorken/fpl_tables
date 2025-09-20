@@ -5,13 +5,15 @@
         <div id="header-logo-gw" class="{{ '' if request.endpoint == 'index' else 'd-none d-md-block' }} me-2">
             <a href="/" class="d-flex align-items-end text-light text-decoration-none p-2">
                 <h1 id="header-logo" class="m-0 h6 fw-bold">FPL Tables</h1>
-                <span id="header-gw" class="d-none d-sm-block px-2 text-center fw-lighter">
-                    {% if current_gw is none %}
+                    <span id="header-gw" class="d-none d-sm-block px-2 text-center fw-lighter" aria-live="polite">
+                        {% if is_updating %}
+                        Updating
+                        {% elif current_gw is none %}
                         Preseason
-                    {% else %}
-                        GW{{ current_gw }}
-                    {% endif %}
-                </span>
+                        {% else %}
+                        GW{{ current_gw }}{% if is_live %} <span class="live-indicator" title="Matches live">LIVE 🔴</span>{% endif %}
+                        {% endif %}
+                    </span>
             </a>
         </div>
 

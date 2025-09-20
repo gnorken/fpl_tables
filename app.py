@@ -111,44 +111,71 @@ def before_every_request():
 
     t0 = time.perf_counter()
     try:
+        # 1) Clear team_id on index GET
         if request.endpoint == "index" and request.method == "GET":
             session.pop("team_id", None)
             app.logger.info("Cleared session team_id on GET to index route")
 
+        # 2) Resolve team_id (URL > session)
         url_tid = (request.view_args or {}).get("team_id")
         if url_tid is not None:
             session["team_id"] = url_tid
             app.logger.debug("Session team_id set to %s", url_tid)
         g.team_id = url_tid if url_tid is not None else session.get("team_id")
 
-        st = get_event_status_state()   # must not raise; if it can, it’s caught below
+        # 3) Event-status snapshot (single source of truth; must not raise)
+        st = get_event_status_state()
         g.current_gw = st.get("gw")
         g.is_live = st.get("is_live")
         g.event_last_update = st.get("last_update")
+        g.is_updating = bool(st.get("maintenance"))
+        g.fpl_status_msg = st.get(
+            "message") or "The game is being updated and will be available soon."
         session["current_gw"] = g.current_gw
 
+        app.logger.info("status: gw=%s live=%s updating=%s msg=%s",
+                        g.current_gw, g.is_live, g.is_updating, g.fpl_status_msg)
+
+        # 3a) Show friendly banner once per session
+        if g.is_updating and not session.get("fpl_notice_shown"):
+            flash(g.fpl_status_msg, "warning")
+            session["fpl_notice_shown"] = True
+
+        # Optional: let data routes know they should avoid live fetches right now
+        g.skip_live_fetch = g.is_updating
+
+        # 4) Load manager once per request (prefer cache; avoid live fetch during updating)
         g.manager = None
         if g.team_id:
             cache = g.__dict__.setdefault("_mgr_cache", {})
-            if g.team_id not in cache:
-                try:
-                    m = get_manager_data(g.team_id) or {}
-                    m["id"] = g.team_id
-                    cache[g.team_id] = m
-                except Exception as e:
-                    app.logger.error(
-                        "Failed to load manager %s: %s", g.team_id, e)
+            if g.is_updating:
+                # Don’t hit FPL while updating; use cached manager if available, else placeholder
+                if g.team_id in cache:
+                    g.manager = cache[g.team_id]
+                else:
                     cache[g.team_id] = {
                         "id": g.team_id, "first_name": "Unknown", "team_name": f"Manager {g.team_id}"}
-            g.manager = cache[g.team_id]
+                    g.manager = cache[g.team_id]
+            else:
+                if g.team_id not in cache:
+                    try:
+                        m = get_manager_data(g.team_id) or {}
+                        m["id"] = g.team_id
+                        cache[g.team_id] = m
+                    except Exception as e:
+                        app.logger.error(
+                            "Failed to load manager %s: %s", g.team_id, e)
+                        cache[g.team_id] = {
+                            "id": g.team_id, "first_name": "Unknown", "team_name": f"Manager {g.team_id}"}
+                g.manager = cache[g.team_id]
 
     except Exception:
         app.logger.error("before_request failed for %s\n%s",
                          p, traceback.format_exc())
         # proceed; views must tolerate missing g.*
     finally:
-        app.logger.debug("before_request %s in %.1fms",
-                         p, (time.perf_counter()-t0)*1000)
+        app.logger.debug("before_request %s in %.1fms", p,
+                         (time.perf_counter() - t0) * 1000)
 
 
 @app.get("/admin/gw-debug")
@@ -195,6 +222,18 @@ def inject_manager():
         "manager": g.manager
     }
 
+# For the NAV
+
+
+@app.context_processor
+def inject_status():
+    return {
+        "current_gw": getattr(g, "current_gw", None),
+        "is_live": bool(getattr(g, "is_live", False)),
+        "is_updating": bool(getattr(g, "is_updating", False)),
+        "fpl_status_msg": getattr(g, "fpl_status_msg", None),
+    }
+
 
 # Go to this URL to reset session
 @app.route('/reset-session')
@@ -229,6 +268,24 @@ def favicon():
 def debug_gw():
 
     return jsonify(current_gw=g.current_gw, session_gw=session.get("current_gw"))
+
+
+@app.get("/dev/maintenance/on")
+def dev_maint_on():
+    if not app.debug:
+        return ("Not allowed", 403)
+    os.environ["FPL_MAINTENANCE"] = "1"
+    session.pop("fpl_notice_shown", None)  # show banner again
+    return "Maintenance ON"
+
+
+@app.get("/dev/maintenance/off")
+def dev_maint_off():
+    if not app.debug:
+        return ("Not allowed", 403)
+    os.environ.pop("FPL_MAINTENANCE", None)
+    session.pop("fpl_notice_shown", None)
+    return "Maintenance OFF"
 
 
 # --- Flash preseason ---
@@ -753,6 +810,8 @@ if __name__ == "__main__":
 # export FLASK_ENV=development
 # export FLASK_DEBUG=1
 # flask run
+
+# FLASK_DEBUG=1 LOG_LEVEL=DEBUG python3 app.py
 
 # grep -r "print(" modules/
 # That will find all the print() calls inside your modules / directory (or wherever your app lives).

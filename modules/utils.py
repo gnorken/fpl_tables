@@ -1,4 +1,5 @@
 
+import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 from flask import g, flash, request
@@ -22,7 +23,7 @@ FPL_STATIC_URL = f"{FPL_API_BASE}/bootstrap-static/"
 FPL_EVENT_STATUS_URL = "https://fantasy.premierleague.com/api/event-status/"
 _ES_CACHE = {
     "gw": 1, "is_live": False, "last_update": None,
-    "sig": None, "at": None
+    "sig": None, "at": None, "maintenance": False, "message": None
 }
 # _ES_CACHE = {"ts": None, "at": None, "live": False}
 LIVE_TTL_SECONDS = 30  # advance freshness at most every 30s while live
@@ -48,6 +49,10 @@ SESSION.headers.update({
     "Accept-Encoding": "gzip",
     "Connection": "keep-alive",
 })
+
+
+def _maintenance_forced() -> bool:
+    return os.getenv("FPL_MAINTENANCE", "0").lower() in ("1", "true", "yes", "on")
 
 
 def get_json_cached(url, *, timeout=10):
@@ -121,27 +126,72 @@ def get_max_users():
 
 def get_event_status(force: bool = False):
     now = datetime.now(timezone.utc)
-    if (not force) and _ES_CACHE["at"] and (now - _ES_CACHE["at"]).total_seconds() < 30:
+
+    # 🔧 1) Manual override FIRST (before any cache early-return)
+    if _maintenance_forced():
+        _ES_CACHE.update({
+            "maintenance": True,
+            "message": "The game is being updated and will be available soon.",
+            "is_live": False,
+            "at": now,
+            # keep prior gw/last_update if present
+        })
         return _ES_CACHE
 
-    r = SESSION.get(FPL_EVENT_STATUS_URL, timeout=10)
-    r.raise_for_status()
-    js = r.json()
-    statuses = js.get("status", [])
+    # 2) Cache early-return — but don't return if cache says maintenance=True
+    #    and the override is now OFF (so we can clear stale maintenance).
+    if (not force) and _ES_CACHE["at"]:
+        fresh = (now - _ES_CACHE["at"]).total_seconds() < 30
+        if fresh and not _ES_CACHE.get("maintenance"):
+            return _ES_CACHE
+        # If maintenance was cached but override is OFF, fall through to fetch
+        # so we can clear it.
 
-    gw = max((s.get("event")
-             for s in statuses if isinstance(s.get("event"), int)), default=1)
-    is_live = any(s.get("points") == "l" for s in statuses)
-    sig = json.dumps(statuses, sort_keys=True)
+    # 3) Normal fetch + parse
+    try:
+        r = SESSION.get(FPL_EVENT_STATUS_URL, timeout=10)
+        if r.status_code == 503:
+            _ES_CACHE.update({
+                "maintenance": True,
+                "message": "The game is being updated and will be available soon.",
+                "is_live": False,
+                "at": now,
+            })
+            return _ES_CACHE
 
-    # bump last_update only when content changes (monotonic)
-    last_update = _ES_CACHE["last_update"] or datetime.now(timezone.utc)
-    if sig != _ES_CACHE["sig"]:
-        last_update = now
+        r.raise_for_status()
+        js = r.json()
+        statuses = js.get("status", [])
+        gw = max((s.get("event") for s in statuses if isinstance(s.get("event"), int)),
+                 default=_ES_CACHE.get("gw") or 1)
+        is_live = any(s.get("points") == "l" for s in statuses)
+        sig = json.dumps(statuses, sort_keys=True)
 
-    _ES_CACHE.update({"gw": gw, "is_live": is_live,
-                      "last_update": last_update, "sig": sig, "at": now})
-    return _ES_CACHE
+        last_update = _ES_CACHE["last_update"] or now
+        if sig != _ES_CACHE["sig"]:
+            last_update = now
+
+        _ES_CACHE.update({
+            "gw": gw,
+            "is_live": is_live,
+            "last_update": last_update,
+            "sig": sig,
+            "at": now,
+            "maintenance": False,
+            "message": None,
+        })
+        return _ES_CACHE
+
+    except Exception:
+        # network error: return whatever we have; if we have nothing, mark maintenance-ish
+        if not _ES_CACHE["at"]:
+            _ES_CACHE.update({
+                "maintenance": True,
+                "message": "The game is being updated and will be available soon.",
+                "is_live": False,
+                "at": now,
+            })
+        return _ES_CACHE
 
 # Backwards-compatible shims (no extra network)
 
@@ -155,9 +205,19 @@ def get_event_status_last_update() -> datetime:
 
 
 def get_event_status_state(force: bool = False):
-    gw = get_current_gw(force=force)
-    last = get_event_status_last_update()
-    return {"gw": gw, "is_live": bool(_ES_CACHE.get("is_live")), "last_update": last}
+    """
+    Single source of truth for event status used by before_request.
+    Returns gw, is_live, last_update, maintenance, message.
+    """
+    es = get_event_status(
+        force=force)  # <-- use the cached/override-aware call
+    return {
+        "gw": es.get("gw"),
+        "is_live": bool(es.get("is_live")),
+        "last_update": es.get("last_update"),
+        "maintenance": bool(es.get("maintenance")),
+        "message": es.get("message"),
+    }
 
 
 # Check latest entry in database
@@ -587,7 +647,8 @@ def fill_global_points_from_explain(
     # Fetch concurrently with a sensible cap
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
         # when submitting futures
-        futs = {ex.submit(session.get, url, timeout=TIMEOUT_SHORT)                : gw for gw, url in urls.items()}
+        futs = {ex.submit(session.get, url, timeout=TIMEOUT_SHORT)
+                          : gw for gw, url in urls.items()}
 
         for fut in as_completed(futs):
             gw = futs[fut]

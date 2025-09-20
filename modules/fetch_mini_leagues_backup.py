@@ -3,7 +3,7 @@ import logging
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from flask import url_for
-from modules.utils import ordinalformat
+from modules.utils import ordinalformat, get_static_data
 
 logger = logging.getLogger(__name__)
 
@@ -18,29 +18,16 @@ SPECIAL_FLAGS = {
     "nn": "gb-nir",  # Northern Ireland
 }
 
-# Add at the top of fetch_mini_league.py
-TEAM_CODE_TO_NAME = {
-    3: "Arsenal",
-    7: "Aston Villa",
-    90: "Burnley",
-    91: "Bournemouth",
-    94: "Brentford",
-    36: "Brighton",
-    7: "Chelsea",
-    31: "Crystal Palace",
-    11: "Everton",
-    54: "Fulham",
-    2: "Leeds",
-    14: "Liverpool",
-    43: "Manchester City",
-    1: "Manchester United",
-    4: "Newcastle",
-    17: "Nottingham Forest",
-    56: "Sunderland",
-    6: "Tottenham",
-    21: "West Ham",
-    39: "Wolves"
-}
+static_data = get_static_data()
+current_gw = next((e["id"] for e in static_data["events"]
+                  if e.get("is_current")), None)
+gw_finished = next(
+    (e["finished"] for e in static_data["events"] if e["id"] == current_gw), False)
+# optionally: data_checked = next((e["data_checked"] ...), False)
+
+# Maps from your cached bootstrap-static structure
+player_data_by_id = {e["id"]: e for e in static_data["elements"]}
+team_id_to_name = {t["id"]: t["name"] for t in static_data["teams"]}
 
 
 def get_entry_history(entry_id: int) -> dict:
@@ -163,22 +150,25 @@ def enrich_points_behind(managers: list[dict]) -> list[dict]:
 
 
 def build_manager(me: dict, league_entry: dict | None = None) -> dict:
-    raw = me.get("player_region_iso_code_short", "").strip().lower()
+    raw = (me.get("player_region_iso_code_short") or "").strip().lower()
     country_code = SPECIAL_FLAGS.get(raw, raw)
+
+    years_active_val = (me.get("years_active") or 0) + 1
 
     base = {
         "entry": me.get("id", me.get("entry")),
         "entry_name": me.get("entry_name", ""),
         "country_code": country_code,
-        "player_region_iso_code_long": me.get("player_region_iso_code_long", "N/A"),
-        "team_name": me.get("name", ""),
         "last_deadline_bank": me.get("last_deadline_bank") or 0,
         "last_deadline_total_transfers": me.get("last_deadline_total_transfers") or 0,
         "last_deadline_value": me.get("last_deadline_value") or 0,
         "player_name": f"{me.get('player_first_name', '')} {me.get('player_last_name', '')}".strip(),
+        "player_region_iso_code_long": me.get("player_region_iso_code_long", "N/A"),
+        "summary_event_points": me.get("summary_event_points", 0),
+        "team_name": me.get("name", ""),
         "total_points": me.get("summary_overall_points", 0),
-        "years_active": me.get("years_active") + 1 or 0,
-        "years_active_label": me.get("years_active") + 1 or 0,
+        "years_active": years_active_val,
+        "years_active_label": years_active_val,
     }
 
     if league_entry:
@@ -188,12 +178,12 @@ def build_manager(me: dict, league_entry: dict | None = None) -> dict:
         })
 
     # National league URL
-    country_name = me.get("player_region_name", "").strip().lower()
+    country_name = (me.get("player_region_name") or "").strip().lower()
     classic_leagues = me.get("leagues", {}).get("classic", [])
     base["national_league_url"] = None
     if country_name and classic_leagues:
         for league in classic_leagues:
-            league_name = league.get("name", "").strip().lower()
+            league_name = (league.get("name") or "").strip().lower()
             if league_name == country_name:
                 try:
                     base["national_league_url"] = url_for(
@@ -203,60 +193,106 @@ def build_manager(me: dict, league_entry: dict | None = None) -> dict:
                         f"Failed to generate URL for league {league.get('id')}: {e}")
                     base["national_league_url"] = None
 
-    # Fetch current gameweek and captain data
-    current_gw = get_current_gameweek()
-    player_data = get_player_data()
+    # ---------- Static data (from DB) ----------
+    from modules.utils import get_static_data
+    static_data = get_static_data() or {}
+    elements = static_data.get("elements", [])
+    teams = static_data.get("teams", [])
+    events = static_data.get("events", [])
+
+    player_data_by_id = {e["id"]: e for e in elements}
+    team_id_to_name = {t["id"]: t["name"] for t in teams}
+
+    current_gw = next((e["id"] for e in events if e.get("is_current")), None)
+    gw_finished = next((e["finished"]
+                       for e in events if e.get("id") == current_gw), False)
+
+    # ---------- Live + picks ----------
     live_points = get_live_points(current_gw) if current_gw else {}
     picks = get_picks(base["entry"], current_gw) if current_gw else []
 
-    # Initialize captain fields
+    # ---------- Entry history (CHIPS, ranks, etc.) ----------
+    history = get_entry_history(base["entry"])
+    chips = history.get("chips", []) or []
+
+    # Active chip (label for UI + numeric for backend sort alias)
+    chip_name_map = {
+        "bboost": "Bench Boost",
+        "freehit": "Free Hit",
+        "3xc": "Triple Captain",
+        "wildcard": "Wildcard",
+    }
+    chip_order = {"bboost": 1, "freehit": 2, "3xc": 3, "wildcard": 4}
+
+    active_chip_code = next(
+        (c.get("name") for c in chips
+         if c.get("event") == current_gw and c.get("name") in chip_name_map),
+        None
+    )
+    base["active_chip"] = chip_name_map.get(active_chip_code, "")
+    base["active_chip_sort"] = chip_order.get(
+        active_chip_code, 99)  # empties last
+
+    # ---------- Captain snapshot ----------
     base["captain_current_name"] = "N/A"
     base["captain_current_team"] = "N/A"
+    base["captain_current_team_id"] = 0
     base["captain_current_team_code"] = 0
+    base["captain_current_multiplier"] = 0
     base["captain_current_points"] = 0
+    base["captain_current_pending"] = False
 
     if picks and current_gw:
-        # Check for Triple Captain chip
-        history = get_entry_history(base["entry"])
-        chips = history.get("chips", [])
-        is_triple_captain = any(
-            chip["name"] == "3xc" and chip["event"] == current_gw for chip in chips)
-        multiplier = 3 if is_triple_captain else 2
+        # Pick armband by multiplier (>1 covers C/TC; VC will only move after GW ends)
+        armband = next((p for p in picks if int(
+            p.get("multiplier", 1) or 1) > 1), None)
+        if armband is None:
+            armband = next((p for p in picks if p.get("is_captain")), None)
 
-        for pick in picks:
-            if pick.get("is_captain"):
-                element_id = pick.get("element")
-                player = player_data.get(element_id, {})
-                points_data = live_points.get(element_id, {})
-                base["captain_current_name"] = f"{player.get('web_name', '')}".strip(
-                ) or "N/A"
+        if armband:
+            element_id = armband.get("element")
+            player = player_data_by_id.get(element_id, {}) or {}
+            stats = live_points.get(element_id, {}) or {}
+            mult = int(armband.get("multiplier", 1) or 1)
 
-                # In build_manager, replace player_data.get("teams", ...) with:
-                base["captain_current_team"] = TEAM_CODE_TO_NAME.get(
-                    player.get("team_code", 0), "N/A")
-                base["captain_current_team_code"] = player.get("team_code", 0)
-                base["captain_current_points"] = points_data.get(
-                    "total_points", 0) * multiplier
-                break
+            team_id = player.get("team")
+            team_code = player.get("team_code", 0)
 
-    history = get_entry_history(base["entry"])
-    base["chips"] = history["chips"]
-    base["bench_points"] = history["bench_points"]
-    base["transfer_cost"] = history["transfer_cost"]
-    base["overall_rank"] = history["overall_rank"] or 0
-    base["overall_last_rank"] = history["overall_last_rank"] or 0
+            base["captain_current_name"] = player.get("web_name", "N/A")
+            base["captain_current_team"] = team_id_to_name.get(team_id, "N/A")
+            base["captain_current_team_id"] = team_id or 0
+            base["captain_current_team_code"] = team_code or 0
+            base["captain_current_multiplier"] = mult
 
+            minutes = int(stats.get("minutes") or 0)
+            total_points = int(stats.get("total_points") or 0)
+
+            if not gw_finished and minutes == 0:
+                base["captain_current_points"] = None  # UI shows ⏳ for None
+                base["captain_current_pending"] = True
+            else:
+                base["captain_current_points"] = total_points * mult
+                base["captain_current_pending"] = False
+
+    # ---------- Copy history metrics ----------
+    base["chips"] = chips
+    base["bench_points"] = history.get("bench_points", 0)
+    base["transfer_cost"] = history.get("transfer_cost", 0)
+    base["overall_rank"] = history.get("overall_rank") or 0
+    base["overall_last_rank"] = history.get("overall_last_rank") or 0
+
+    # Per-chip first-use GWs (for your columns)
     chip_events: dict[str, list[int]] = {}
-    for c in base["chips"]:
-        chip_events.setdefault(c["name"], []).append(c["event"])
+    for c in chips:
+        chip_events.setdefault(c.get("name"), []).append(c.get("event"))
 
-    wcs = chip_events.get("wildcard", [])
+    wcs = chip_events.get("wildcard", []) or []
     base["wildcard1_gw"] = wcs[0] if len(wcs) > 0 else 0
     base["wildcard2_gw"] = wcs[1] if len(wcs) > 1 else 0
 
     for chip_name in ("3xc", "bboost", "freehit", "manager"):
-        events = chip_events.get(chip_name, [])
-        base[f"{chip_name}_gw"] = events[0] if events else 0
+        events_used = chip_events.get(chip_name, []) or []
+        base[f"{chip_name}_gw"] = events_used[0] if events_used else 0
 
     return base
 

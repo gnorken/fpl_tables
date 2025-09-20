@@ -1,4 +1,3 @@
-# fetch_mini_league.py
 import logging
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed

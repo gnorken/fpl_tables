@@ -50,11 +50,20 @@
 </head>
 
 <body class="d-flex flex-column min-vh-100">
-  {% if get_flashed_messages() %}
-  <div class="alert alert-primary my-3 text-center" role="alert">
-    {{ get_flashed_messages() | join(" ") }}
-  </div>
-  {% endif %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="my-3 text-center">
+        {% for category, message in messages %}
+        <div
+          class="alert alert-{{ category if category in ['primary','secondary','success','danger','warning','info','light','dark'] else 'primary' }} mb-2"
+          role="alert">
+          {{ message }}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% endwith %}
+
 
   {% include "nav.html" %}
 

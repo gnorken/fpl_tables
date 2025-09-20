@@ -954,3 +954,9 @@ th.sorted {
   color: black !important;
 }
 /**/
+
+/* in the NAV*/
+.live-indicator {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
