@@ -550,23 +550,35 @@ def get_sorted_players():
         conn = sqlite3.connect(DATABASE, check_same_thread=False)
         cur = conn.cursor()
 
-        # Always pass GW so get_static_data doesn't think it's preseason
+        # Optional manual override (handy for testing; safe to keep)
+        refresh = request.args.get("refresh") in ("1", "true", "yes")
+
+        # Always pass GW so get_static_data doesn't think it's preseason (you already do this)
         static_data = static_data or get_static_data(
             current_gw=current_gw,
             event_updated_iso=(g.event_last_update.isoformat()
                                if g.event_last_update else None)
         )
-
         if not static_data:
             return jsonify({"error": "Failed to load static_data"}), 500
 
-        # Current gameweek (for cache key)
-            # If g.current_gw wasn't set for some reason, fall back to events
+        # Ensure current_gw exists (you already do this)
         if not current_gw:
             current_gw = next(
                 (e["id"] for e in static_data["events"] if e.get("is_current")), None)
         if not current_gw:
             return jsonify({"error": "No current gameweek"}), 500
+
+        # --- NEW: read the freshness anchor used by your other tables ---
+        cur.execute(
+            "SELECT last_fetched FROM static_player_info WHERE gameweek = ?", (current_gw,))
+        _row_static = cur.fetchone()
+        static_info_last = None
+        if _row_static and _row_static[0]:
+            try:
+                static_info_last = datetime.fromisoformat(_row_static[0])
+            except Exception:
+                static_info_last = None
 
         # ── Cache check with freshness ────────────────────────────────
         cur.execute("""
@@ -581,31 +593,37 @@ def get_sorted_players():
                 last = datetime.fromisoformat(last_iso)
             except Exception:
                 return False
-            now = datetime.now(timezone.utc)
-            if g.is_live:
-                return (now - last) < LIVE_TTL
+
+            # 1) If we know when events last updated, cache must be at least that new
             if g.event_last_update:
-                return last >= g.event_last_update
-            return (now - last) < COLD_TTL
+                if last < g.event_last_update:
+                    return False
+
+            # 2) Align with other tables: cache must also be >= static_player_info.last_fetched
+            if static_info_last and last < static_info_last:
+                return False
+
+            # 3) Otherwise accept the cached row (no extra TTL differences here)
+            return True
 
         use_cache = False
-        if row:
+        if row and not refresh:
             cached_json, last_fetched_iso = row
             use_cache = _is_cache_fresh(last_fetched_iso)
             app.logger.debug(
-                "[mini_league] cache %s (last_fetched=%s, event_last_update=%s, live=%s)",
+                "[mini_league] cache %s (last_fetched=%s, static_info_last=%s, event_last_update=%s)",
                 "HIT" if use_cache else "STALE",
                 last_fetched_iso,
+                (_row_static[0] if _row_static else None),
                 (g.event_last_update.isoformat() if g.event_last_update else None),
-                g.is_live,
             )
 
         if use_cache:
             rows = json.loads(cached_json)
-
         else:
             app.logger.debug(
                 "[mini_league] rebuilding league=%s gw=%s", league_id, current_gw)
+            # ... your existing rebuild code unchanged ...
 
             # Build fresh rows safely
             rows = []
