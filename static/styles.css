@@ -96,11 +96,10 @@ a:active {
 .rank {
   flex: 0 0 3ch;
   /* reserve space for up to 3 digits */
-  text-align: right;
   padding-right: .25rem;
   font-variant-numeric: tabular-nums;
   /* monospaced numerals */
-  line-height: 1;
+  /* line-height: 1; */
   /* tidy vertical rhythm */
   border-right: 1px solid rgba(0, 0, 0, .1);
 }
@@ -502,7 +501,7 @@ td {
 .interactive-table th.sticky-col::after {
   content: none;
 }
-
+/* sticky-cols end*/
 
 /* mini league current team highlighter */
 .table tbody tr.highlight-current>* {

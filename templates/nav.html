@@ -1,42 +1,72 @@
-<header class="bg-primary text-light p-2">
+{# ===== Helpers & safe guards (top of file) ===== #}
+{% set has_manager = manager is defined and manager %}
+{% set has_team = team_id is defined and team_id %}
 
+{# Compact counts with K/M, dash for unknown #}
+{% macro fmt_count_compact(n) -%}
+{%- if n is number and n >= 1000000 -%}
+{{ (n / 1000000)|round(1) }}M
+{%- elif n is number and n >= 100000 -%}
+{{ ((n + 500) // 1000)|int }}K
+{%- elif n is number and n >= 1000 -%}
+{{ n|thousands }}
+{%- elif n is number and n > 0 -%}
+{{ n }}
+{%- else -%}
+—
+{%- endif -%}
+{%- endmacro %}
+
+{# Rank: ordinal for small numbers; compact (no ordinal) for big #}
+{% macro fmt_rank_compact(r) -%}
+{%- if r is number and r > 0 -%}
+{%- if r >= 1000000 -%}
+{{ (r / 1000000)|round(1) }}M
+{%- elif r >= 100000 -%}
+{{ ((r + 500) // 1000)|int }}K
+{%- else -%}
+{{ r|ordinalformat }}
+{%- endif -%}
+{%- else -%}
+—
+{%- endif -%}
+{%- endmacro %}
+
+<header class="bg-primary text-light p-2">
     <nav class="d-flex align-items-center">
-        <!-- MANGER INFO SMALL-->
+        <!-- LOGO + GW -->
         <div id="header-logo-gw" class="{{ '' if request.endpoint == 'index' else 'd-none d-md-block' }} me-2">
             <a href="/" class="d-flex align-items-end text-light text-decoration-none p-2">
                 <h1 id="header-logo" class="m-0 h6 fw-bold">FPL Tables</h1>
-                    <span id="header-gw" class="d-none d-sm-block px-2 text-center fw-lighter" aria-live="polite">
-                        {% if is_updating %}
-                        Updating
-                        {% elif current_gw is none %}
-                        Preseason
-                        {% else %}
-                        GW{{ current_gw }}{% if is_live %} <span class="live-indicator" title="Matches live">LIVE 🔴</span>{% endif %}
-                        {% endif %}
-                    </span>
+                <span id="header-gw" class="d-none d-sm-block px-2 text-center fw-lighter" aria-live="polite">
+                    {% if is_updating %}
+                    Updating
+                    {% elif current_gw is none %}
+                    Preseason
+                    {% else %}
+                    GW{{ current_gw }}{% if is_live %} <span class="live-indicator" title="Matches live">LIVE
+                        🔴</span>{% endif %}
+                    {% endif %}
+                </span>
             </a>
         </div>
 
-        {% if manager %}
-        <!-- <div id="header-team" class="d-flex align-items-end p-1"> -->
-            <div id="flag" class="me-2">
-                {% if manager.national_league_url %}
-                <a href="{{ manager.national_league_url }}">
-                    {{ manager.flag_html|safe }}
-                </a>
-                {% else %}
-                    {{ manager.flag_html|safe }}
-                {% endif %}
-
+        {# MANAGER BADGE + NAMES (only if we have a manager) #}
+        {% if has_manager %}
+        <div id="flag" class="me-2">
+            {% if manager.national_league_url %}
+            <a href="{{ manager.national_league_url }}">{{ manager.flag_html|safe }}</a>
+            {% else %}
+            {{ manager.flag_html|safe }}
+            {% endif %}
+        </div>
+        <a href="{{ url_for('manager', team_id=team_id) }}">
+            <div id="header-team-name" class="d-flex flex-column">
+                <h2 class="mb-0">{{ manager.first_name }} {{ manager.last_name }}'s&nbsp;</h2>
+                <h2 class="mb-0">{{ manager.team_name }}</h2>
             </div>
-            <a href="{{ url_for('manager', team_id=team_id) }}">
-                <div id="header-team-name" class="d-flex flex-column">
-                    <h2 class="mb-0">{{ manager.first_name }} {{ manager.last_name }}'s&nbsp;</h2>
-                    <h2 class="mb-0">{{ manager.team_name }}</h2>
-                </div>
-            </a>
-        <!-- </div> -->
-
+        </a>
+        {% endif %}
 
         <!-- THE DROPDOWN BUTTON -->
         <div class="dropdown ms-auto">
@@ -44,10 +74,12 @@
                 aria-expanded="false">
                 Menu
             </button>
+
             <ul class="dropdown-menu" aria-labelledby="tables-btn">
+                {# Link macro (disabled if no team) #}
                 {% macro nav_item(label, endpoint, page_name) %}
                 <li>
-                    {% if team_id %}
+                    {% if has_team %}
                     <a class="dropdown-item{% if current_page == page_name %} active{% endif %}"
                         href="{{ url_for(endpoint, team_id=team_id) }}">
                         {{ label }}
@@ -59,84 +91,92 @@
                 {% endmacro %}
 
                 <li>
-                    {% if manager %}
+                    {% if has_manager %}
                     <a class="dropdown-item{% if current_page == 'manager' %} active{% endif %}"
                         href="{{ url_for('manager', team_id=team_id) }}">
-                        {{ manager.team_name }}
+                        {{ manager.team_name }} Team History
                     </a>
                     {% else %}
-                    <a class="dropdown-item disabled">No manager</a>
+                    <a class="dropdown-item disabled">No manager. Please enter ID for custom tables</a>
                     {% endif %}
                 </li>
 
                 <li>
                     <hr class="dropdown-divider">
                 </li>
+
                 <li>
-                    <h6 class="dropdown-header">Tables</h6>
+                    <h6 class="dropdown-header">
+                        {% if has_manager %}{{ manager.team_name }} tables{% else %}Your tables{% endif %}
+                    </h6>
                 </li>
+
                 {{ nav_item('Summary', 'summary', 'summary') }}
                 {{ nav_item('Defence', 'defence', 'defence') }}
                 {{ nav_item('Offence', 'offence', 'offence') }}
                 {{ nav_item('By Points', 'points', 'points') }}
                 {{ nav_item('By Teams', 'teams', 'teams') }}
-                <li>
-                    <hr class="dropdown-divider">
-                </li>
-                {{ nav_item('Talisman', 'talisman', 'talisman') }}
-                <li>
-                    <hr class="dropdown-divider">
-                </li>
-                <li><a class="dropdown-item" href="/">Enter New ID</a></li>
+
                 <li>
                     <hr class="dropdown-divider">
                 </li>
 
-                {% if manager and manager.classic_leagues %}
+                <li>
+                    <h6 class="dropdown-header">General tables</h6>
+                </li>
+                {{ nav_item('Talisman', 'talisman', 'talisman') }}
+
+                <li>
+                    <hr class="dropdown-divider">
+                </li>
+
+                <li><a class="dropdown-item" href="/">Enter New ID</a></li>
+
+                <li>
+                    <hr class="dropdown-divider">
+                </li>
+
+                {# MINI-LEAGUES (render only when we have manager; keeps dropdown intact on "/") #}
+                {% if has_manager and manager.classic_leagues %}
                 <li>
                     <h6 class="dropdown-header">My Mini-Leagues</h6>
                 </li>
+
                 {% for league in manager.classic_leagues %}
                 {% set r = league.entry_rank %}
+                {% set last = league.entry_last_rank %}
+                {% set size = league.rank_count %}
+
+                {# Top-3 precedence over bottom 💩; then ▲/▼/— #}
                 {% set pod =
-                r == league.rank_count and "💩" or
-                r in [1,2,3] and ( session.current_gw==38
-                and ["🥇","🥈","🥉"][r-1]
-                or ["1️⃣","2️⃣","3️⃣"][r-1] )
-                or ( league.entry_rank < league.entry_last_rank and "▲" or league.entry_rank> league.entry_last_rank and
-                    "▼"
+                (r in [1,2,3]) and (
+                session.current_gw == 38 and ["🥇","🥈","🥉"][r-1] or ["1️⃣","2️⃣","3️⃣"][r-1]
+                )
+                or (size and r == size) and "💩"
+                or ( last is number and r is number and r < last and "▲" or last is number and r is number and r> last
+                    and "▼"
                     or "—" )
                     %}
-                    <li
-                        class="{{ 'green-text' if league.entry_rank < league.entry_last_rank else league.entry_rank > league.entry_last_rank and 'red-text' or '' }}">
+
+                    <li class="{{ 'green-text' if (last is number and r is number and r < last)
+                         else (last is number and r is number and r > last and 'red-text' or '') }}">
                         <a class="dropdown-item d-flex justify-content-between {% if current_page=='mini_leagues' and league.id==league_id %} active{% endif %}"
                             href="{{ url_for('mini_leagues', league_id=league.id) }}">
                             <span>
                                 <span class="me-2">{{ pod }}</span>
                                 {{ league.name }} {{ league.name|territory_icon|safe }}
                             </span>
-                            <span>
-                                ({{ r|ordinalformat }} of {{ league.rank_count|thousands }})
+                            <span class="ms-3">
+                                ({{ fmt_rank_compact(r) }}{% if size %} of {{ fmt_count_compact(size) }}{% endif %})
                             </span>
                         </a>
                     </li>
                     {% endfor %}
-                    {% else %}
+
+                    {% elif has_manager %}
                     <li><a class="dropdown-item disabled">No mini-leagues</a></li>
                     {% endif %}
-                    <li>
-                        <hr class="dropdown-divider">
-                    </li>
-
-                    <li>
-                        <a class="dropdown-item{% if current_page=='about' %} active{% endif %}"
-                            href="{{ url_for('about') }}">
-                            About
-                        </a>
-                    </li>
             </ul>
         </div>
-        {% endif %}
     </nav>
-
 </header>
