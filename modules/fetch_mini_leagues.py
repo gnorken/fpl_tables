@@ -1,10 +1,17 @@
+import json
+import sqlite3
+from datetime import datetime, timezone
+import traceback
 import logging
+import traceback
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from flask import url_for
 from modules.utils import ordinalformat, get_static_data
+from modules.live_cache import get_live_points_map
 
 logger = logging.getLogger(__name__)
+
 
 FPL_API = "https://fantasy.premierleague.com/api"
 SESSION = requests.Session()
@@ -27,6 +34,25 @@ gw_finished = next(
 # Maps from your cached bootstrap-static structure
 player_data_by_id = {e["id"]: e for e in static_data["elements"]}
 team_id_to_name = {t["id"]: t["name"] for t in static_data["teams"]}
+
+
+DATABASE = "page_views.db"  # or your actual path
+
+
+def get_live_points(event_id: int, cur: sqlite3.Cursor | None = None) -> dict[int, dict]:
+    """
+    Return id->stats for a GW via the shared live cache.
+    If 'cur' is None, open a short-lived connection so legacy callers still work.
+    """
+    local_conn = None
+    try:
+        if cur is None:
+            local_conn = sqlite3.connect(DATABASE, check_same_thread=False)
+            cur = local_conn.cursor()
+        return get_live_points_map(cur, event_id, FPL_API)
+    finally:
+        if local_conn is not None:
+            local_conn.close()
 
 
 def get_entry_history(entry_id: int) -> dict:
@@ -86,15 +112,6 @@ def get_player_data():
     return {p["id"]: p for p in resp.json().get("elements", [])}
 
 
-def get_live_points(event_id: int):
-    url = f"{FPL_API}/event/{event_id}/live/"
-    resp = SESSION.get(url)
-    if not resp.ok:
-        logger.error("Failed to fetch live points for event %s", event_id)
-        return {}
-    return {p["id"]: p["stats"] for p in resp.json().get("elements", [])}
-
-
 def get_picks(entry_id: int, event_id: int):
     url = f"{FPL_API}/entry/{entry_id}/event/{event_id}/picks/"
     resp = SESSION.get(url)
@@ -148,7 +165,15 @@ def enrich_points_behind(managers: list[dict]) -> list[dict]:
     return managers
 
 
-def build_manager(me: dict, league_entry: dict | None = None) -> dict:
+def build_manager(me: dict, league_entry: dict | None = None, cur=None) -> dict:
+    """
+    Build a manager snapshot. If 'cur' (sqlite cursor) is provided,
+    live points are fetched via the shared SQLite live cache.
+    """
+    # inside build_manager
+    # logger.info("build_manager called\n%s", "".join(
+    #     traceback.format_stack(limit=6)))
+
     raw = (me.get("player_region_iso_code_short") or "").strip().lower()
     country_code = SPECIAL_FLAGS.get(raw, raw)
 
@@ -218,14 +243,14 @@ def build_manager(me: dict, league_entry: dict | None = None) -> dict:
         base["summary_event_points_pending"] = False
 
     # ---------- Live + picks ----------
-    live_points = get_live_points(current_gw) if current_gw else {}
+    # NEW: route via shared live cache (uses cur if provided)
+    live_points = get_live_points(current_gw, cur) if current_gw else {}
     picks = get_picks(base["entry"], current_gw) if current_gw else []
 
     # ---------- Entry history (CHIPS, ranks, etc.) ----------
     history = get_entry_history(base["entry"])
     chips = history.get("chips", []) or []
 
-    # Active chip (label for UI + numeric for backend sort alias)
     chip_name_map = {
         "bboost": "Bench Boost",
         "freehit": "Free Hit",
@@ -316,6 +341,9 @@ def get_league_name(league_id: int) -> str:
 
 
 def get_team_ids_from_league(league_id: int, max_show: int) -> list[dict]:
+    '''
+    Find the team ids and call build managers
+    '''
     url = f"{FPL_API}/leagues-classic/{league_id}/standings/"
     resp = SESSION.get(url)
     resp.raise_for_status()
@@ -373,7 +401,8 @@ def get_team_mini_league_summary(team_id: int, static_data: dict, live_data_map:
     }
     picks_map = {}
     with ThreadPoolExecutor(max_workers=8) as ex:
-        future_to_gw = {ex.submit(SESSION.get, url): gw for gw, url in pick_urls.items()}
+        future_to_gw = {ex.submit(SESSION.get, url)
+                                  : gw for gw, url in pick_urls.items()}
         for fut in as_completed(future_to_gw):
             gw = future_to_gw[fut]
             try:
@@ -385,7 +414,7 @@ def get_team_mini_league_summary(team_id: int, static_data: dict, live_data_map:
 
     summary = {
         "assists_team": 0,
-        "bps_team": 0,  # Change to bonus_points_team
+        "bps_team": 0,  # Not in use
         "bonus_team": 0,
         "captain_points_team": 0,
         "clean_sheets_team": 0,

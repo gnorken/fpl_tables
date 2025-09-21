@@ -29,6 +29,7 @@ from modules.fetch_mini_leagues import (
 from modules.fetch_teams_table import aggregate_team_stats
 from modules.fetch_all_tables import build_player_info, populate_player_info_all_with_live_data
 from modules.fetch_manager_data import get_manager_data, get_manager_history
+from modules.live_cache import get_live_elements
 
 # ── Logging config (controlled by env LOG_LEVEL) ─────────────────────────────
 LOG_LEVEL_NAME = os.environ.get("LOG_LEVEL", "INFO").upper()
@@ -637,13 +638,9 @@ def get_sorted_players():
                 live_data_map = {}
                 for gw in range(1, current_gw + 1):
                     try:
-                        url = f"{FPL_API}/event/{gw}/live/"
-                        resp = requests.get(
-                            url, headers={"User-Agent": "Mozilla/5.0"})
-                        live_data_map[gw] = resp.json().get("elements", [])
+                        live_data_map[gw] = get_live_elements(cur, gw, FPL_API)
                     except Exception as e:
-                        app.logger.warning(
-                            "Failed to fetch live data for gw=%s: %s", gw, e)
+                        app.logger.warning("live fetch fail gw=%s: %s", gw, e)
                         live_data_map[gw] = []
 
                 # Build each manager row
