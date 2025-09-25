@@ -40,16 +40,13 @@ CREATE TABLE IF NOT EXISTS team_player_info (
 """)
 
 cur.execute("""
-CREATE TABLE IF NOT EXISTS mini_league_cache (
-    league_id    INTEGER NOT NULL,
-    gameweek     INTEGER NOT NULL,
-    team_id      INTEGER,
-    max_show     INTEGER NOT NULL,
-    data         TEXT NOT NULL,
-    last_fetched TEXT NOT NULL,
-    PRIMARY KEY (league_id, gameweek, team_id, max_show)
+CREATE TABLE IF NOT EXISTS live_elements_cache(
+    gameweek INTEGER PRIMARY KEY,
+    data TEXT NOT NULL,
+    last_fetched TEXT NOT NULL
 )
 """)
+
 
 cur.execute("""
 CREATE TABLE IF NOT EXISTS managers (

@@ -2,15 +2,14 @@
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
-from flask import g, flash, request
+from flask import g, flash
 import json
 import logging
 import pycountry
 from markupsafe import Markup
 from modules.fetch_all_tables import build_player_info
+from modules.http_client import HTTP
 import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util import Retry
 import sqlite3
 
 logger = logging.getLogger(__name__)
@@ -34,23 +33,6 @@ TIMEOUT_MED = (3, 8)
 TIMEOUT_LONG = (3, 12)
 
 
-SESSION = requests.Session()
-adapter = HTTPAdapter(
-    pool_connections=10,
-    pool_maxsize=20,
-    max_retries=Retry(total=3, backoff_factor=0.3,
-                      status_forcelist=[502, 503, 504]),
-)
-SESSION.mount("https://", adapter)
-SESSION.mount("http://", adapter)
-SESSION.headers.update({
-    "User-Agent": "Mozilla/5.0",
-    "Accept": "application/json",
-    "Accept-Encoding": "gzip",
-    "Connection": "keep-alive",
-})
-
-
 def _maintenance_forced() -> bool:
     return os.getenv("FPL_MAINTENANCE", "0").lower() in ("1", "true", "yes", "on")
 
@@ -60,7 +42,7 @@ def get_json_cached(url, *, timeout=10):
         g.http_cache = {}
     if url in g.http_cache:
         return g.http_cache[url]
-    r = SESSION.get(url, timeout=timeout)
+    r = HTTP.get(url, timeout=timeout)
     r.raise_for_status()
     js = r.json()
     g.http_cache[url] = js
@@ -83,7 +65,7 @@ def validate_team_id(team_id, max_users):
         if 1 <= team_id <= max_users:
             # Test API to check if the game is being updated
             manager_url = f"{FPL_API_BASE}/entry/{team_id}/"
-            manager_response = SESSION.get(manager_url)
+            manager_response = HTTP.get(manager_url)
             logger.debug(
                 f"FPL API status code: {manager_response.status_code}")
             logger.debug(f"max_users: {max_users}")
@@ -149,7 +131,7 @@ def get_event_status(force: bool = False):
 
     # 3) Normal fetch + parse
     try:
-        r = SESSION.get(FPL_EVENT_STATUS_URL, timeout=10)
+        r = HTTP.get(FPL_EVENT_STATUS_URL, timeout=10)
         if r.status_code == 503:
             _ES_CACHE.update({
                 "maintenance": True,
@@ -238,7 +220,7 @@ def init_last_event_updated():
                 UNION ALL
                 SELECT last_fetched FROM team_player_info
                 UNION ALL
-                SELECT last_fetched FROM mini_league_cache
+                SELECT last_fetched FROM mini_league_summary_cache
                 UNION ALL
                 SELECT last_fetched FROM managers
             )
@@ -252,16 +234,22 @@ def init_last_event_updated():
     logger.debug(f"✅ Initialized _last_event_updated={_last_event_updated}")
 
 
-def get_static_data(force_refresh: bool = False, current_gw: int = -1, event_updated_iso: str | None = None):
+def get_static_data(
+    force_refresh: bool = False,
+    current_gw: int = -1,
+    event_updated_iso: str | None = None,
+    include_global_points: bool = True,   # ✅ new parameter
+):
     logger.debug("🔄 [get_static_data] called")
 
-    # use provided value (from g) if available
+    # Use provided value (from g) if available
     if event_updated_iso is None:
         event_updated = get_event_status_last_update()
         event_updated_iso = event_updated.isoformat()
     else:
         event_updated = datetime.fromisoformat(event_updated_iso)
     logger.debug("🕒 [get_static_data] event_updated: %s", event_updated)
+
     now_utc = datetime.now(timezone.utc)
 
     conn = open_conn(DATABASE)
@@ -273,6 +261,8 @@ def get_static_data(force_refresh: bool = False, current_gw: int = -1, event_upd
     row = cur.fetchone()
 
     need_fetch_static = True
+    static_data = None
+
     if row and not force_refresh:
         data_str, last_ts = row
         try:
@@ -282,14 +272,14 @@ def get_static_data(force_refresh: bool = False, current_gw: int = -1, event_upd
         age = (now_utc - cached_time).total_seconds()
         if age < STATIC_TTL_SECONDS:
             logger.debug(
-                "✅ [get_static_data] bootstrap-static within TTL → using cache")
+                "✅ [get_static_data] bootstrap-static within TTL → using cache (no bump)")
             static_data = json.loads(data_str)
             need_fetch_static = False
 
     if need_fetch_static:
         logger.debug(
-            "⚠️ [get_static_data] bootstrap-static TTL expired (or no row) → fetching")
-        resp = SESSION.get(FPL_STATIC_URL, timeout=TIMEOUT_MED)
+            "⚠️ [get_static_data] bootstrap-static TTL expired (or no row/force) → fetching")
+        resp = HTTP.get(FPL_STATIC_URL, timeout=TIMEOUT_MED)
         resp.raise_for_status()
         static_data = resp.json()
         cur.execute(
@@ -301,35 +291,45 @@ def get_static_data(force_refresh: bool = False, current_gw: int = -1, event_upd
     gw_key = current_gw if (isinstance(current_gw, int)
                             and current_gw >= 1) else -1
 
-    # 3) Build static blob
+    # 3) Build static blob (derived / denormalised view of bootstrap)
     static_blob = build_player_info(static_data)
 
-    # 4) Populate global points only when season started (driven by event_status freshness)
-    if current_gw != -1:
+    # 4) Populate global points only when season started AND requested
+    if include_global_points and current_gw != -1:
         fill_global_points_from_explain(
             static_blob=static_blob,
             current_gw=gw_key,
             event_updated_iso=event_updated_iso,
-            conn=conn,   # reuse same connection
+            conn=conn,
             cur=cur
         )
-    else:
-        logger.info("Preseason (gw=-1) → skipping team_player_info population")
 
-    # 5) Snapshot for routes to read (use *now* as snapshot time)
-    snapshot_time = now_utc.isoformat()
-    cur.execute("""
-        INSERT OR REPLACE INTO static_player_info (gameweek, data, last_fetched)
-        VALUES (?, ?, ?)
-    """, (gw_key, json.dumps(static_blob), snapshot_time))
-    logger.debug("💾 [get_static_data] Updated static_player_info table")
+    # 5) Snapshot for routes to read (write only when we fetched fresh or first init)
+    should_write_snapshot = bool(need_fetch_static or force_refresh)
+    if not should_write_snapshot:
+        cur.execute(
+            "SELECT 1 FROM static_player_info WHERE gameweek = ?", (gw_key,))
+        if not cur.fetchone():
+            logger.debug(
+                "🆕 [get_static_data] initialising static_player_info row for gw=%s", gw_key)
+            should_write_snapshot = True
+
+    if should_write_snapshot:
+        snapshot_time = now_utc.isoformat()
+        cur.execute("""
+            INSERT OR REPLACE INTO static_player_info (gameweek, data, last_fetched)
+            VALUES (?, ?, ?)
+        """, (gw_key, json.dumps(static_blob), snapshot_time))
+        logger.debug(
+            "💾 [get_static_data] Wrote static_player_info (last_fetched=%s) gw=%s", snapshot_time, gw_key)
+    else:
+        logger.debug(
+            "🙅 [get_static_data] Skipped writing static_player_info (cache hit; no bump) gw=%s", gw_key)
 
     conn.commit()
     conn.close()
     logger.debug("🔚 [get_static_data] finished")
     return static_data
-
-# Check if I have the latest data
 
 
 def _floor_to_bucket(dt: datetime, seconds: int) -> datetime:
@@ -341,7 +341,8 @@ def prune_stale_data(conn, event_updated):
     """
     Delete stale rows from key tables and print comparisons for debugging.
     """
-    tables = ["team_player_info", "mini_league_cache", "managers"]
+    tables = ["team_player_info", "mini_league_breakdown_cache",
+              "mini_league_summary_cache" "managers"]
 
     for table in tables:
         logger.debug(f"🧹 [prune_stale_data] Checking table: {table}")
@@ -374,7 +375,7 @@ def prune_stale_data(conn, event_updated):
 
 
 def get_player_detail_data():
-    response = SESSION.get(
+    response = HTTP.get(
         "https://fantasy.premierleague.com/api/element-summary/", timeout=10)
     response.raise_for_status()
     player_detail_data = response.json()
@@ -582,14 +583,12 @@ def fill_global_points_from_explain(
         logger.debug("[global_points] no current_gw yet → skip")
         return
 
-    # Decide DB handling mode
+    # DB handling
     close_after = False
-
-    # new fallback
     if conn is None or cur is None:
         if not db_path:
-            db_path = DATABASE  # or raise, your call
-        conn = open_conn(db_path)  # this applies all PRAGMAs
+            db_path = DATABASE
+        conn = open_conn(db_path)  # applies PRAGMAs
         cur = conn.cursor()
         close_after = True
 
@@ -604,14 +603,16 @@ def fill_global_points_from_explain(
 
     # Cache hit?
     cur.execute(
-        "SELECT data FROM global_points_cache WHERE event_updated = ?", (event_updated_iso,))
+        "SELECT data FROM global_points_cache WHERE event_updated = ?",
+        (event_updated_iso,),
+    )
     row = cur.fetchone()
     if row:
         logger.debug("[global_points] cache hit")
         try:
             payload = json.loads(row[0])
             apply_points_payload(static_blob, payload)
-            # ✅ derive counts from points (global)
+            # Derive counts from points on cache hit
             for base in static_blob.values():
                 pts_dc = int(base.get("defensive_contribution_points", 0) or 0)
                 base["defensive_contribution_count"] = pts_dc // 2
@@ -622,19 +623,14 @@ def fill_global_points_from_explain(
         return
 
     logger.debug(
-        "[global_points] cache miss → fetching explain for all GWs (1..%d)", current_gw)
-
-    # Build requests session
-    session = SESSION
-    session.headers.update({
-        "User-Agent": "Mozilla/5.0",
-        "Accept": "application/json",
-        "Accept-Encoding": "gzip",
-        "Connection": "keep-alive",
-    })
+        "[global_points] cache miss → fetching explain for all GWs (1..%d)",
+        current_gw,
+    )
 
     urls = {
-        gw: f"https://fantasy.premierleague.com/api/event/{gw}/live/" for gw in range(1, current_gw + 1)}
+        gw: f"https://fantasy.premierleague.com/api/event/{gw}/live/"
+        for gw in range(1, current_gw + 1)
+    }
 
     # pid -> { field -> points }
     payload: dict[int, dict[str, int]] = {}
@@ -644,11 +640,16 @@ def fill_global_points_from_explain(
             payload[pid] = {v: 0 for v in EXPLAIN_TO_FIELD.values()}
         return payload[pid]
 
-    # Fetch concurrently with a sensible cap
+    # Use a sensible connect/read timeout; allow caller to tweak read
+    timeout_val = (3, request_timeout)
+
+    # Fetch concurrently
+    from concurrent.futures import ThreadPoolExecutor, as_completed  # local import ok
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
-        # when submitting futures
-        futs = {ex.submit(session.get, url, timeout=TIMEOUT_SHORT)
-                          : gw for gw, url in urls.items()}
+        futs = {
+            ex.submit(HTTP.get, url, timeout=timeout_val): gw
+            for gw, url in urls.items()
+        }
 
         for fut in as_completed(futs):
             gw = futs[fut]
@@ -661,20 +662,20 @@ def fill_global_points_from_explain(
                 continue
 
             # Aggregate per element
-            for el in data.get("elements", []):
+            for el in data.get("elements", []) or []:
                 pid = el.get("id")
                 if not isinstance(pid, int):
                     continue
                 tgt = ensure(pid)
                 # 'explain' is a list of blocks, each with 'stats'
-                for blk in el.get("explain", []):
-                    for s in blk.get("stats", []):
+                for blk in el.get("explain", []) or []:
+                    for s in blk.get("stats", []) or []:
                         ident = s.get("identifier")
                         dst = EXPLAIN_TO_FIELD.get(ident)
                         if not dst:
                             continue
                         try:
-                            pts = int(s.get("points", 0))
+                            pts = int(s.get("points", 0) or 0)
                         except (TypeError, ValueError):
                             pts = 0
                         tgt[dst] += pts
@@ -686,10 +687,14 @@ def fill_global_points_from_explain(
          datetime.now(timezone.utc).isoformat()),
     )
 
-    # IMPORTANT: only commit/close here if we opened the connection ourselves.
     if close_after:
         conn.commit()
         conn.close()
 
-    # Apply to your in-memory blob for immediate use by the request
+    # Apply to in-memory blob for immediate use by the request
     apply_points_payload(static_blob, payload)
+
+    # Derive counts from points on fresh fetch (parity with cache-hit path)
+    for base in static_blob.values():
+        pts_dc = int(base.get("defensive_contribution_points", 0) or 0)
+        base["defensive_contribution_count"] = pts_dc // 2

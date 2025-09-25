@@ -1,11 +1,22 @@
-window.initTooltips = () => {
-  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => {
-    // Avoid double-initialising the same tooltip
-    if (!el.getAttribute("data-bs-original-title")) {
-      new bootstrap.Tooltip(el);
-    }
+// ─────────────── 0) Tooltips (delegated, covers dynamic content) ───────────────
+let __tooltipDelegator = null;
+
+function enableDelegatedTooltips() {
+  if (__tooltipDelegator) return; // idempotent
+
+  __tooltipDelegator = new bootstrap.Tooltip(document.body, {
+    selector: '[data-bs-toggle="tooltip"]',
+    container: "body",
+    boundary: "window",
+    trigger: "hover",
+    delay: { show: 0, hide: 0 },
+    sanitize: false,
+    customClass: (el) => el?.dataset?.bsCustomClass || "tooltip-lg",
   });
-};
+}
+
+// Back-compat: callers can still call window.initTooltips(...) but it's a no-op now
+window.initTooltips = () => enableDelegatedTooltips();
 
 // ─────────────── 1) Header update ──────────────────
 function updateHeader(mgr) {
@@ -99,11 +110,12 @@ window.updateSortIndicator = (sortBy, sortOrder, containerSelector = null) => {
   if (!root) return;
 
   const roundedTables = [
+    "summary-table",
     "defence-table",
     "offence-table",
     "points-table",
-    "per-90-table",
     "teams-table",
+    "talisman-table",
   ];
 
   root.querySelectorAll("th[data-sort]").forEach((th) => {
@@ -199,7 +211,7 @@ window.updateBadges = (data) => {
     const div = document.createElement("div"),
       img = document.createElement("img");
     div.className = `badge-image-${idx + 1}`;
-    img.classList.add("img-fluid", "overlap-badge");
+    img.classList.add("img-fluid", "badge-width");
     img.loading = "lazy";
     img.alt = "Club Badge";
     img.src = `https://resources.premierleague.com/premierleague/badges/100/t${pi.team_code}@x2.png`;
@@ -294,7 +306,6 @@ async function fetchMiniLeague(sortBy, sortOrder) {
   return true;
 }
 
-// ─────────────── 7) Generic data fetch ─────────────
 // ─────────────── 7) Generic data fetch ─────────────
 async function fetchData(sortBy, sortOrder, opts = {}) {
   const { snapPrice = true } = opts;
@@ -430,7 +441,7 @@ async function fetchData(sortBy, sortOrder, opts = {}) {
     });
 
     tbody.appendChild(tr);
-    window.initTooltips();
+    // NOTE: no per-cell tooltip init needed anymore; delegation handles it
   });
 
   if (cfg.table === "teams") {
@@ -463,6 +474,9 @@ window.fetchData = fetchData;
 
 // ─────────────── 8) DOMContentLoaded ─────────────────
 document.addEventListener("DOMContentLoaded", () => {
+  // Enable delegated tooltips once
+  enableDelegatedTooltips();
+
   const params = new URLSearchParams(location.search);
   if (window.tableConfig) {
     if (params.has("sort_by")) tableConfig.sortBy = params.get("sort_by");
@@ -524,7 +538,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    function clearHighlights() {
+    function clearHighlights2() {
       activeCells.forEach((cell) => {
         cell.style.backgroundColor = "";
         cell.style.color = "";
@@ -617,17 +631,19 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   initComponents();
 
-  // Tooltip setup for table headers
+  // Tooltip setup for table headers — use data-bs-title (not title)
   if (window.tableConfig && window.tableConfig.lookup) {
     document.querySelectorAll("table thead th").forEach((th) => {
       const sortKey = th.getAttribute("data-sort");
-      if (sortKey && window.tableConfig.lookup[sortKey]) {
-        th.setAttribute("title", window.tableConfig.lookup[sortKey]);
+      const tip = sortKey && window.tableConfig.lookup[sortKey];
+      if (tip) {
+        th.removeAttribute("title"); // prevent native tooltip
         th.setAttribute("data-bs-toggle", "tooltip");
+        th.setAttribute("data-bs-title", tip);
+        th.setAttribute("data-bs-custom-class", "tooltip-lg");
       }
     });
   }
-  window.initTooltips();
 });
 
 // ──────────── 9) popstate (back/forward) ─────────────
@@ -754,7 +770,7 @@ function addScaleToggle(chart, linearBtnId, logBtnId) {
   });
 }
 
-// Get rid of Tooltips instances
+// Get rid of Tooltips instances (safe even with delegation)
 function disposeTooltips(context = document) {
   context.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => {
     const instance = bootstrap.Tooltip.getInstance(el);
@@ -803,8 +819,7 @@ async function buildManagerTableAndChart(cfg) {
 
       container.innerHTML = buildSortableTable(data, cfg.columns, cfg.dataKey);
 
-      // Re-init tooltips and popovers
-      window.initTooltips(container);
+      // Re-init popovers (tooltips are delegated globally)
       initComponents(container);
 
       // Header sorting (local re-render)
@@ -819,6 +834,18 @@ async function buildManagerTableAndChart(cfg) {
             cfg.sortOrder = dir;
             buildManagerTableAndChart(cfg); // re-render
           });
+        });
+
+        // Add header tooltips via data attributes
+        table.querySelectorAll("thead th[data-sort]").forEach((th) => {
+          const sortKey = th.getAttribute("data-sort");
+          const tip = cfg.columns.find((c) => c.key === sortKey)?.label;
+          if (tip) {
+            th.removeAttribute("title");
+            th.setAttribute("data-bs-toggle", "tooltip");
+            th.setAttribute("data-bs-title", tip);
+            th.setAttribute("data-bs-custom-class", "tooltip-lg");
+          }
         });
       }
 

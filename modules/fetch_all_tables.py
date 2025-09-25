@@ -1,11 +1,13 @@
+# modules/fetch_all_tables.py
 import logging
-import json
-import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from modules.http_client import HTTP
 
-
-# Logger for debugging
 logger = logging.getLogger(__name__)
+
+# Local request tuning (avoid importing from utils to prevent circular import)
+REQ_TIMEOUT = 10
+MAX_WORKERS = 8
 
 # === Mapping from FPL "explain" identifiers to your *_points keys ===
 EXPLAIN_TO_FIELD = {
@@ -20,17 +22,13 @@ EXPLAIN_TO_FIELD = {
     "penalties_saved": "penalties_saved_points",
     "penalties_missed": "penalties_missed_points",
     "red_cards": "red_cards_points",
-    "saves": "saves_points",   # <- plural
+    "saves": "saves_points",
     "yellow_cards": "yellow_cards_points",
 }
 
-# Convenience sets if you want to reuse when zeroing/pre-init
 GLOBAL_POINTS_KEYS = tuple(EXPLAIN_TO_FIELD.values())
 TEAM_POINTS_KEYS = tuple(k.replace("_points", "_points_team")
                          for k in GLOBAL_POINTS_KEYS)
-
-
-# Build base player info from static_data (bootstrap-static)
 
 
 def build_player_info(static_data):
@@ -38,7 +36,6 @@ def build_player_info(static_data):
     teams = static_data.get("teams", [])
     players = static_data.get("elements", [])
 
-    # Build lookup maps
     code_to_name = {team["code"]: team["name"] for team in teams}
     code_to_short = {team["code"]: team["short_name"] for team in teams}
 
@@ -57,7 +54,7 @@ def build_player_info(static_data):
             "selected_by_percent": p["selected_by_percent"],
 
             # Season stats (so far)
-            "appearances": 0,  # not implemented yet
+            "appearances": 0,
             "assists": p["assists"],
             "assists_performance": round(p["assists"] - float(p.get("expected_assists", 0)), 2),
             "bps": p["bps"],
@@ -94,21 +91,19 @@ def build_player_info(static_data):
             "total_points": p["total_points"],
             "yellow_cards": p["yellow_cards"],
 
-            # Global points breakdown (populate later) Need to convert to points
-            # 0-59 minutes. 1 point. 60+ 2 points.
-            "assists_points": 0,            # 3 points
-            "clean_sheets_points": 0,       # 4 points for GK and Def, 1 point for Mid
-            "defensive_contribution_points": 0,  # 2 points
-            "goals_conceded_points": 0,     # -1 point every other goal conceded within a game
-            # 10, 6, 5, 4 points depending on element type
+            # Global points breakdown (populated in utils.fill_global_points_from_explain)
+            "assists_points": 0,
+            "clean_sheets_points": 0,
+            "defensive_contribution_points": 0,
+            "goals_conceded_points": 0,
             "goals_scored_points": 0,
             "minutes_points": 0,
-            "own_goals_points": 0,          # -2 points
-            "penalties_saved_points": 0,    # 5 points
-            "penalties_missed_points": 0,   # -2 points
-            "red_cards_points": 0,          # -2 points
-            "saves_points": 0,               # 2 points for every three saves in a game
-            "yellow_cards_points": 0,       # -1 point
+            "own_goals_points": 0,
+            "penalties_saved_points": 0,
+            "penalties_missed_points": 0,
+            "red_cards_points": 0,
+            "saves_points": 0,
+            "yellow_cards_points": 0,
 
             # Team-specific aggregates
             "appearances_team": 0,
@@ -171,46 +166,29 @@ def build_player_info(static_data):
     return player_info
 
 
-def add_explain_points(pi: dict, explain_blocks, suffix: str = "", mult: int = 1, pid=None, gw=None, tag=""):
+def add_explain_points(pi: dict, explain_blocks, suffix: str = "", mult: int = 1):
+    """
+    Sum points from 'explain' into pi[<metric>_points{suffix}],
+    e.g. suffix="_team" for team aggregates. 'mult' is almost always 1 here.
+    """
     for block in (explain_blocks or []):
-        fixture_id = block.get("fixture")
-        for s in block.get("stats", []):
+        for s in block.get("stats", []) or []:
             ident = s.get("identifier")
-            pts = s.get("points", 0)
-            key = f"{ident}_points{suffix}"
-
-            # Special debug for goals_scored
-            # if ident == "goals_scored":
-            #     logger.debug(
-            #         f"[GW {gw}] PID {pid} fixture={fixture_id} {tag} → "
-            #         f"trying to update {key} by {pts} (mult={mult}), "
-            #         f"before={pi.get(key)}"
-            #     )
-
-            # if key not in pi:
-            #     logger.warning(
-            #         f"[GW {gw}] PID {pid} fixture={fixture_id} {tag} → "
-            #         f"missing key={key}, skipping"
-            #     )
-            #     continue
-
-            # before = pi[key]
-            # pi[key] = before + pts * mult
-            # after = pi[key]
-
-            # logger.debug(
-            #     f"[GW {gw}] PID {pid} fixture={fixture_id} {tag} → "
-            #     f"{key}: {before} + {pts}*{mult} = {after}"
-            # )
+            dst = EXPLAIN_TO_FIELD.get(ident)
+            if not dst:
+                continue
+            key = f"{dst}{suffix}"
+            try:
+                pts = int(s.get("points", 0))
+            except (TypeError, ValueError):
+                pts = 0
+            pi[key] = pi.get(key, 0) + pts * mult
 
 
 def populate_player_info_all_with_live_data(team_id, player_info, static_data):
     logger.debug("[populate_player_info_all_with_live_data] called")
 
     FPL_API = "https://fantasy.premierleague.com/api"
-    session_req = requests.Session()
-    session_req.headers.update(
-        {"User-Agent": "Mozilla/5.0", "Accept-Encoding": "gzip"})
 
     # 1) Current GW
     try:
@@ -228,19 +206,21 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
 
     # 3) Fetch concurrently
     live_data_map, picks_data_map = {}, {}
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=min(MAX_WORKERS, current_gw)) as executor:
         future_to_info = {}
         for gw, url in live_urls.items():
             future_to_info[executor.submit(
-                session_req.get, url)] = ('live', gw)
+                HTTP.get, url, timeout=REQ_TIMEOUT)] = ('live', gw)
         for gw, url in pick_urls.items():
             future_to_info[executor.submit(
-                session_req.get, url)] = ('picks', gw)
+                HTTP.get, url, timeout=REQ_TIMEOUT)] = ('picks', gw)
 
         for fut in as_completed(future_to_info):
             kind, gw = future_to_info[fut]
             try:
-                data = fut.result().json()
+                r = fut.result()
+                r.raise_for_status()
+                data = r.json()
             except Exception as e:
                 logger.warning(f"Failed fetch {kind} for GW {gw}: {e}")
                 continue
@@ -254,37 +234,31 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
     logger.debug(f"Fetched live_data for GWs: {sorted(live_data_map.keys())}")
     logger.debug(f"Fetched pick_data for GWs: {sorted(picks_data_map.keys())}")
 
-    # 4) IMPORTANT: reset GLOBAL *_points (we're about to re-sum all GWs)
-    for pi in player_info.values():
-        for k in GLOBAL_POINTS_KEYS:
-            if k in pi:
-                pi[k] = 0
+    # 4) DO NOT reset GLOBAL *_points; utils.fill_global_points_from_explain has populated those.
+    #    We'll compute only *_points_team here.
 
     # 5) Only players ever picked
     all_picked_pids = set()
     for picks in picks_data_map.values():
         all_picked_pids.update(picks.keys())
 
-    # 6) Build team_info as copies and ZERO / PRE-INIT all *_team fields
+    # 6) Build team_info copies and zero *_team fields
     team_info = {}
     for pid in all_picked_pids:
         if pid not in player_info:
             continue
         ti = player_info[pid].copy()
 
-        # Zero any existing *_team fields
+        # zero *_team fields
         for k in list(ti.keys()):
             if k.endswith("_team"):
-                try:
-                    ti[k] = 0 if isinstance(ti[k], int) else 0.0
-                except Exception:
-                    ti[k] = 0
+                ti[k] = 0 if isinstance(ti[k], (int, float)) else 0
 
-        # Pre-init TEAM *_points fields so keys always exist
+        # pre-init team *_points keys
         for key_team in TEAM_POINTS_KEYS:
             ti[key_team] = 0
 
-        # Also ensure team aggregates exist (if your downstream expects them)
+        # ensure common team aggregates exist
         for agg in (
             "bonus_team", "bps_team", "clean_sheets_team", "defensive_contribution_team",
             "expected_assists_team", "expected_goals_team", "expected_goals_conceded_team",
@@ -292,8 +266,7 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
             "goals_assists_team", "minutes_team", "red_cards_team", "recoveries_team",
             "starts_team", "tackles_team", "yellow_cards_team", "dreamteam_count_team",
             "total_points_team", "captain_points_team", "goals_benched_team", "assists_benched_team",
-            "starts_benched_team", "minutes_benched_team", "benched_points_team",
-            "appearances_team"
+            "starts_benched_team", "minutes_benched_team", "benched_points_team", "appearances_team"
         ):
             ti.setdefault(agg, 0)
 
@@ -304,7 +277,8 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
         live_elements = live_data_map.get(gw, [])
         multipliers = picks_data_map.get(gw, {})
 
-        # de-dup for GLOBAL pass across this GW
+        # de-dup for GLOBAL pass across this GW (we won't update GLOBAL here,
+        # but we reuse dedup for team points)
         seen_global = set()  # (pid, fixture_id, identifier)
 
         for element in live_elements:
@@ -316,7 +290,7 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
             stats = element.get('stats', {}) or {}
             explain = element.get('explain', []) or []
 
-            # ---- GLOBAL (non-team): deduplicate per (pid, fixture, ident) ----
+            # ---- Build deduped blocks (per fixture + identifier) ----
             dedup_blocks = []
             for block in explain:
                 fx = block.get("fixture")
@@ -331,12 +305,13 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
                 if kept:
                     dedup_blocks.append({"fixture": fx, "stats": kept})
 
-            add_explain_points(base, dedup_blocks, suffix="",
-                               mult=1, pid=pid, gw=gw, tag="GLOBAL")
+            # ---- Do NOT modify global *_points here (already computed once).
+            # add_explain_points(base, dedup_blocks, suffix="", mult=1)
 
             # ---- TEAM (only if picked this GW) ----
             if pid not in multipliers or pid not in team_info:
                 continue
+
             mult = multipliers[pid]
             ti = team_info[pid]
 
@@ -356,13 +331,14 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
 
                 # Aggregate team stats
                 ti['assists_team'] += stats.get('assists', 0)
-                ti['bonus_team'] += stats.get('bonus', 0)  # plain bonus tally
+                ti['bonus_team'] += stats.get('bonus', 0)
                 ti['bps_team'] += stats.get('bps', 0)
                 ti['cbi_team'] += stats.get(
                     'clearances_blocks_interceptions', 0)
                 ti['clean_sheets_team'] += stats.get('clean_sheets', 0)
                 ti['defensive_contribution_team'] += stats.get(
                     'defensive_contribution', 0)
+
                 xa = float(stats.get('expected_assists', 0))
                 xg = float(stats.get('expected_goals', 0))
                 xgc = float(stats.get('expected_goals_conceded', 0))
@@ -370,6 +346,7 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
                 ti['expected_goals_team'] += xg
                 ti['expected_goals_conceded_team'] += xgc
                 ti['expected_goal_involvements_team'] += (xg + xa)
+
                 ti['goals_conceded_team'] += stats.get('goals_conceded', 0)
                 goals = stats.get('goals_scored', 0)
                 ti['goals_scored_team'] += goals
@@ -402,12 +379,8 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
                     ti['captain_points_team'] += base_points * (mult - 1)
                     ti['total_points_team'] += stats.get('total_points', 0)
 
-                # ✅ Team points via explain (with multiplier=1; no captain boost), using DEDUP blocks
-                add_explain_points(
-                    ti, dedup_blocks, suffix="_team", mult=1, pid=pid, gw=gw, tag="TEAM")
-
-                # Base points without captain multiplier
-                # ti['total_points_team'] += stats.get('total_points', 0)
+                # ✅ Team points via explain (no captain boost), using deduped blocks
+                add_explain_points(ti, dedup_blocks, suffix="_team", mult=1)
 
                 # PPM
                 cost = ti.get('now_cost', 0)
@@ -436,5 +409,8 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
             ti["clean_sheets_per_90_team"] = 0.0
             ti["clean_sheets_rate_team"] = 0.0
             ti["expected_goals_per_90_team"] = 0.0
+
+        # Optional: derive a count from DC points if you want a points-based count too
+        # ti["defensive_contribution_count_team"] = ti.get("defensive_contribution_points_team", 0) // 2
 
     return team_info

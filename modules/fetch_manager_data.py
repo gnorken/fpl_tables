@@ -1,8 +1,9 @@
-from flask import session, url_for
+from flask import url_for
 import json
 from datetime import datetime, timezone
-from modules.utils import get_event_status_last_update, territory_icon, SESSION, get_json_cached
+from modules.utils import get_event_status_last_update, territory_icon, get_json_cached
 from modules.utils import (territory_icon)
+from modules.http_client import HTTP
 import logging
 import sqlite3
 import time
@@ -77,7 +78,7 @@ def get_manager_data(team_id):
 
     # 2️⃣ Cache miss or stale → fetch from API
     def try_fetch(url):
-        resp = SESSION.get(url, timeout=10)
+        resp = HTTP.get(url, timeout=10)
         logger.debug("REQUEST %s HEADERS: %s", url, resp.request.headers)
         logger.debug("RESPONSE STATUS: %s", resp.status_code)
         logger.debug("RESPONSE CONTENT-TYPE: %s",
@@ -223,7 +224,7 @@ def get_manager_history(team_id):
       • current_rows (for charts/tables on the current season)
     """
     history_url = f"{FPL_API_BASE}/entry/{team_id}/history/"
-    history_response = SESSION.get(history_url, timeout=TIMEOUT_MED)
+    history_response = HTTP.get(history_url, timeout=TIMEOUT_MED)
     history_data = history_response.json()
 
     # 1) Past seasons → add percentile context
@@ -311,7 +312,7 @@ def get_manager_history(team_id):
 
     # Fetch bootstrap static data once for use in photo/name lookups
     bootstrap_url = "https://fantasy.premierleague.com/api/bootstrap-static/"
-    bootstrap_response = SESSION.get(bootstrap_url, timeout=TIMEOUT_MED)
+    bootstrap_response = HTTP.get(bootstrap_url, timeout=TIMEOUT_MED)
     bootstrap_data = bootstrap_response.json()
 
     # -----------------------------
@@ -324,7 +325,7 @@ def get_manager_history(team_id):
 
             # Fetch picks for the event.
             picks_url = f"{FPL_API_BASE}/entry/{team_id}/event/{event_number}/picks/"
-            picks_response = SESSION.get(picks_url, timeout=TIMEOUT_SHORT)
+            picks_response = HTTP.get(picks_url, timeout=TIMEOUT_SHORT)
             picks_data = picks_response.json()
 
             # Find the captain's pick.
@@ -337,7 +338,7 @@ def get_manager_history(team_id):
             if captain_element is not None:
                 # Fetch live data for the event.
                 live_url = f"{FPL_API_BASE}/event/{event_number}/live/"
-                live_response = SESSION.get(live_url, timeout=TIMEOUT_SHORT)
+                live_response = HTTP.get(live_url, timeout=TIMEOUT_SHORT)
                 live_data = live_response.json()
 
                 for element in live_data.get("elements", []):
@@ -373,7 +374,7 @@ def get_manager_history(team_id):
 
             # Fetch picks for the bench boost event.
             picks_url = f"{FPL_API_BASE}/entry/{team_id}/event/{event_number}/picks/"
-            picks_response = SESSION.get(picks_url, timeout=TIMEOUT_MED)
+            picks_response = HTTP.get(picks_url, timeout=TIMEOUT_MED)
             picks_data = picks_response.json()
 
             # Get the four bench players based on their positions (12, 13, 14, 15).
@@ -386,7 +387,7 @@ def get_manager_history(team_id):
 
             # Fetch live data for the event.
             live_url = f"{FPL_API_BASE}/event/{event_number}/live/"
-            live_response = SESSION.get(live_url, timeout=TIMEOUT_MED)
+            live_response = HTTP.get(live_url, timeout=TIMEOUT_MED)
             live_data = live_response.json()
 
             # Create a mapping of element IDs to their total points.
