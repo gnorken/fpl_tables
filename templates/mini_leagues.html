@@ -369,12 +369,12 @@
     table: "mini_league",
     tbodySelector: "#summary-body",
     loadingSelector: "#loading-summary",
-  maxShow: {{ maxShow }},
-  lookup: sharedLookup,
+    maxShow: {{ maxShow }},
+    lookup: sharedLookup,
     invertKeys: sharedInvert,
-      statsKeys: sharedStats,
-        columns: summaryColumns,
-          currentEntry: {{ session.get('team_id', none) | tojson }}
+    statsKeys: sharedStats,
+    columns: summaryColumns,
+    currentEntry: {{ session.get('team_id', none) | tojson }}
   };
 
   const breakdownConfig = {
