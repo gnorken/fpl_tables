@@ -425,8 +425,6 @@ def points(team_id):
 
 
 # --- TEAMS PAGE ---
-
-
 @app.route("/<int:team_id>/team/teams")
 def teams(team_id):
 
@@ -461,13 +459,27 @@ def teams(team_id):
 
     return redirect(url_for("index"))
 
+
+# --- Players  ---
+@app.route("/tables/players")
+def players():
+    return render_template("players.html",
+                           team_id=g.team_id,
+                           current_gw=session.get('current_gw'),
+                           manager=g.manager,
+                           sort_by=request.args.get(
+                               'sort_by', 'total_points'),
+                           order=request.args.get('order', 'desc'),
+                           current_page='players')
+
+
 # --- TALISMAN PAGE ---
 
 
-@app.route("/<int:team_id>/team/talisman")
-def talisman(team_id):
+@app.route("/tables/talisman")
+def talisman():
     return render_template("talisman.html",
-                           team_id=team_id,
+                           team_id=g.team_id,
                            current_gw=session.get('current_gw'),
                            manager=g.manager,
                            sort_by=request.args.get('sort_by', 'total_points'),

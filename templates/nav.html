@@ -77,18 +77,18 @@
 
             <ul class="dropdown-menu" aria-labelledby="tables-btn">
                 {# Link macro (disabled if no team) #}
-                {% macro nav_item(label, endpoint, page_name) %}
+                {% macro nav_item(label, endpoint, page_name, require_team=True) -%}
                 <li>
-                    {% if has_team %}
+                    {% if require_team and not has_team %}
+                    <a class="dropdown-item disabled">{{ label }}</a>
+                    {% else %}
                     <a class="dropdown-item{% if current_page == page_name %} active{% endif %}"
-                        href="{{ url_for(endpoint, team_id=team_id) }}">
+                        href="{{ url_for(endpoint, team_id=team_id) if require_team else url_for(endpoint) }}">
                         {{ label }}
                     </a>
-                    {% else %}
-                    <a class="dropdown-item disabled">{{ label }}</a>
                     {% endif %}
                 </li>
-                {% endmacro %}
+                {%- endmacro %}
 
                 <li>
                     {% if has_manager %}
@@ -97,7 +97,7 @@
                         {{ manager.team_name }} Team History
                     </a>
                     {% else %}
-                    <a class="dropdown-item disabled">No manager. Please enter ID for custom tables</a>
+                    <a class="dropdown-item disabled">No manager ID</a>
                     {% endif %}
                 </li>
 
@@ -107,16 +107,16 @@
 
                 <li>
                     <h6 class="dropdown-header">
-                        {% if has_manager %}{{ manager.team_name }} tables{% else %}Your tables{% endif %}
+                        {% if has_manager %}{{ manager.team_name }} tables{% else %}Please enter ID for custom tables{% endif %}
                     </h6>
                 </li>
-
-                {{ nav_item('Summary', 'summary', 'summary') }}
-                {{ nav_item('Defence', 'defence', 'defence') }}
-                {{ nav_item('Offence', 'offence', 'offence') }}
-                {{ nav_item('By Points', 'points', 'points') }}
-                {{ nav_item('By Teams', 'teams', 'teams') }}
-
+                {% if has_manager %}
+                    {{ nav_item('Summary', 'summary', 'summary') }}
+                    {{ nav_item('Defence', 'defence', 'defence') }}
+                    {{ nav_item('Offence', 'offence', 'offence') }}
+                    {{ nav_item('By Points', 'points', 'points') }}
+                    {{ nav_item('By Teams', 'teams', 'teams') }}
+                {% endif %}
                 <li>
                     <hr class="dropdown-divider">
                 </li>
@@ -124,23 +124,30 @@
                 <li>
                     <h6 class="dropdown-header">General tables</h6>
                 </li>
-                {{ nav_item('Talisman', 'talisman', 'talisman') }}
-
+                {{ nav_item('Talisman', 'talisman', 'talisman', require_team=False) }}
+                {{ nav_item('Players', 'players', 'players', require_team=False) }}
+                {% if has_manager %}
                 <li>
                     <hr class="dropdown-divider">
                 </li>
-
                 <li><a class="dropdown-item" href="/">Enter New ID</a></li>
+                {% endif %}
 
                 <li>
                     <hr class="dropdown-divider">
                 </li>
 
-                {# MINI-LEAGUES (render only when we have manager; keeps dropdown intact on "/") #}
-                {% if has_manager and manager.classic_leagues %}
+                {% if has_manager %}
                 <li>
                     <h6 class="dropdown-header">My Mini-Leagues</h6>
+                </li> 
+                {% else %}
+                <li>
+                    <h6 class="dropdown-header">Please enter team ID for mini-leagues</h6>
                 </li>
+                {% endif %}
+                {# MINI-LEAGUES (render only when we have manager; keeps dropdown intact on "/") #}
+                {% if has_manager and manager.classic_leagues %}
 
                 {% for league in manager.classic_leagues %}
                 {% set r = league.entry_rank %}
@@ -175,6 +182,8 @@
 
                     {% elif has_manager %}
                     <li><a class="dropdown-item disabled">No mini-leagues</a></li>
+                    {% else %}
+
                     {% endif %}
             </ul>
         </div>

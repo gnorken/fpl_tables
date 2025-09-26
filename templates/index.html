@@ -2,40 +2,69 @@
 
 {% block body %}
 <div class="d-flex flex-column align-items-center justify-content-center mt-5">
-  <!-- Enter Team ID Form -->
-  <form action="/" method="POST" class="mb-5">
-    <h4 class="text-center mb-3">Please enter a team ID</h4>
-    <div class="input-group">
-      <div class="form-floating">
-        <input name="team_id" type="number" class="form-control" id="team_id" placeholder="FPL ID" required>
-        <label for="team_id">FPL ID</label>
+
+  <!-- Wrap to keep a pleasant width, not full-bleed -->
+  <div class="mx-auto" style="max-width: 520px;">
+
+    <!-- Enter Team ID Form -->
+    <form action="/" method="POST" class="mb-5 pb-1">
+      <h4 class="text-center mb-3">Please enter a team ID</h4>
+
+      <div class="input-group">
+        <div class="form-floating">
+          <input name="team_id" type="number" class="form-control" id="team_id" placeholder="FPL ID" required>
+          <label for="team_id">FPL ID</label>
+        </div>
+        <button class="btn bg-secondary" type="submit">GO</button>
       </div>
-      <button class="btn bg-secondary" type="submit">GO</button>
-    </div>
-  </form>
-  
-  <!-- Select from List Form -->
-  <form action="/" method="POST" class="mb-5">
-    <h4 class="text-center mb-3">Or select from list</h4>
-    <select name="team_id" class="form-select" onchange="this.form.submit()">
-      <option value="" selected disabled>Managers</option>
-      <option value="893074">Gerry</option>
-      <option value="15208">Steffen</option>
-      <option value="4783108">Fábio Borges</option>
-    </select>
-  </form>
-  <!-- <form action="/" method="POST" class="mb-5">
-    <h4 class="text-center mb-3">Leagues</h4>
-    <select name="league_id" class="form-select" onchange="this.form.submit()">
-      <option value="" selected disabled>Select a team</option>
-      <option value="32885">#Elite64</option>
-      <option value="395683">Arbeidergata Allidrett</option>
-      <option value="334">Top 1% 24/25 League</option>
-      <option value="335">Top 10% 24/25 League</option>
-    </select>
-  </form> -->
+
+      <!-- Link + info button on the SAME line -->
+      <div class="mt-2 d-flex justify-content-center align-items-center gap-2">
+        <a href="#" data-bs-toggle="modal" data-bs-target="#findIdModal" class="">
+          Where do I find my ID?
+        </a>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
+          data-bs-target="#findIdModal" aria-label="How to find your FPL ID">
+          ℹ︎
+        </button>
+      </div>
+    </form>
+
+    <!-- Select from List Form -->
+    <form action="/" method="POST" class="mb-5">
+      <h5 class="text-center mb-3">Notable Teams</h5>
+      <select name="team_id" class="form-select" onchange="this.form.submit()">
+        <option value="" selected disabled>Managers</option>
+        <option value="893074">Gerry</option>
+        <option value="15208">Steffen</option>
+        <option value="4783108">Fábio Borges</option>
+      </select>
+    </form>
+
+  </div>
 </div>
 
-
+<!-- Modal: Find your ID -->
+<div class="modal fade" id="findIdModal" tabindex="-1" aria-labelledby="findIdModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="findIdModalLabel">Find your FPL Team ID</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ol class="mb-3">
+          <li>Go to the official <a href="https://fantasy.premierleague.com/" class="link-primary" target="_blank" rel="noopener">Fantasy
+              Premier League</a> website.</li>
+          <li>Open your team’s <strong>Points</strong> tab.</li>
+          <li>Your Team ID is the number in the URL between <code>/entry/</code> and <code>/event/</code>.
+            Example: <code>.../entry/<strong>15208</strong>/event/5</code> → ID is <strong>15208</strong>.
+          </li>
+        </ol>
+        <img src="{{ url_for('static', filename='img/find_your_id.png') }}" class="img-fluid border rounded"
+          alt="Screenshot showing where to find your FPL Team ID in the URL on the Points tab">
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
-

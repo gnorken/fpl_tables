@@ -38,11 +38,11 @@
                 <th data-sort="dreamteam_count" class="sort">DT</th>
                 <th data-sort="bps" class="sort">BPS</th>
                 <th data-sort="penalties_saved" class="sort">PS</th>
+                <th data-sort="penalties_missed" class="sort">PM</th>
                 <th data-sort="yellow_cards" class="sort">YC</th>
                 <th data-sort="red_cards" class="sort">RC</th>
                 <th data-sort="goals_conceded" class="sort">GC</th>
                 <th data-sort="own_goals" class="sort">OG</th>
-                <th data-sort="penalties_missed" class="sort">PM</th>
 
             </tr>
         </thead>
@@ -66,7 +66,7 @@
 {% block scripts %}
 <script>
     // 1) Page‐specific lookup for header‐hover tooltips:
-    const managerName = {{ manager.team_name | tojson }};
+    const managerName = {{ manager.team_name | default ('', true) | tojson }};
     const lookup = {
 
         "selected_by_percent": "Teams selected by",
@@ -156,7 +156,7 @@
 
             { key: "defensive_contribution", className: "sort vert-border", dataColumn: "defcon" },
             { key: "defensive_contribution_per_90", className: "sort-team", dataColumn: "defcon_90" },
-            { key: "clean_sheets", className: "sort", dataColumn: "clean_sheets" },
+            { key: "clean_sheets", className: "sort vert-border", dataColumn: "clean_sheets" },
             { key: "clean_sheets_per_90", className: "sort", dataColumn: "clean_sheets_per_90", formatter: v => (v).toFixed(2) },
 
             { key: 'goals_scored', dataColumn: "goals_scored ", className: 'sort vert-border' },
@@ -177,11 +177,11 @@
             { key: "bps", className: "sort", dataColumn: "bps" },
             { key: "penalties_saved", className: "sort", dataColumn: "penalties_saved" },
             // Negatives
+            { key: "penalties_missed", className: "sort text-danger vert-border-end", dataColumn: "penalties_missed" },
             { key: "yellow_cards", className: "sort text-danger vert-border", dataColumn: "yellow_cards" },
             { key: "red_cards", className: "sort text-danger", dataColumn: "red_cards" },
-            { key: "goals_conceded", className: "sort text-danger", dataColumn: "goals_conceded" },
-            { key: "own_goals", className: "sort text-danger", dataColumn: "own_goals" },
-            { key: "penalties_missed", className: "sort text-danger vert-border-end", dataColumn: "penalties_missed" },
+            { key: "goals_conceded", className: "sort text-danger vert-border", dataColumn: "goals_conceded" },
+            { key: "own_goals", className: "sort text-danger vert-border-end", dataColumn: "own_goals" },
         ]
     };
 </script>
