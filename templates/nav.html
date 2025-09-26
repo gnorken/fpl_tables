@@ -100,17 +100,24 @@
                     <a class="dropdown-item disabled">No manager ID</a>
                     {% endif %}
                 </li>
-
                 <li>
                     <hr class="dropdown-divider">
                 </li>
 
-                <li>
-                    <h6 class="dropdown-header">
-                        {% if has_manager %}{{ manager.team_name }} tables{% else %}Please enter ID for custom tables{% endif %}
-                    </h6>
-                </li>
                 {% if has_manager %}
+                <li>
+                    <h6 class="dropdown-header">{{ manager.team_name }} tables</h6>
+                </li>
+                {% else %}
+                <li>
+                    <h6 class="dropdown-header">Custom tables</h6>
+                </li>
+                <li>
+                    <a href="/" class="dropdown-item">Please enter team ID</a>
+                </li>
+                {% endif %}
+
+                    {% if has_manager %}
                     {{ nav_item('Summary', 'summary', 'summary') }}
                     {{ nav_item('Defence', 'defence', 'defence') }}
                     {{ nav_item('Offence', 'offence', 'offence') }}
@@ -143,8 +150,11 @@
                 </li> 
                 {% else %}
                 <li>
-                    <h6 class="dropdown-header">Please enter team ID for mini-leagues</h6>
+                    <h6 class="dropdown-header">Mini Leagues</h6>
                 </li>
+            <li>
+                <a href="/" class="dropdown-item">Please enter team ID</a>
+            </li>
                 {% endif %}
                 {# MINI-LEAGUES (render only when we have manager; keeps dropdown intact on "/") #}
                 {% if has_manager and manager.classic_leagues %}
