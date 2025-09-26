@@ -252,7 +252,7 @@ td {
 }
 
 /* lg - round borders */
-@media (min-width: 768px) {
+@media (min-width: 992px) {
   .round-border-lg-top {
     border-radius: 20px 20px 0 0;
   }

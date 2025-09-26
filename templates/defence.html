@@ -7,14 +7,14 @@
         <table id="defence-table" class="interactive-table table table-borderless table-striped text-center text-nowrap">
             <thead class="th-bg-primary text-center">
                 <tr class="sticky-top">
-                    <th id="top-players" class="sticky-col align-middle">↑ Top Five
+                    <th id="top-players" class="sticky-col align-middle round-border-lg-top-left">↑ Top Five
                     </th>
-                    <th colspan="2" class="round-border-top-right"></th>
-                    <th colspan="19" class="bg-team round-border-top ps-3 text-start text-md-center"
+                    <th colspan="2" class="round-border-lg-top-right"></th>
+                    <th colspan="19" class="bg-team round-border-lg-top ps-3 text-start text-lg-center"
                         title="Players that are or have been in {{ manager.team_name }} this season">
                         Stats for {{ manager.team_name }}
                     </th>
-                    <th colspan="22"  class="round-border-top ps-3 text-start text-lg-center">Player Totals</th>
+                    <th colspan="22"  class="round-border-lg-top ps-3 text-start text-lg-center">Player Totals</th>
                 </tr>
                 <tr class="">
                     <th id="entries" class="sticky-col"></th>
@@ -27,7 +27,7 @@
                     <th data-sort="minutes_team" class="sort-team bg-team">M</th>
                     <th data-sort="defensive_contribution_count_team" class="sort-team bg-team">DC</th>
                     <th data-sort="defensive_contribution_points_team" class="sort-team bg-team">DC P</th>
-                    <th data-sort="defensive_contribution_team" class="sort-team bg-team">DC Tot</th>
+                    <th data-sort="defensive_contribution_team" class="sort-team bg-team">DC T</th>
                     <th data-sort="defensive_contribution_per_90_team" class="sort-team bg-team">DC90</th>
                     <th data-sort="cbi_team" class="sort-team bg-team">CBI</th>
                     <th data-sort="tackles_team" class="sort-team bg-team">T</th>
@@ -169,33 +169,34 @@
         // columns tells script.js what to render, in order:
         columns: [
             // rank + name
-            { render: (p, idx) => {
-                const short = p.web_name.length > 11 ? p.web_name.slice(0, 11) + '…' : p.web_name;
-                const badgeUrl = `https://resources.premierleague.com/premierleague/badges/100/t${p.team_code}@x2.png`;
+            {
+                render: (p, idx) => {
+                    const short = p.web_name.length > 11 ? p.web_name.slice(0, 10) + '…' : p.web_name;
+                    const badgeUrl = `https://resources.premierleague.com/premierleague/badges/100/t${p.team_code}@x2.png`;
 
-                return `
-                    <td class="sticky-col vert-border-end vert-border">
+                    return `
+                    <td class="sticky-col vert-border">
                         <div class="d-flex align-items-center">
-                            <div class="text-center vert-border-end d-none d-lg-inline" flex:0 0 auto;">${idx + 1}</div> 
-                            <img 
-                                src="${badgeUrl}"
-                                alt="${p.team_name} badge"
-                                class="img-fluid overlap-badge ms-1"
-                                data-bs-toggle="tooltip"
-                                title="${p.team_name}"
-                                style="width: 20px; height: 20px; flex:0 0 auto;"
-                                onerror="this.onerror=null;this.src='https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png';"
+                            <div class="rank d-none d-lg-block text-center">${idx + 1}</div>
+                            <img
+                            src="${badgeUrl}"
+                            alt="${p.team_name} badge"
+                            class="img-fluid overlap-badge ms-1 badge-20"
+                            data-bs-toggle="tooltip"
+                            title="${p.team_name}"
                             >
-                            <div class="d-flex align-items-end">
-                                <div class="ms-1 ">${short}</div>
-                                <div class="small text-muted d-none d-lg-inline">&nbsp;${positionMap[p.element_type] || p.element_type}</div>
+                            <div class="d-flex align-items-end ms-1">
+                                <div>${short}</div>
+                                <div class="small text-muted d-none d-xl-inline">
+                                    &nbsp;${positionMap[p.element_type] || p.element_type}
+                                </div>
                                 <div class="">&nbsp;&nbsp;&nbsp;&nbsp;</div>
                             </div>
                         </div>
-                    </td>`;
+                    </td>
+                    `;
                 }
             },
-
             { key: "selected_by_percent", className: "sort", dataColumn: "selected_by_percent", formatter: v => `${parseFloat(v).toFixed(0)}%` },
             { key: "now_cost", className: "sort", dataColumn: "now_cost", formatter: v => `£${(v / 10).toFixed(1)}m` },
             // team‐specific (primary) columns:

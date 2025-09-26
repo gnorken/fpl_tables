@@ -8,16 +8,16 @@
     <table id="teams-table" class="interactive-table table table-borderless table-striped text-center text-nowrap">
         <thead class="th-bg-primary text-center">
             <tr>
-                <th id="top-players" data-sort="top-players" class="sticky-col align-middle round-border-top">↑ Top Five
+                <th id="top-players" class="sticky-col align-middle round-border-lg-top">↑ Top Five
                 </th>
-                <th colspan="18" data-sort="team-data" class="bg-team round-border-top"
+                <th colspan="18" class="bg-team round-border-lg-top"
                     title="Players that are or have been in {{ manager.team_name }} this season">
                     Stats for {{ manager.team_name }}
                 </th>
-                <th colspan="13" data-sort="overall-data" class="round-border-top">Team Totals</th>
+                <th colspan="13" class="round-border-lg-top">Team Totals</th>
             </tr>
             <tr>
-                <th id="entries" data-sort="entries" class="sticky-col"></th>
+                <th id="entries" class="sticky-col"></th>
 
                 {# — 18 primary cols (per-team) — #}
                 <th data-sort="starts_team" class="sort-team bg-team">S</th>
@@ -60,11 +60,11 @@
 
         <tfoot>
             <tr class="th-bg-primary text-center">
-                <th class="sticky-col round-border-btm">.</th>
-                <th colspan="18" class="bg-team round-border-btm">
+                <th class="sticky-col round-border-lg-btm"></th>
+                <th colspan="18" class="bg-team round-border-lg-btm">
                     <div id="loading" style="display:none;">Loading…</div>
                 </th>
-                <th colspan="13" class="round-border-btm"></th>
+                <th colspan="13" class="round-border-lg-btm"></th>
             </tr>
         </tfoot>
     </table>
@@ -128,13 +128,25 @@
         columns: [
             // name/rank
             {
-                render: (p, idx) => `
-          <td class="sticky-col">
-            <div class="d-flex">
-              <div style="width:3ch">${idx + 1}</div>
-              <div>${p.team_name}</div>
-            </div>
-          </td>`
+                render: (p, idx) => {
+                    const badgeUrl = `https://resources.premierleague.com/premierleague/badges/100/t${p.team_code}@x2.png`;
+                return`
+                <td class="sticky-col vert-border">
+                    <div class="d-flex align-items-center">
+                        <img
+                        src="${badgeUrl}"
+                        alt="${p.team_name} badge"
+                        class="img-fluid overlap-badge ms-1 badge-20"
+                        data-bs-toggle="tooltip"
+                        title="${p.team_name}"
+                        >
+                        <div class="d-flex">
+                        <div style="width:3ch">${idx + 1}</div>
+                        <div>${p.team_name}</div>
+                        </div>
+                    </div>
+                </td>`
+              }
             },
 
             // 18 primary
