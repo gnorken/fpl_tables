@@ -696,11 +696,6 @@ def get_sorted_players():
                    manager=g.manager, price_range=price_range)
 
 
-def _parse_order(s: str) -> str:
-    s = (s or "desc").lower()
-    return s if s in ("asc", "desc") else "desc"
-
-
 def _is_fresh(last_iso: str) -> bool:
     """Fresh if cache timestamp >= g.event_last_update (static ignored)."""
     try:
@@ -717,8 +712,8 @@ def _is_fresh(last_iso: str) -> bool:
 def mini_league_summary():
     league_id = request.args.get("league_id", type=int)
     max_show = request.args.get("max_show", default=10, type=int)
-    sort_by = request.args.get("sort_by") or "total_points"
-    order = _parse_order(request.args.get("order"))
+    sort_by = request.args.get("sort_by") or "rank"
+    order = request.args.get("order") or "asc"
     refresh = request.args.get("refresh") in ("1", "true", "yes")
 
     if league_id is None:
@@ -843,8 +838,8 @@ def mini_league_breakdown():
     league_id = request.args.get("league_id", type=int)
     max_show = request.args.get(
         "max_show", default=10, type=int)  # no whitelist
-    sort_by = request.args.get("sort_by") or "captain_points_team"
-    order = _parse_order(request.args.get("order"))
+    sort_by = request.args.get("sort_by") or "rank"
+    order = request.args.get("order") or "asc"
     refresh = request.args.get("refresh") in ("1", "true", "yes")
 
     if league_id is None:

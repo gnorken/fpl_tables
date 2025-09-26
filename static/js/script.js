@@ -237,7 +237,12 @@ async function fetchMiniLeague(sortBy, sortOrder) {
   if (loading) loading.style.display = "block";
   tbody.style.display = "none";
 
-  const url = `${cfg.url}&sort_by=${sortBy}&order=${sortOrder}&max_show=${cfg.maxShow}`;
+  // New
+  const qs = new URLSearchParams({ max_show: String(cfg.maxShow) });
+  if (sortBy) qs.set("sort_by", sortBy);
+  if (sortOrder) qs.set("order", sortOrder);
+  const url = `${cfg.url}&${qs.toString()}`;
+
   console.log("📡 fetchMiniLeague →", url);
   let res, data;
   try {
@@ -310,17 +315,17 @@ async function fetchMiniLeague(sortBy, sortOrder) {
 async function fetchData(sortBy, sortOrder, opts = {}) {
   const { snapPrice = true } = opts;
 
-  // Use tableConfig.sortBy/Order, fall back to defaultSort/Order
+  // New: no hard-coded fallback; trust URL or leave empty
   sortBy =
-    sortBy ||
-    window.tableConfig.sortBy ||
-    window.tableConfig.defaultSort ||
-    "total_points";
+    sortBy ??
+    window.tableConfig.sortBy ??
+    window.tableConfig.defaultSort ??
+    null;
   sortOrder =
-    sortOrder ||
-    window.tableConfig.sortOrder ||
-    window.tableConfig.defaultOrder ||
-    "asc";
+    sortOrder ??
+    window.tableConfig.sortOrder ??
+    window.tableConfig.defaultOrder ??
+    null;
 
   // Function to update sort display
   const updateSortDisplay = () => {
@@ -333,20 +338,16 @@ async function fetchData(sortBy, sortOrder, opts = {}) {
       lookup: window.tableConfig.lookup,
     });
 
-    if (sortEl) {
-      const displayName = window.tableConfig.lookup?.[sortBy] || sortBy;
-      sortEl.textContent = displayName;
-      console.log(
-        `Updating current-sort: sortBy=${sortBy}, displayName=${displayName}`
-      );
-    } else {
-      console.warn("Element with ID 'current-sort' not found in DOM");
-    }
+    const effectiveSortBy = sortBy || "rank";
+    const effectiveOrder = (sortOrder || "asc").toLowerCase();
 
+    if (sortEl) {
+      const displayName =
+        window.tableConfig.lookup?.[effectiveSortBy] || effectiveSortBy;
+      sortEl.textContent = displayName;
+    }
     if (orderEl) {
-      orderEl.textContent = sortOrder === "desc" ? "" : "(asc)";
-    } else {
-      console.warn("Element with ID 'current-order' not found in DOM");
+      orderEl.textContent = effectiveOrder === "desc" ? "" : "(asc)";
     }
   };
 
