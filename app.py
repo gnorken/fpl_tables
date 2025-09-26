@@ -13,17 +13,17 @@ from flask import (
 
 from werkzeug.exceptions import HTTPException
 
+from modules.aggregate_data import merge_team_and_global, filter_and_sort_players, sort_table_data
+from modules.http_client import HTTP
 from modules.utils import (
     validate_team_id, get_max_users, get_static_data, get_current_gw,
     init_last_event_updated, ordinalformat,
     thousands, millions, territory_icon, get_event_status_state,
 )
-
-from modules.aggregate_data import merge_team_and_global, filter_and_sort_players, sort_table_data
-from modules.fetch_mini_leagues import (
-    get_league_name, get_live_points, get_team_ids_from_league, get_team_mini_league_breakdown,
-    append_current_manager, enrich_points_behind,
-)
+from modules.fetch_mini_leagues import (build_manager,
+                                        get_league_name, get_live_points, get_team_ids_from_league, get_team_mini_league_breakdown,
+                                        append_current_manager, enrich_points_behind,
+                                        )
 from modules.fetch_teams_table import aggregate_team_stats
 from modules.fetch_all_tables import build_player_info, populate_player_info_all_with_live_data
 from modules.fetch_manager_data import get_manager_data, get_manager_history
@@ -486,38 +486,6 @@ def talisman():
                            order=request.args.get('order', 'desc'),
                            current_page='talisman')
 
-# --- MINI LEAGUES PAGE ---
-
-
-@app.route("/<int:league_id>/leagues/mini_leagues")
-def mini_leagues(league_id):
-
-    # 1️⃣ ensure we know the current GW
-    current_gw = session.get("current_gw") or get_current_gw()
-    session["current_gw"] = current_gw
-
-    # 2️⃣ pull sort params out of the query (for JS to re‐use)
-    sort_by = request.args.get("sort_by", "rank")
-    order = request.args.get("order",   "asc")
-
-    league_name = get_league_name(league_id)
-
-    # set your default rows-per-page here
-    default_page_size = 10
-
-    # 3️⃣ just render the template—no DB or API calls here
-    return render_template(
-        "mini_leagues.html",
-        team_id=session.get("team_id"),
-        league_id=league_id,
-        current_gw=current_gw,
-        sort_by=sort_by,
-        order=order,
-        league_name=league_name,
-        current_page="mini_leagues",
-        maxShow=default_page_size,
-    )
-
 
 @app.route("/get-sorted-players")
 def get_sorted_players():
@@ -707,13 +675,45 @@ def _is_fresh(last_iso: str) -> bool:
         return False
     return True
 
+# --- MINI LEAGUES PAGE ---
 
-@app.get("/mini-league-summary")
-def mini_league_summary():
+
+@app.route("/<int:league_id>/leagues/mini_leagues")
+def mini_leagues(league_id):
+
+    # 1️⃣ ensure we know the current GW
+    current_gw = session.get("current_gw") or get_current_gw()
+    session["current_gw"] = current_gw
+
+    # 2️⃣ pull sort params out of the query (for JS to re‐use)
+    sort_by = request.args.get("sort_by", "rank")
+    order = request.args.get("order",   "asc")
+
+    league_name = get_league_name(league_id)
+
+    # set your default rows-per-page here
+    default_page_size = 10
+
+    # 3️⃣ just render the template—no DB or API calls here
+    return render_template(
+        "mini_leagues.html",
+        team_id=session.get("team_id"),
+        league_id=league_id,
+        current_gw=current_gw,
+        sort_by=sort_by,
+        order=order,
+        league_name=league_name,
+        current_page="mini_leagues",
+        maxShow=default_page_size,
+    )
+
+
+@app.get("/get-sorted-mini-league-summary")
+def get_sorted_mini_league_summary():
     league_id = request.args.get("league_id", type=int)
     max_show = request.args.get("max_show", default=10, type=int)
     sort_by = request.args.get("sort_by") or "rank"
-    order = request.args.get("order") or "asc"
+    order = (request.args.get("order") or "asc").lower()
     refresh = request.args.get("refresh") in ("1", "true", "yes")
 
     if league_id is None:
@@ -721,43 +721,35 @@ def mini_league_summary():
     if not max_show or max_show < 1:
         max_show = 10
 
+    # Identify "me"
+    team_id = request.args.get("current_entry", type=int)
+    if not team_id:
+        mgr = getattr(g, "manager", None)
+        if isinstance(mgr, dict):
+            team_id = mgr.get("team_id") or mgr.get("entry") or mgr.get("id")
+        elif mgr is not None:
+            team_id = getattr(mgr, "team_id", None) or getattr(
+                mgr, "entry", None)
+        if not team_id:
+            team_id = session.get("team_id")
+
     conn = sqlite3.connect(DATABASE, check_same_thread=False)
     cur = conn.cursor()
 
-    # -------- One-time static (fast path) --------
+    # One-time static
     event_iso = getattr(g, "event_last_update", None)
     event_iso = event_iso.isoformat() if event_iso else None
-
-    # Avoid season-wide aggregation for summary
     static_data = get_static_data(
-        current_gw=-1,
-        event_updated_iso=event_iso,
-        include_global_points=False,
-    ) or {}
+        current_gw=-1, event_updated_iso=event_iso, include_global_points=False) or {}
 
-    # Work out current_gw once (fallback to g.current_gw if already set)
-    current_gw = getattr(g, "current_gw", None)
-    if not current_gw:
-        current_gw = next((e["id"] for e in static_data.get(
-            "events", []) if e.get("is_current")), None)
+    # Current GW
+    current_gw = getattr(g, "current_gw", None) or next(
+        (e["id"] for e in static_data.get("events", []) if e.get("is_current")), None)
     if not current_gw:
         conn.close()
         return jsonify({"error": "No current gameweek"}), 500
 
-    # Anchor for cache invalidation: prefer current_gw snapshot, else -1
-    cur.execute(
-        "SELECT last_fetched FROM static_player_info WHERE gameweek = ?",
-        (current_gw,)
-    )
-    _row_static = cur.fetchone()
-    if not _row_static:
-        cur.execute(
-            "SELECT last_fetched FROM static_player_info WHERE gameweek = ?",
-            (-1,)
-        )
-        _row_static = cur.fetchone()
-
-    # -------- Mini-league summary cache read --------
+    # Cache read
     cur.execute("""
         SELECT data, last_fetched
         FROM mini_league_summary_cache
@@ -765,102 +757,98 @@ def mini_league_summary():
     """, (league_id, current_gw, max_show))
     row = cur.fetchone()
 
-    app.logger.debug(
-        "[mini_summary] anchors: cache_last=%s static_last=%s event_last=%s refresh=%s",
-        (row[1] if row else None),
-        (_row_static[0] if _row_static else None),
-        (event_iso or None),
-        refresh,
-    )
-
     use_cache = bool(row and not refresh and _is_fresh(row[1]))
-
     if use_cache:
-        rows = json.loads(row[0])
+        managers = json.loads(row[0])
         app.logger.debug(
-            "[mini_summary] cache HIT (gw=%s, league=%s, max_show=%s)",
-            current_gw, league_id, max_show
-        )
+            "[mini_summary] cache HIT (gw=%s, league=%s, max_show=%s)", current_gw, league_id, max_show)
     else:
         app.logger.debug(
-            "[mini_summary] rebuilding league=%s gw=%s max_show=%s",
-            league_id, current_gw, max_show
-        )
+            "[mini_summary] rebuilding league=%s gw=%s max_show=%s", league_id, current_gw, max_show)
         try:
-            # One-time live map for the current GW
-            # id -> stats for current GW
             live_map = get_live_points(current_gw, cur)
-
-            # Rebuild managers using the pre-fetched static/live
             managers = get_team_ids_from_league(
-                league_id,
-                max_show,
+                league_id, max_show,
                 static_data=static_data,
                 current_gw=current_gw,
                 live_points_by_element=live_map,
                 cur=cur,
-                skip_history=False,  # summary table doesn't need season history cols
+                skip_history=False,
             )
-            rows = enrich_points_behind(managers, overall_league_id=314)
-
             cur.execute("""
                 INSERT OR REPLACE INTO mini_league_summary_cache
                 (league_id, gameweek, max_show, data, last_fetched)
                 VALUES (?, ?, ?, ?, ?)
-            """, (
-                league_id,
-                current_gw,
-                max_show,
-                json.dumps(rows),
-                datetime.now(timezone.utc).isoformat(),
-            ))
+            """, (league_id, current_gw, max_show, json.dumps(managers), datetime.now(timezone.utc).isoformat()))
             conn.commit()
         except Exception as e:
             app.logger.error("[mini_summary] rebuild failed: %s", e)
-            rows = json.loads(row[0]) if row else []
+            managers = json.loads(row[0]) if row else []
 
     conn.close()
 
-    # -------- Sort for response --------
-    rows.sort(
-        key=lambda m: (
-            m.get(sort_by)
-            if m.get(sort_by) is not None
-            else (-1 if sort_by == "summary_event_points" else "")
-        ),
+    # Append current team if missing (do NOT write to cache)
+    if team_id and not any(int(m.get("entry", -1)) == int(team_id) for m in managers):
+        try:
+            append_current_manager(managers, int(
+                team_id), int(league_id), logger=app.logger)
+        except Exception as e:
+            app.logger.warning(
+                "[mini_summary] append_current_manager failed: %s", e)
+
+    # Ensure alias for client
+    for r in managers:
+        r.setdefault("team_id", r.get("entry"))
+
+    # Recompute derived fields (so appended row gets labels/behind fields)
+    managers = enrich_points_behind(managers, overall_league_id=314)
+
+    # Sort & return
+    managers.sort(
+        key=lambda m: (m.get(sort_by) if m.get(
+            sort_by) is not None else (-1 if sort_by == "summary_event_points" else "")),
         reverse=(order == "desc"),
     )
-    return jsonify(players=rows, manager=getattr(g, "manager", None))
+    return jsonify(players=managers, manager=getattr(g, "manager", None))
 
 
-@app.get("/mini-league-breakdown")
-def mini_league_breakdown():
+# ---- /get-sorted-mini-league-breakdown --------------------------------------
+@app.get("/get-sorted-mini-league-breakdown")
+def get_sorted_mini_league_breakdown():
     league_id = request.args.get("league_id", type=int)
-    max_show = request.args.get(
-        "max_show", default=10, type=int)  # no whitelist
+    max_show = request.args.get("max_show", default=10, type=int)
     sort_by = request.args.get("sort_by") or "rank"
-    order = request.args.get("order") or "asc"
+    order = (request.args.get("order") or "asc").lower()
     refresh = request.args.get("refresh") in ("1", "true", "yes")
 
     if league_id is None:
         return jsonify({"error": "Missing league_id"}), 400
     if not max_show or max_show < 1:
-        max_show = 10  # fallback only if invalid
+        max_show = 10
+
+    # Identify "me" from query, g.manager, or session
+    team_id = request.args.get("current_entry", type=int)
+    if not team_id:
+        mgr = getattr(g, "manager", None)
+        if isinstance(mgr, dict):
+            team_id = mgr.get("team_id") or mgr.get("entry") or mgr.get("id")
+        elif mgr is not None:
+            team_id = getattr(mgr, "team_id", None) or getattr(
+                mgr, "entry", None)
+        if not team_id:
+            team_id = session.get("team_id")
+    team_id = int(team_id) if team_id else None
 
     conn = sqlite3.connect(DATABASE, check_same_thread=False)
     cur = conn.cursor()
 
+    # Static + current GW
     current_gw = getattr(g, "current_gw", None)
-    cur.execute(
-        "SELECT last_fetched FROM static_player_info WHERE gameweek = ?", (current_gw or -1,))
-    _row_static = cur.fetchone()
-
     static_data = get_static_data(
         current_gw=current_gw,
-        event_updated_iso=(g.event_last_update.isoformat()
-                           if g.event_last_update else None),
+        event_updated_iso=(g.event_last_update.isoformat() if getattr(
+            g, "event_last_update", None) else None),
     ) or {}
-
     if not current_gw:
         current_gw = next((e["id"] for e in static_data.get(
             "events", []) if e.get("is_current")), None)
@@ -876,15 +864,9 @@ def mini_league_breakdown():
     """, (league_id, current_gw, max_show))
     row = cur.fetchone()
 
-    app.logger.debug(
-        "[mini_breakdown] anchors: cache_last=%s static_last=%s event_last=%s refresh=%s",
-        (row[1] if row else None),
-        (_row_static[0] if _row_static else None),
-        (g.event_last_update.isoformat() if g.event_last_update else None),
-        refresh,
-    )
-
     use_cache = bool(row and not refresh and _is_fresh(row[1]))
+    rows = []
+
     if use_cache:
         rows = json.loads(row[0])
         app.logger.debug(
@@ -893,7 +875,12 @@ def mini_league_breakdown():
         app.logger.debug(
             "[mini_breakdown] rebuilding league=%s gw=%s max_show=%s", league_id, current_gw, max_show)
         try:
-            managers = get_team_ids_from_league(league_id, max_show)
+            # Top-N managers
+            managers = get_team_ids_from_league(
+                league_id, max_show,
+                static_data=static_data,
+                current_gw=current_gw
+            )
 
             # Prefetch live once per GW
             live_data_map = {}
@@ -905,39 +892,109 @@ def mini_league_breakdown():
                         "[mini_breakdown] live fetch fail gw=%s: %s", gw, e)
                     live_data_map[gw] = []
 
-            rows = []
+            # Build per-manager breakdown rows
             for m in managers:
                 try:
                     summary = get_team_mini_league_breakdown(
                         m["entry"], static_data, live_data_map)
-                    row_data = {**m, **summary, "team_id": m["entry"]}
-                    rows.append(row_data)
+                    rows.append({**m, **summary, "team_id": m["entry"]})
                 except Exception as e:
                     app.logger.warning(
                         "[mini_breakdown] summary build failed for %s: %s", m.get("entry"), e)
 
+            # Cache the generic top-N (without 'me')
             cur.execute("""
                 INSERT OR REPLACE INTO mini_league_breakdown_cache
                 (league_id, gameweek, max_show, data, last_fetched)
                 VALUES (?, ?, ?, ?, ?)
-            """, (
-                league_id, current_gw, max_show,
-                json.dumps(rows),
-                datetime.now(timezone.utc).isoformat(),
-            ))
+            """, (league_id, current_gw, max_show, json.dumps(rows), datetime.now(timezone.utc).isoformat()))
             conn.commit()
         except Exception as e:
             app.logger.error("[mini_breakdown] rebuild failed: %s", e)
             rows = json.loads(row[0]) if row else []
 
+    # ---- ensure current team is present (post-cache), and report what happened
+    def _have_me(rws, me_id: int) -> bool:
+        for r in rws:
+            rid = r.get("team_id") if r.get(
+                "team_id") is not None else r.get("entry")
+            try:
+                if rid is not None and int(rid) == int(me_id):
+                    return True
+            except Exception:
+                pass
+        return False
+
+    present_before = bool(team_id and _have_me(rows, team_id))
+    appended = False
+
+    if team_id and not present_before:
+        try:
+            # Build "me" row on the fly
+            resp = HTTP.get(f"{FPL_API}/entry/{team_id}/", timeout=10)
+            if resp.ok:
+                me = resp.json()
+                league_entry = next(
+                    (cl for cl in me.get("leagues", {}).get("classic", [])
+                     if int(cl.get("id", 0)) == int(league_id)),
+                    None
+                )
+                m_base = build_manager(
+                    me, league_entry=league_entry, cur=cur,
+                    static_data=static_data, skip_history=True
+                )
+
+                # Ensure live_data_map exists (for cache-HIT path)
+                try:
+                    live_data_map  # noqa: F401
+                except NameError:
+                    live_data_map = {}
+                    for gw in range(1, current_gw + 1):
+                        try:
+                            live_data_map[gw] = get_live_elements(
+                                cur, gw, FPL_API)
+                        except Exception:
+                            live_data_map[gw] = []
+
+                summary_me = get_team_mini_league_breakdown(
+                    team_id, static_data, live_data_map)
+                rows.append({**m_base, **summary_me, "team_id": team_id})
+                appended = True
+                app.logger.debug(
+                    "[mini_breakdown] appended team_id=%s; count=%d", team_id, len(rows))
+            else:
+                app.logger.warning(
+                    "[mini_breakdown] entry fetch failed (status=%s) for %s", resp.status_code, team_id)
+        except Exception as e:
+            app.logger.warning(
+                "[mini_breakdown] append current team failed: %s", e)
+
     conn.close()
 
-    # Sort (independent)
+    # Add alias for client (and any cached rows lacking team_id)
+    for r in rows:
+        r.setdefault("team_id", r.get("entry"))
+
+    # Sort & return (don’t re-slice; allow N+1)
     rows.sort(
         key=lambda m: m.get(sort_by) if m.get(sort_by) is not None else -1,
         reverse=(order == "desc"),
     )
-    return jsonify(players=rows, manager=getattr(g, "manager", None))
+
+    # Include debug meta so you can see what happened from the browser
+    return jsonify(
+        players=rows,
+        manager=getattr(g, "manager", None),
+        meta={
+            "league_id": league_id,
+            "max_show": max_show,
+            "used_cache": use_cache,
+            "team_id": team_id,
+            "present_before": present_before,
+            "appended": appended,
+            "count": len(rows),
+        },
+    )
 
 
 if __name__ == "__main__":

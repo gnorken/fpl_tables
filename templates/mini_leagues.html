@@ -365,7 +365,7 @@
 
   // ---------- Two configs that your existing script.js will consume ----------
   const summaryConfig = {
-    url: `/mini-league-summary?league_id={{ league_id }}`,
+    url: "{{ url_for('get_sorted_mini_league_summary') }}?league_id={{ league_id }}&max_show=11&current_entry={{ team_id or 0 }}",
     table: "mini_league",
     tbodySelector: "#summary-body",
     loadingSelector: "#loading-summary",
@@ -378,7 +378,7 @@
   };
 
   const breakdownConfig = {
-    url: `/mini-league-breakdown?league_id={{ league_id }}`,
+    url: "{{ url_for('get_sorted_mini_league_breakdown') }}?league_id={{ league_id }}&max_show={{ maxShow }}&current_entry={{ team_id or 0 }}",
     table: "mini_league",
     tbodySelector: "#breakdown-body",
     loadingSelector: "#loading-breakdown",
