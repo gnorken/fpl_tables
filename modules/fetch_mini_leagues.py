@@ -150,6 +150,17 @@ def build_manager(
             "last_rank": league_entry.get("entry_last_rank", league_entry.get("last_rank", 0)),
         })
 
+    # --- National league URL (reinstated) ---
+    base["national_league_url"] = None
+    country_name = (me.get("player_region_name") or "").strip().casefold()
+    classic_leagues = (me.get("leagues") or {}).get("classic") or []
+
+    for league in classic_leagues:
+        if (league.get("name") or "").strip().casefold() == country_name:
+            base["national_league_url"] = url_for(
+                "mini_leagues", league_id=league["id"])
+            break
+
     # --- static data (reuse if passed) ---
     if static_data is None:
         static_data = get_static_data(

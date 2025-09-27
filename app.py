@@ -1012,6 +1012,7 @@ if __name__ == "__main__":
 # FLASK_DEBUG=1 LOG_LEVEL=DEBUG python3 app.py
 
 # grep -r "print(" modules/
+# grep -r national_league_url
 # That will find all the print() calls inside your modules / directory (or wherever your app lives).
 
 # venv problems. git ls-files | grep -E '(^|/)\.venv(/|$)' || echo "✅ no .venv tracked"
