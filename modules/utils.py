@@ -109,25 +109,24 @@ def get_max_users():
 def get_event_status(force: bool = False):
     now = datetime.now(timezone.utc)
 
-    # 🔧 1) Manual override FIRST (before any cache early-return)
+    # 1) Manual override FIRST
     if _maintenance_forced():
         _ES_CACHE.update({
             "maintenance": True,
             "message": "The game is being updated and will be available soon.",
             "is_live": False,
+            "updating": True,
             "at": now,
             # keep prior gw/last_update if present
         })
         return _ES_CACHE
 
-    # 2) Cache early-return — but don't return if cache says maintenance=True
-    #    and the override is now OFF (so we can clear stale maintenance).
-    if (not force) and _ES_CACHE["at"]:
+    # 2) Cache early-return (but don't keep stale maintenance)
+    if (not force) and _ES_CACHE.get("at"):
         fresh = (now - _ES_CACHE["at"]).total_seconds() < 30
         if fresh and not _ES_CACHE.get("maintenance"):
             return _ES_CACHE
-        # If maintenance was cached but override is OFF, fall through to fetch
-        # so we can clear it.
+        # if maintenance was cached but override is OFF, fall through and refetch
 
     # 3) Normal fetch + parse
     try:
@@ -137,43 +136,77 @@ def get_event_status(force: bool = False):
                 "maintenance": True,
                 "message": "The game is being updated and will be available soon.",
                 "is_live": False,
+                "updating": True,
                 "at": now,
             })
             return _ES_CACHE
 
         r.raise_for_status()
         js = r.json()
-        statuses = js.get("status", [])
-        gw = max((s.get("event") for s in statuses if isinstance(s.get("event"), int)),
-                 default=_ES_CACHE.get("gw") or 1)
-        is_live = any(s.get("points") == "l" for s in statuses)
-        sig = json.dumps(statuses, sort_keys=True)
 
-        last_update = _ES_CACHE["last_update"] or now
-        if sig != _ES_CACHE["sig"]:
+        # ---- robust parsing ----
+        statuses_all = [s for s in js.get(
+            "status", []) if isinstance(s.get("event"), int)]
+        if not statuses_all:
+            raise ValueError("event-status had no usable rows")
+
+        gw = max((s["event"] for s in statuses_all),
+                 default=_ES_CACHE.get("gw") or 1)
+
+        # Only consider rows for this GW (FPL returns up to 3 dates for the same GW)
+        rows = [s for s in statuses_all if s.get("event") == gw]
+        flags = [s.get("points") or "" for s in rows]           # '', 'l', 'r'
+        leagues_flag = (js.get("leagues") or "")                # '' or 'u'
+        bonus_any = any(bool(s.get("bonus_added")) for s in rows)
+
+        is_live = any(f == "l" for f in flags)
+        results_seen = any(f == "r" for f in flags)
+        updating = (leagues_flag == "u") or (results_seen and not bonus_any)
+
+        if is_live:
+            message = "Live points are updating."
+        elif updating:
+            message = "The game is being updated and will be available soon."
+        else:
+            message = "No fixtures live right now."
+
+        # Include leagues flag in sig so message changes trigger last_update
+        sig = json.dumps(
+            {"status": rows, "leagues": leagues_flag}, sort_keys=True)
+
+        last_update = _ES_CACHE.get("last_update") or now
+        if sig != _ES_CACHE.get("sig"):
             last_update = now
 
         _ES_CACHE.update({
             "gw": gw,
             "is_live": is_live,
+            "updating": updating,
+            "message": message,
             "last_update": last_update,
             "sig": sig,
             "at": now,
             "maintenance": False,
-            "message": None,
         })
+
+        logger.debug(
+            "[event-status] gw=%s flags=%s leagues=%r live=%s results=%s bonus_any=%s updating=%s",
+            gw, flags, leagues_flag, is_live, results_seen, bonus_any, updating
+        )
         return _ES_CACHE
 
     except Exception:
-        # network error: return whatever we have; if we have nothing, mark maintenance-ish
-        if not _ES_CACHE["at"]:
+        # network/parse failure → keep whatever we have; if nothing yet, fall back to safe message
+        if not _ES_CACHE.get("at"):
             _ES_CACHE.update({
                 "maintenance": True,
                 "message": "The game is being updated and will be available soon.",
                 "is_live": False,
+                "updating": True,
                 "at": now,
             })
         return _ES_CACHE
+
 
 # Backwards-compatible shims (no extra network)
 
