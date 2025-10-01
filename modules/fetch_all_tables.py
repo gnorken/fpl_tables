@@ -425,6 +425,9 @@ def populate_player_info_all_with_live_data(team_id, player_info, static_data):
                 ti['goals_scored_team'] += goals
                 ti['goals_assists_team'] += (goals + stats.get('assists', 0))
                 ti['minutes_team'] += mins
+                ti['own_goals_team'] += stats.get('own_goals', 0)
+                ti['penalties_missed_team'] += stats.get('penalties_missed', 0)
+                ti['penalties_saved_team'] += stats.get('penalties_saved', 0)
                 ti['red_cards_team'] += stats.get('red_cards', 0)
                 ti['recoveries_team'] += stats.get('recoveries', 0)
                 ti['starts_team'] += stats.get('starts', 0)
