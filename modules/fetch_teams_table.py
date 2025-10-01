@@ -72,13 +72,6 @@ def aggregate_team_stats(player_info):
             bps_team_val = player.get("bps", 0)
         teams_data[team_code]["bps_team"] += int(bps_team_val or 0)
 
-        # bonus: prefer explain-derived team key, else team key, else raw
-        # bpt = player.get("bonus_points_team")
-        # if bpt is None:
-        #     bpt = player.get("bonus_team")
-        # if bpt is None:
-        #     bpt = player.get("bonus", 0)
-        # teams_data[team_code]["bonus_team"] += int(bpt or 0)
         teams_data[team_code]["bonus_team"] += player.get(
             "bonus_points_team", 0)
 

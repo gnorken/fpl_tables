@@ -116,6 +116,7 @@ window.updateSortIndicator = (sortBy, sortOrder, containerSelector = null) => {
     "points-table",
     "teams-table",
     "talisman-table",
+    "players-table",
   ];
 
   root.querySelectorAll("th[data-sort]").forEach((th) => {

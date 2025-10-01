@@ -25,8 +25,10 @@ from modules.fetch_mini_leagues import (build_manager,
                                         append_current_manager, enrich_points_behind,
                                         )
 from modules.fetch_teams_table import aggregate_team_stats
-from modules.fetch_all_tables import build_player_info, populate_player_info_all_with_live_data
+from modules.fetch_all_tables import populate_player_info_all_with_live_data
 from modules.fetch_manager_data import get_manager_data, get_manager_history
+from modules.fetch_fixtures import ensure_fixtures_for_gw
+from modules.fixtures_utils import build_team_fixture_cache, attach_upcoming_to_rows, add_fixture_metrics_to_blob
 from modules.live_cache import get_live_elements
 
 # ── Logging config (controlled by env LOG_LEVEL) ─────────────────────────────
@@ -57,8 +59,8 @@ app.jinja_env.filters["thousands"] = thousands
 app.jinja_env.filters["millions"] = millions
 app.jinja_env.filters["territory_icon"] = territory_icon
 
-LIVE_TTL = timedelta(seconds=60)
-COLD_TTL = timedelta(hours=6)
+LIVE_TTL = timedelta(seconds=60)  # In use?
+COLD_TTL = timedelta(hours=6)  # In use?
 
 DATABASE = "page_views.db"
 
@@ -521,15 +523,30 @@ def get_sorted_players():
         data_str, _last = r
         return {int(pid): blob for pid, blob in json.loads(data_str).items()}
 
+    # Is this the right spot
+    # Ensure fixtures cache exists for this request even if we didn't refresh static_data
+    if getattr(g, "fixtures_cache", None) is None:
+        ensure_fixtures_for_gw(current_gw, database=DATABASE, verbose=False)
+        g.fixtures_cache = build_team_fixture_cache(
+            cur, from_event=current_gw, lookahead=5)
+
+    # If static_data is still None, load bootstrap from DB so we have teams mapping.
+    if static_data is None:
+        cur.execute("SELECT data FROM static_data WHERE key='bootstrap'")
+        _row_bootstrap = cur.fetchone()
+        if _row_bootstrap:
+            static_data = json.loads(_row_bootstrap[0])
+
     if row:
         static_blob = _load_static_blob(row)
         if g.event_last_update and datetime.fromisoformat(row[1]) < g.event_last_update:
             app.logger.debug("static_player_info stale → refreshing")
-            static_data = static_data or get_static_data(
-                current_gw=current_gw,
-                event_updated_iso=(g.event_last_update.isoformat()
-                                   if g.event_last_update else None)
-            )
+            static_data = static_data or get_static_data(current_gw=current_gw,
+                                                         event_updated_iso=(g.event_last_update.isoformat()
+                                                                            if g.event_last_update else None),
+                                                         hydrate_fixtures=True,
+                                                         fixtures_lookahead=5
+                                                         )
 
             cur.execute(
                 "SELECT data, last_fetched FROM static_player_info WHERE gameweek = ?",
@@ -542,7 +559,9 @@ def get_sorted_players():
         static_data = static_data or get_static_data(
             current_gw=current_gw,
             event_updated_iso=(g.event_last_update.isoformat()
-                               if g.event_last_update else None)
+                               if g.event_last_update else None),
+            hydrate_fixtures=True,          # ← add this
+            fixtures_lookahead=5
         )
 
         cur.execute(
@@ -581,7 +600,9 @@ def get_sorted_players():
             static_data = static_data or get_static_data(
                 current_gw=current_gw,
                 event_updated_iso=(g.event_last_update.isoformat()
-                                   if g.event_last_update else None)
+                                   if g.event_last_update else None),
+                hydrate_fixtures=True,        # <- NEW
+                fixtures_lookahead=5          # <- tweak as you like
             )
 
             team_blob = populate_player_info_all_with_live_data(
@@ -602,7 +623,9 @@ def get_sorted_players():
         static_data = static_data or get_static_data(
             current_gw=current_gw,
             event_updated_iso=(g.event_last_update.isoformat()
-                               if g.event_last_update else None)
+                               if g.event_last_update else None),
+            hydrate_fixtures=True,
+            fixtures_lookahead=5
         )
 
         team_blob = populate_player_info_all_with_live_data(
@@ -620,6 +643,10 @@ def get_sorted_players():
     app.logger.debug("Final team_blob length=%s", len(team_blob))
     conn.close()
 
+    # Stamp numeric fixture metrics onto static_blob BEFORE sorting
+    add_fixture_metrics_to_blob(
+        static_blob, static_data, g.fixtures_cache, lookahead=5)
+
     # 6) Special tables
     if table == "talisman":
         app.logger.debug("Talisman table")
@@ -630,6 +657,9 @@ def get_sorted_players():
             if p["team_code"] not in seen:
                 seen.add(p["team_code"])
                 talisman_list.append(p)
+
+        attach_upcoming_to_rows(
+            talisman_list, g.fixtures_cache, static_data, lookahead=5)
         images = [{"photo": p["photo"], "team_code": p["team_code"]}
                   for p in talisman_list[:5]]
         return jsonify(players=talisman_list, players_images=images, is_truncated=False,
@@ -660,6 +690,10 @@ def get_sorted_players():
 
     players, images, is_truncated, price_range = filter_and_sort_players(
         static_blob, team_blob, request.args)
+
+    attach_upcoming_to_rows(players, g.fixtures_cache,
+                            static_data, lookahead=5)
+
     return jsonify(players=players, players_images=images, is_truncated=is_truncated,
                    manager=g.manager, price_range=price_range)
 

@@ -1,4 +1,5 @@
 # modules/fetch_all_tables.py
+from datetime import datetime, timezone  # add this import
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from modules.http_client import HTTP
@@ -31,18 +32,39 @@ TEAM_POINTS_KEYS = tuple(k.replace("_points", "_points_team")
                          for k in GLOBAL_POINTS_KEYS)
 
 
-def build_player_info(static_data):
+def build_player_info(static_data, fixtures_cache: dict | None = None, fixtures_lookahead: int = 5):
     logger.debug("[build_player_info] called")
     teams = static_data.get("teams", [])
     players = static_data.get("elements", [])
 
     code_to_name = {team["code"]: team["name"] for team in teams}
     code_to_short = {team["code"]: team["short_name"] for team in teams}
+    code_to_id = {team["code"]: team["id"]
+                  for team in teams}          # NEW: map team_code -> team_id
+    short_by_id = {team["id"]:  team["short_name"]
+                   for team in teams}   # NEW: for opponent short names
+
+    def _fmt_leg(leg):
+        # leg is from fixtures_cache (keys: event, is_home, opp_team_id, difficulty, kickoff_time_utc, tbc)
+        opp = short_by_id.get(leg["opp_team_id"], "UNK")
+        ha = "H" if leg["is_home"] else "A"
+        fdr = leg["difficulty"] if leg["difficulty"] is not None else "?"
+        star = "*" if leg.get("tbc") else ""
+        return f"{opp}({ha})-{fdr}{star}"
+
+    def _fdr_agg(legs, n):
+        diffs = [l["difficulty"]
+                 for l in legs[:n] if l["difficulty"] is not None]
+        if not diffs:
+            return None, None
+        s = sum(diffs)
+        return s, round(s / len(diffs), 2)
 
     player_info = {}
     for p in players:
         team_code = p["team_code"]
-        player_info[p["id"]] = {
+
+        row = {
             # Basic info
             "photo": "p" + p["photo"].replace(".jpg", ".png"),
             "team_code": team_code,
@@ -91,7 +113,7 @@ def build_player_info(static_data):
             "total_points": p["total_points"],
             "yellow_cards": p["yellow_cards"],
 
-            # Global points breakdown (populated in utils.fill_global_points_from_explain)
+            # Global points breakdown
             "assists_points": 0,
             "clean_sheets_points": 0,
             "defensive_contribution_points": 0,
@@ -163,6 +185,57 @@ def build_player_info(static_data):
             "red_cards_team": 0,
             "red_cards_points_team": 0,
         }
+
+        # ✅ NEW: attach upcoming fixtures if cache is provided
+        if fixtures_cache is not None:
+            team_id = code_to_id.get(team_code)
+            legs = (fixtures_cache.get(team_id) or [])[:fixtures_lookahead]
+
+            # Store a compact list for flexible UI usage
+            upcoming_list = []
+            for l in legs:
+                # derive a UTC epoch ts for optional sorting (no local tz needed)
+                ts = None
+                ko = l.get("kickoff_time_utc")
+                if ko:
+                    try:
+                        ts = datetime.fromisoformat(
+                            ko.replace("Z", "+00:00")).timestamp()
+                    except Exception:
+                        ts = None
+                upcoming_list.append({
+                    "event": l.get("event"),
+                    "is_home": l.get("is_home"),
+                    "opp_team_id": l.get("opp_team_id"),
+                    "opp_short": short_by_id.get(l.get("opp_team_id"), "UNK"),
+                    "difficulty": l.get("difficulty"),
+                    "kickoff_time_utc": ko,
+                    "kickoff_ts_utc": ts,
+                    "tbc": bool(l.get("tbc")),
+                })
+
+            # Preformatted strings for table cells
+            next3_str = ", ".join(_fmt_leg(l) for l in legs[:3]) or None
+            next5_str = ", ".join(_fmt_leg(l) for l in legs[:5]) or None
+
+            # FDR aggregates
+            s3, a3 = _fdr_agg(legs, 3)
+            s5, a5 = _fdr_agg(legs, 5)
+
+            row.update({
+                # list[dict] for tooltips/rows/pills
+                "upcoming_fixtures": upcoming_list,
+                "next3_fixtures": next3_str,          # quick cell
+                "next5_fixtures": next5_str,          # quick tooltip
+                "next3_fdr_sum": s3,
+                "next3_fdr_avg": a3,
+                "next5_fdr_sum": s5,
+                "next5_fdr_avg": a5,
+                "next_ko_ts_utc": (upcoming_list[0]["kickoff_ts_utc"] if upcoming_list else None),
+            })
+
+        player_info[p["id"]] = row
+
     return player_info
 
 

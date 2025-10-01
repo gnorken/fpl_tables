@@ -2,12 +2,14 @@
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
-from flask import g, flash
+from flask import g, flash, has_request_context
 import json
 import logging
 import pycountry
 from markupsafe import Markup
 from modules.fetch_all_tables import build_player_info
+from modules.fetch_fixtures import ensure_fixtures_for_gw
+from modules.fixtures_utils import build_team_fixture_cache
 from modules.http_client import HTTP
 import requests
 import sqlite3
@@ -19,7 +21,7 @@ DATABASE = "page_views.db"
 
 FPL_API_BASE = "https://fantasy.premierleague.com/api"
 FPL_STATIC_URL = f"{FPL_API_BASE}/bootstrap-static/"
-FPL_EVENT_STATUS_URL = "https://fantasy.premierleague.com/api/event-status/"
+FPL_EVENT_STATUS_URL = f"{FPL_API_BASE}/event-status/"
 _ES_CACHE = {
     "gw": 1, "is_live": False, "last_update": None,
     "sig": None, "at": None, "maintenance": False, "message": None
@@ -271,7 +273,9 @@ def get_static_data(
     force_refresh: bool = False,
     current_gw: int = -1,
     event_updated_iso: str | None = None,
-    include_global_points: bool = True,   # ✅ new parameter
+    include_global_points: bool = True,   # ✅ existing
+    hydrate_fixtures: bool = False,       # ✅ NEW: opt-in per request
+    fixtures_lookahead: int = 5,          # ✅ NEW: how many legs per team
 ):
     logger.debug("🔄 [get_static_data] called")
 
@@ -337,6 +341,24 @@ def get_static_data(
             cur=cur
         )
 
+    # 4.5) Hydrate fixtures per request (optional, event-aware)
+    if hydrate_fixtures and has_request_context():
+        try:
+            from_event = gw_key if gw_key != -1 else None
+            ensure_fixtures_for_gw(
+                from_event, database=DATABASE, verbose=False)
+
+            # build per-team in-memory cache once for this request
+            g.fixtures_cache = build_team_fixture_cache(
+                cur, from_event=from_event, lookahead=fixtures_lookahead)
+
+            legs = sum(len(v) for v in g.fixtures_cache.values())
+            logger.debug("[fixtures] hydrated on g: teams=%s legs=%s from_event=%s lookahead=%s",
+                         len(g.fixtures_cache), legs, from_event, fixtures_lookahead)
+        except Exception as e:
+            logger.warning("[fixtures] hydrate failed: %s", e)
+            g.fixtures_cache = {}
+
     # 5) Snapshot for routes to read (write only when we fetched fresh or first init)
     should_write_snapshot = bool(need_fetch_static or force_refresh)
     if not should_write_snapshot:
@@ -363,11 +385,6 @@ def get_static_data(
     conn.close()
     logger.debug("🔚 [get_static_data] finished")
     return static_data
-
-
-def _floor_to_bucket(dt: datetime, seconds: int) -> datetime:
-    bucket = int(dt.timestamp()) // seconds * seconds
-    return datetime.fromtimestamp(bucket, tz=timezone.utc)
 
 
 def prune_stale_data(conn, event_updated):
@@ -573,7 +590,7 @@ EXPLAIN_TO_FIELD = {
     "penalties_saved": "penalties_saved_points",
     "penalties_missed": "penalties_missed_points",
     "red_cards": "red_cards_points",
-    "saves": "saves_points",   # <- plural
+    "saves": "saves_points",
     "yellow_cards": "yellow_cards_points",
 }
 

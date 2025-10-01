@@ -12,18 +12,23 @@
                     <th colspan="1" id="top-players" class="sticky-col align-middle round-border-lg-top-left">↑ Top Five
                     </th>
                     <th colspan="2" class="round-border-lg-top-right"></th>
+                    <th colspan="1" class="round-border-lg-top bg-purple">Fixtures</th>
                     <th colspan="31" class="round-border-lg-top ps-3 text-start text-lg-center">Player Totals</th>
                 </tr>
                 <tr class="">
                     <th id="entries" class="sticky-col"></th>
                     <th data-sort="selected_by_percent" class="sort">%</th>
                     <th data-sort="now_cost" class="sort">£</th>
+                    
+                    {# --- Fixtures --- #}
+                    <th data-sort="next5_fdr_avg" class="sort bg-purple">Next 5 FDR</th>
+
 
                     {# --- Overall columns (secondary) --- #}
                     <th data-sort="total_points" class="sort">P</th>
                     <th data-sort="starts" class="sort">S</th>
                     <th data-sort="minutes" class="sort">M</th>
-                    <th data-sort="defensive_contribution_count" class="sort">#DC</th>
+                    <!-- <th data-sort="defensive_contribution_count" class="sort">#DC</th> -->
                     <th data-sort="defensive_contribution_points" class="sort">DC P</th>
                     <th data-sort="defensive_contribution" class="sort">DC</th>
                     <th data-sort="defensive_contribution_per_90" class="sort">DC90</th>
@@ -65,6 +70,7 @@
                 <tr class="th-bg-primary text-center">
                     <th class="sticky-col round-border-lg-btm-left"></th>
                     <th colspan="2" class="th-bg-primary round-border-lg-btm-right">
+                    <th colspan="1" class="bg-purple round-border-lg-btm">
                     <th colspan="31" class="round-border-lg-btm">
                         <div id="loading" style="display:none;">Loading…</div>
                     </th>
@@ -83,6 +89,7 @@
     const lookup = {
         "selected_by_percent": "Teams selected by",
         "now_cost": "Current price",
+        "next5_fdr_avg": "Average difficulty of next five matches",
 
         "total_points": "Total points",
         "starts": "Starts",
@@ -129,6 +136,25 @@
         4: "FWD"
     };
 
+    // Escape for HTML attributes (safety for title)
+        const esc = s => String(s ?? "").replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+
+        // Render one leg/pill
+        function legCell(leg) {
+            if (!leg) return `<span class="fx blank">–</span>`;
+            const opp = leg.opp_short ?? "?";
+            const text = leg.is_home ? opp.toUpperCase() : opp.toLowerCase();
+            const dif = leg.difficulty ?? "x";         // falls back to 'x'
+            const ha = leg.is_home ? "home" : "away";
+            const tbc = leg.tbc ? "<sup>*</sup>" : "";
+            const when = leg.kickoff_time_utc
+                ? new Date(leg.kickoff_time_utc).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })
+                : "";
+            const title = `${opp} ${leg.is_home ? "H" : "A"} · FDR ${dif}${when ? " · " + when : ""}`;
+            return `<span class="fx ${ha} dif_${dif}" title="${esc(title)}">${text}${tbc}</span>`;
+        }
+
+
     // 2) Now inject the shared tableConfig for `script.js` to pick up:
     window.tableConfig = {
         table: "summary",
@@ -173,17 +199,27 @@
 
                     { key: "selected_by_percent", className: "sort", dataColumn: "selected_by_percent", formatter: v => `${parseFloat(v).toFixed(0)}%` },
                     { key: "now_cost", className: "sort ", dataColumn: "now_cost", formatter: v => `£${(v / 10).toFixed(1)}m` },
-                    
-
+                    // Fixtures
+                    {
+                        key: "next5",
+                        header: "Next 5",
+                        className: "fx5-col", dataColumn: "next5_fdr_sum",
+                        render: r => {
+                            const legs = r.upcoming_fixtures || [];
+                            let html = "";
+                            for (let i = 0; i < 5; i++) html += legCell(legs[i] || null);
+                            return `<div class="fx5 sort font-monospace  vert-border vert-border-end">${html}</div>`;
+                        }
+                    },
                     // 15 overall (secondary) columns:
-                    { key: "total_points", className: "sort vert-border-secondary", sortLevel: "secondary", dataColumn: "total_points", formatter: v => `${parseFloat(v)}` },
+                    { key: "total_points", className: "sort", sortLevel: "secondary", dataColumn: "total_points", formatter: v => `${parseFloat(v)}` },
                     // { key: "appearances", className: "sort", sortLevel: "secondary", dataColumn: "appearances" },
                     { key: "starts", className: "sort", sortLevel: "secondary", dataColumn: "starts" },
                     { key: "minutes", className: "sort vert-border-end", sortLevel: "secondary", dataColumn: "minutes" },
-                    { key: "defensive_contribution_count", className: "sort", sortLevel: "secondary", dataColumn: "defcon_count" },
+                    // { key: "defensive_contribution_count", className: "sort", sortLevel: "secondary", dataColumn: "defcon_count" },
                     { key: "defensive_contribution_points", className: "sort", sortLevel: "secondary", dataColumn: "defcon_points" },
                     { key: "defensive_contribution", className: "sort", sortLevel: "secondary", dataColumn: "defcon" },
-                    { key: "defensive_contribution_per_90", className: "sort", sortLevel: "secondary", dataColumn: "defcon_90" },
+                    { key: "defensive_contribution_per_90", className: "sort", sortLevel: "secondary", dataColumn: "defcon_90", formatter: v => (v).toFixed(1) },
                     { key: "cbi", className: "sort", sortLevel: "secondary", dataColumn: "cbi" },
                     { key: "tackles", className: "sort", sortLevel: "secondary", dataColumn: "tackles" },
                     { key: "recoveries", className: "sort", sortLevel: "secondary", dataColumn: "recoveries" },

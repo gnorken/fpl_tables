@@ -54,9 +54,16 @@ def filter_and_sort_players(global_info, team_info, request_args):
         "defence": "starts_team",
         "offence": "goals_scored_team",
         "points": "minutes_points_team",
+        "players": "total_points",
         "talisman": "total_points",
         "teams": "total_points",
     }.get(table, "goals_scored_team")
+
+    FIXTURE_SORT_KEYS = {
+        "next3_fdr_sum", "next3_fdr_avg",
+        "next5_fdr_sum", "next5_fdr_avg",
+        "next_ko_ts_utc",
+    }
 
     sort_by = request_args.get("sort_by", default_sort_by)
     order = request_args.get("order", "desc")
@@ -107,12 +114,13 @@ def filter_and_sort_players(global_info, team_info, request_args):
         "starts_team", "total_points_team"
     }
 
-    if sort_by in negative_columns:
-        players = [p for p in players if float(p.get(sort_by, 0)) < 0]
-    elif sort_by in positive_and_negative_columns:
-        players = [p for p in players if float(p.get(sort_by, 0))]
-    else:
-        players = [p for p in players if float(p.get(sort_by, 0)) > 0]
+    if sort_by not in FIXTURE_SORT_KEYS:
+        if sort_by in negative_columns:
+            players = [p for p in players if float(p.get(sort_by, 0)) < 0]
+        elif sort_by in positive_and_negative_columns:
+            players = [p for p in players if float(p.get(sort_by, 0))]
+        else:
+            players = [p for p in players if float(p.get(sort_by, 0)) > 0]
 
     # ---------------- 5) Sort ----------------------------------------------------------
     reverse_order = (order == "desc")

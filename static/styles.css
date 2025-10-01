@@ -46,7 +46,6 @@ a:active {
 
   --purple: #38003c;
   --purple-comp: #043C00; /* Complemantary to purple */
-  --light-purple: #963cff; /* Light Purpe */
   --bright-green: #00ff85; /* Bright green */
   --turqouise: #04f5ff; /* Turqouise */
   /* --red: #e90052;  */
@@ -86,6 +85,7 @@ a:active {
 .bg-purple {
   background-color: var(--purple) !important;
 }
+
 .text-purple {
   color: var(--purple) !important;
 }
@@ -959,3 +959,54 @@ th.sorted {
   font-weight: 700;
   letter-spacing: 0.5px;
 }
+
+/* Fixtures */
+.fx5-col {
+  text-align: center;
+}
+
+.fx5 {
+  display: inline-flex;
+  gap: .35rem;
+  justify-content: center;
+}
+
+.fx {
+  display: inline-block;
+  min-width: 2.2em;
+  text-align: center;
+}
+
+.fx5 span {
+  border-radius: 5px;
+  padding: 0 5px;
+}
+
+/* Difficulty tinting (keep it simple/neutral) */
+.dif_1 {
+  background-color: #375523 !important;
+}
+
+.dif_2 {
+  background-color: #01fc7a !important;
+}
+
+.dif_3 {
+  background-color: #e7e7e7 !important;
+}
+
+.dif_4 {
+  background-color: #ff1751 !important;
+  color: #FFF;
+}
+
+.dif_5 {
+  background-color: #80072d !important;
+  color: #FFF;
+}
+
+.dif_x {
+  opacity: 0.8;
+}
+
+/* unknown */
