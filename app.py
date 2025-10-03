@@ -25,7 +25,7 @@ from modules.fetch_mini_leagues import (build_manager,
                                         append_current_manager, enrich_points_behind,
                                         )
 from modules.fetch_teams_table import aggregate_team_stats
-from modules.fetch_all_tables import populate_player_info_all_with_live_data
+from modules.fetch_all_tables import populate_player_info_all_with_live_data, build_player_info
 from modules.fetch_manager_data import get_manager_data, get_manager_history
 from modules.fetch_fixtures import ensure_fixtures_for_gw
 from modules.fixtures_utils import build_team_fixture_cache, attach_upcoming_to_rows, add_fixture_metrics_to_blob
@@ -491,165 +491,132 @@ def talisman():
 
 @app.route("/get-sorted-players")
 def get_sorted_players():
-    app.logger.debug(
-        "Received minutes filter: %s–%s",
-        request.args.get("min_minutes"),
-        request.args.get("max_minutes"),
-    )
+    app.logger.debug("Received minutes filter: %s–%s", request.args.get(
+        "min_minutes"), request.args.get("max_minutes"))
 
-    # 1) Parse query params
+    # --- Parse args ---
     table = request.args.get("table", default="goals")
     team_id = request.args.get("team_id", type=int)
-    league_id = request.args.get("league_id", type=int)
     sort_by = request.args.get("sort_by", default=None)
     order = request.args.get("order", default="desc")
-    max_show = request.args.get("max_show", 10, type=int)
     current_gw = g.current_gw
-    static_data = None  # lazy-loaded only when needed
+    static_data = None
 
     app.logger.debug("current_gw=%s", current_gw)
 
-    # 3) FAST PATH: use cached static_player_info for current GW (refresh only if stale)
+    # --- helpers (define BEFORE use) ---
+    def _load_static_blob(row_tuple):
+        data_str, _last = row_tuple
+        return {int(pid): blob for pid, blob in json.loads(data_str).items()}
+
+    # --- DB ---
     conn = sqlite3.connect(DATABASE, check_same_thread=False)
     cur = conn.cursor()
 
-    cur.execute(
-        "SELECT data, last_fetched FROM static_player_info WHERE gameweek = ?",
-        (current_gw,)
-    )
-    row = cur.fetchone()
-
-    def _load_static_blob(r):
-        data_str, _last = r
-        return {int(pid): blob for pid, blob in json.loads(data_str).items()}
-
-    # Is this the right spot
-    # Ensure fixtures cache exists for this request even if we didn't refresh static_data
+    # Ensure fixtures cache exists
     if getattr(g, "fixtures_cache", None) is None:
         ensure_fixtures_for_gw(current_gw, database=DATABASE, verbose=False)
         g.fixtures_cache = build_team_fixture_cache(
             cur, from_event=current_gw, lookahead=5)
 
-    # If static_data is still None, load bootstrap from DB so we have teams mapping.
-    if static_data is None:
-        cur.execute("SELECT data FROM static_data WHERE key='bootstrap'")
-        _row_bootstrap = cur.fetchone()
-        if _row_bootstrap:
-            static_data = json.loads(_row_bootstrap[0])
-
-    if row:
-        static_blob = _load_static_blob(row)
-        if g.event_last_update and datetime.fromisoformat(row[1]) < g.event_last_update:
-            app.logger.debug("static_player_info stale → refreshing")
-            static_data = static_data or get_static_data(current_gw=current_gw,
-                                                         event_updated_iso=(g.event_last_update.isoformat()
-                                                                            if g.event_last_update else None),
-                                                         hydrate_fixtures=True,
-                                                         fixtures_lookahead=5
-                                                         )
-
-            cur.execute(
-                "SELECT data, last_fetched FROM static_player_info WHERE gameweek = ?",
-                (current_gw,)
-            )
-            row = cur.fetchone()
-            static_blob = _load_static_blob(row)
+    # Ensure bootstrap (for team mapping)
+    cur.execute("SELECT data FROM static_data WHERE key='bootstrap'")
+    boot = cur.fetchone()
+    if boot:
+        static_data = json.loads(boot[0])
     else:
-        app.logger.debug("no static_player_info row → fetching")
-        static_data = static_data or get_static_data(
-            current_gw=current_gw,
-            event_updated_iso=(g.event_last_update.isoformat()
-                               if g.event_last_update else None),
-            hydrate_fixtures=True,          # ← add this
-            fixtures_lookahead=5
-        )
+        static_data = {"teams": [], "elements": []}
 
-        cur.execute(
-            "SELECT data, last_fetched FROM static_player_info WHERE gameweek = ?",
-            (current_gw,)
-        )
-        row = cur.fetchone()
-        static_blob = _load_static_blob(row)
-
-    # 5) Load or refresh team_player_info (merge needs this)
-    cur.execute("SELECT COUNT(*) FROM team_player_info WHERE team_id=? AND gameweek=?",
-                (team_id, current_gw))
-    count_tg = cur.fetchone()[0]
-    app.logger.debug("Rows for team_id=%s, gw=%s: %s",
-                     team_id, current_gw, count_tg)
-
+    # --- Load or build static_player_info snapshot for this GW ---
     cur.execute(
-        "SELECT data, last_fetched FROM team_player_info WHERE team_id=? AND gameweek=?",
-        (team_id, current_gw)
-    )
+        "SELECT data, last_fetched FROM static_player_info WHERE gameweek=?", (current_gw,))
     row = cur.fetchone()
 
-    if row:
-        app.logger.debug(
-            "Found existing team_player_info for team_id=%s, gw=%s", team_id, current_gw)
-        data, last_fetched = row
-        app.logger.debug("last_fetched=%s, event_status_last_update=%s",
-                         last_fetched, g.event_last_update)
-        if not g.event_last_update or datetime.fromisoformat(last_fetched) >= g.event_last_update:
-            app.logger.debug("Using cached team_player_info")
-            team_blob = {int(pid): blob for pid,
-                         blob in json.loads(data).items()}
-        else:
-            app.logger.debug(
-                "Cached team_player_info stale → refreshing from live")
-            static_data = static_data or get_static_data(
-                current_gw=current_gw,
-                event_updated_iso=(g.event_last_update.isoformat()
-                                   if g.event_last_update else None),
-                hydrate_fixtures=True,        # <- NEW
-                fixtures_lookahead=5          # <- tweak as you like
-            )
-
-            team_blob = populate_player_info_all_with_live_data(
-                team_id, static_blob, static_data)
-            app.logger.debug("Refreshed team_blob keys=%s",
-                             list(team_blob.keys()))
-            cur.execute(
-                """INSERT OR REPLACE INTO team_player_info
-                (team_id, gameweek, data, last_fetched)
-                VALUES (?, ?, ?, ?)""",
-                (team_id, current_gw, json.dumps(team_blob),
-                    datetime.now(timezone.utc).isoformat())
-            )
-            conn.commit()
-    else:
-        app.logger.debug(
-            "No team_player_info row → fetching fresh for team_id=%s, gw=%s", team_id, current_gw)
-        static_data = static_data or get_static_data(
+    if not row:
+        app.logger.warning(
+            "[static] no static_player_info for gw=%s → building snapshot", current_gw)
+        _ = get_static_data(
             current_gw=current_gw,
             event_updated_iso=(g.event_last_update.isoformat()
                                if g.event_last_update else None),
+            force_refresh=True,
             hydrate_fixtures=True,
-            fixtures_lookahead=5
+            fixtures_lookahead=5,
         )
-
-        team_blob = populate_player_info_all_with_live_data(
-            team_id, static_blob, static_data)
-        app.logger.debug("Fresh team_blob keys=%s", list(team_blob.keys()))
         cur.execute(
-            """INSERT OR REPLACE INTO team_player_info
-            (team_id, gameweek, data, last_fetched)
-            VALUES (?, ?, ?, ?)""",
-            (team_id, current_gw, json.dumps(team_blob),
-                datetime.now(timezone.utc).isoformat())
-        )
-        conn.commit()
+            "SELECT data, last_fetched FROM static_player_info WHERE gameweek=?", (current_gw,))
+        row = cur.fetchone()
+
+    # If still missing, build in-memory; else load snapshot
+    if not row:
+        app.logger.error(
+            "[static] snapshot still missing; using in-memory build")
+        static_blob = build_player_info(
+            static_data, fixtures_cache=g.fixtures_cache, fixtures_lookahead=5)
+    else:
+        static_blob = _load_static_blob(row)
+        # Staleness check
+        last_fetched = row[1]
+        if g.event_last_update and datetime.fromisoformat(last_fetched) < g.event_last_update:
+            app.logger.debug("static_player_info stale → refreshing")
+            _ = get_static_data(
+                current_gw=current_gw,
+                event_updated_iso=g.event_last_update.isoformat(),
+                hydrate_fixtures=True,
+                fixtures_lookahead=5,
+                force_refresh=True,
+            )
+            cur.execute(
+                "SELECT data, last_fetched FROM static_player_info WHERE gameweek=?", (current_gw,))
+            row = cur.fetchone()
+            static_blob = _load_static_blob(row)
+
+    # --- Team blob: guard when team_id is None ---
+    if team_id is None:
+        app.logger.debug("No team_id provided → skipping team_player_info")
+        team_blob = {}
+    else:
+        cur.execute(
+            "SELECT data, last_fetched FROM team_player_info WHERE team_id=? AND gameweek=?", (team_id, current_gw))
+        row = cur.fetchone()
+        if row:
+            data, last_fetched = row
+            if not g.event_last_update or datetime.fromisoformat(last_fetched) >= g.event_last_update:
+                team_blob = {int(pid): blob for pid,
+                             blob in json.loads(data).items()}
+            else:
+                app.logger.debug(
+                    "Cached team_player_info stale → refreshing from live")
+                team_blob = populate_player_info_all_with_live_data(
+                    team_id, static_blob, static_data)
+                cur.execute(
+                    """INSERT OR REPLACE INTO team_player_info (team_id, gameweek, data, last_fetched)
+                       VALUES (?, ?, ?, ?)""",
+                    (team_id, current_gw, json.dumps(team_blob),
+                     datetime.now(timezone.utc).isoformat()),
+                )
+                conn.commit()
+        else:
+            app.logger.debug("No team_player_info row → fetching fresh")
+            team_blob = populate_player_info_all_with_live_data(
+                team_id, static_blob, static_data)
+            cur.execute(
+                """INSERT OR REPLACE INTO team_player_info (team_id, gameweek, data, last_fetched)
+                   VALUES (?, ?, ?, ?)""",
+                (team_id, current_gw, json.dumps(team_blob),
+                 datetime.now(timezone.utc).isoformat()),
+            )
+            conn.commit()
 
     app.logger.debug("Final team_blob length=%s", len(team_blob))
     conn.close()
 
-    # Stamp numeric fixture metrics onto static_blob BEFORE sorting
+    # --- Stamp fixture metrics NOW (upstream of sorting) ---
     add_fixture_metrics_to_blob(
         static_blob, static_data, g.fixtures_cache, lookahead=5)
 
-    # 6) Special tables
+    # --- Tables ---
     if table == "talisman":
-        app.logger.debug("Talisman table")
         players, _, is_truncated, price_range = filter_and_sort_players(
             static_blob, {}, request.args)
         seen, talisman_list = set(), []
@@ -657,16 +624,13 @@ def get_sorted_players():
             if p["team_code"] not in seen:
                 seen.add(p["team_code"])
                 talisman_list.append(p)
-
         attach_upcoming_to_rows(
             talisman_list, g.fixtures_cache, static_data, lookahead=5)
         images = [{"photo": p["photo"], "team_code": p["team_code"]}
                   for p in talisman_list[:5]]
-        return jsonify(players=talisman_list, players_images=images, is_truncated=False,
-                       manager=g.manager, price_range=price_range)
+        return jsonify(players=talisman_list, players_images=images, is_truncated=False, manager=g.manager, price_range=price_range)
 
     if table == "teams":
-        app.logger.debug("Teams table")
         merged = merge_team_and_global(static_blob, team_blob)
         stats = aggregate_team_stats(merged)
         sorted_stats = sorted(
@@ -684,18 +648,14 @@ def get_sorted_players():
                     break
         return jsonify(players=sorted_stats, players_images=top5, manager=g.manager)
 
-    # 7) Default tables (summary, defence, offence, points)
-    app.logger.info("GW=%s, mins=%s–%s", g.current_gw,
-                    request.args.get("min_minutes"), request.args.get("max_minutes"))
-
+    # Default tables
+    app.logger.info("GW=%s, mins=%s–%s", g.current_gw, request.args.get(
+        "min_minutes"), request.args.get("max_minutes"))
     players, images, is_truncated, price_range = filter_and_sort_players(
         static_blob, team_blob, request.args)
-
     attach_upcoming_to_rows(players, g.fixtures_cache,
                             static_data, lookahead=5)
-
-    return jsonify(players=players, players_images=images, is_truncated=is_truncated,
-                   manager=g.manager, price_range=price_range)
+    return jsonify(players=players, players_images=images, is_truncated=is_truncated, manager=g.manager, price_range=price_range)
 
 
 def _is_fresh(last_iso: str) -> bool:
