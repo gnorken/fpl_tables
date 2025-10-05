@@ -8,11 +8,11 @@
   <!-- ================= TABLE A: SUMMARY ================= -->
   <div class="table-responsive pe-2 mb-3">
     <table id="mini-league-summary" class="table table-sm interactive-table table-striped text-nowrap">
-      <thead class="th-bg-primary small">
+      <thead class="thead-bg-primary-gradient">
         <tr class="text-center th-padding text-wrap" data-table="summary">
           <!-- Rank -->
-          <th data-sort="rank" class="sort">Rank</th>
-          <th data-sort="overall_rank" class="sort">OR</th>
+          <th data-sort="rank" class="sort round-border-lg-top-left">Rank</th>
+          <th data-sort="overall_rank" class="sort{% if league_id|int == 314 %} d-none {% endif %}">OR</th>
 
           <!-- Manager info-->
           <th data-sort="player_name" class="sort sticky-col text-start">Name</th>
@@ -31,17 +31,17 @@
 
           <!-- Chips -->
           <th data-sort="wildcard1_gw" class="sort">WC</th>
-          <th data-sort="3xc_gw" class="sort text-center">3x_C</th>
+          <th data-sort="3xc_gw" class="sort text-center">TC</th>
           <th data-sort="bboost_gw" class="sort">BB</th>
           <th data-sort="freehit_gw" class="sort">FH</th>
 
           <!-- Transfers -->
           <th data-sort="last_deadline_total_transfers" class="sort text-start">Transfers</th>
-          <th data-sort="transfer_cost" class="sort">Hits</th>
+          <th data-sort="transfer_cost" class="sort round-border-lg-top-right">Hits</th>
         </tr>
       </thead>
       <tbody id="summary-body"></tbody>
-      <tfoot class="th-bg-primary">
+      <tfoot class="thead-bg-primary-gradient">
         <tr>
           <th colspan="18" class="round-border-btm text-center">
             <div id="loading-summary" style="display:none">Loading…</div>
@@ -54,10 +54,11 @@
   <!-- ================= TABLE B: BREAKDOWN ================= -->
   <div class="table-responsive pe-2">
     <table id="mini-league-breakdown" class="table table-sm interactive-table table-striped text-nowrap">
-      <thead class="th-bg-primary small">
+      <thead class="thead-bg-primary-gradient">
         <tr class="text-center th-padding text-wrap" data-table="breakdown">
           <!-- Identity -->
-          <th data-sort="rank" class="sort">Rank</th>
+          <th data-sort="rank" class="sort round-border-lg-top-left">Rank</th>
+          <!-- <th data-sort="overall_rank" class="sort {% if league_id|int == 314 %} d-none {% endif %}">OR</th> -->
           <th data-sort="player_name" class="sort sticky-col text-start">Name</th>
 
           <!-- Breakdown -->
@@ -72,11 +73,11 @@
 
           <!-- Negatives -->
           <th data-sort="yellow_cards_team" class="sort">Yellow Cards</th>
-          <th data-sort="red_cards_team" class="sort">Red Cards</th>
+          <th data-sort="red_cards_team" class="sort round-border-lg-top-right">Red Cards</th>
         </tr>
       </thead>
       <tbody id="breakdown-body"></tbody>
-      <tfoot class="th-bg-primary">
+      <tfoot class="thead-bg-primary-gradient">
         <tr>
           <th colspan="12" class="round-border-btm text-center">
             <div id="loading-breakdown">Loading…</div>
@@ -98,6 +99,7 @@
 </div>
 
 <script>
+  const HIDE_OVERALL = {{ (league_id | int == 314) | tojson }};
   // ---------- Shared lookup used by both configs ----------
   const sharedLookup = {
     rank: "Mini-league rank",
@@ -172,6 +174,7 @@
     {
       key: "overall_rank",
       render: t => {
+        const cls = "vert-border" + (HIDE_OVERALL ? " d-none" : "");
         const v = t.overall_rank;
         if (v == null) return "<td></td>";
         const formatted = (v >= 1_000_000) ? (v / 1_000_000).toFixed(1) + "M" : (v >= 1_000 ? (v / 1_000).toFixed(1) + "K" : v.toLocaleString("de-CH"));
@@ -181,7 +184,7 @@
           else if (v > t.overall_last_rank) arrow = ' <span class="text-danger">&#9660;</span>';
           else arrow = ' <span class="text-muted">&#8211;</span>';
         }
-        return `<td class="vert-border">${formatted}${arrow}</td>`;
+        return `<td class="${cls}">${formatted}${arrow}</td>`;
       }
     },
     {
@@ -365,7 +368,7 @@
 
   // ---------- Two configs that your existing script.js will consume ----------
   const summaryConfig = {
-    url: "{{ url_for('get_sorted_mini_league_summary') }}?league_id={{ league_id }}&max_show=11&current_entry={{ team_id or 0 }}",
+    url: "{{ url_for('get_sorted_mini_league_summary') }}?league_id={{ league_id }}&current_entry={{ team_id or 0 }}",
     table: "mini_league",
     tbodySelector: "#summary-body",
     loadingSelector: "#loading-summary",
@@ -378,7 +381,7 @@
   };
 
   const breakdownConfig = {
-    url: "{{ url_for('get_sorted_mini_league_breakdown') }}?league_id={{ league_id }}&max_show={{ maxShow }}&current_entry={{ team_id or 0 }}",
+    url: "{{ url_for('get_sorted_mini_league_breakdown') }}?league_id={{ league_id }}&current_entry={{ team_id or 0 }}",
     table: "mini_league",
     tbodySelector: "#breakdown-body",
     loadingSelector: "#loading-breakdown",

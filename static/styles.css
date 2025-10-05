@@ -9,7 +9,13 @@ a:active {
 
 /* Define colors at the root level */
 :root {
-  
+  /* White, Neutral, Warm porcelain, Cool Pearl, Lavender mist */
+  --page-bg: #FFF; 
+  /* --page-bg: #F6F7F9;  */
+  /* --page-bg: #FAF7F2;  */
+  /* --page-bg: #F5F7FB; */
+  /* --page-bg: #F6F3FA; */
+
   /* Brand */
   --primary: #203C73;
   /* Navy blue */
@@ -57,6 +63,12 @@ a:active {
   --secondary-hover-color: #00ef77; /* Slightly darker purple for hover */
 }
 
+
+body {
+  background: var(--page-bg)!important;
+  color: #111;
+}
+
 .text-color-light {
   color: var(--text-light) !important;
 }
@@ -82,7 +94,11 @@ a:active {
 .bg-primary {
   background-color: var(--primary) !important;
 }
+.bg-primary-gradient {
+  background: linear-gradient(90deg, var(--purple) 0%, var(--primary) 100%) !important;
+}
 .bg-purple {
+  /* background: linear-gradient(90deg, rgba(56, 0, 60, 1) 0%, rgba(143, 0, 153, 1) 100%) !important; */
   background-color: var(--purple) !important;
 }
 
@@ -90,7 +106,17 @@ a:active {
   color: var(--purple) !important;
 }
 
-
+/* Mini-league name */
+.league-name {
+  background: linear-gradient(90deg, var(--purple) 0%, var(--primary) 100%) !important;
+  color: white;
+  padding: 8px 20px;
+  border-radius: 5px;
+  display: inline-block;
+  /* text-align: center; */
+  box-shadow: rgba(0, 0, 0, 0.45) 2px 2px 3px;
+  /* box-shadow: rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px; */
+}
 
 /* Fixed-width rank so badge/text always line up */
 .rank {
@@ -133,6 +159,16 @@ a:active {
   background-color: var(--primary);
   color: white;
 } /* th */
+.thead-bg-primary-gradient {
+  background: linear-gradient(90deg, var(--purple) 0%, var(--primary) 100%) !important;
+  color: white;
+} /* th */
+/* Let the row’s background show through each <th> */
+.thead-bg-primary-gradient th {
+  background: transparent !important;
+  /* overrides any per-cell bg */
+  color: #fff;
+}
 .th-bg-primary th a {
   background-color: var(--primary);
   color: white;

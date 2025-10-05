@@ -705,7 +705,7 @@ def mini_leagues(league_id):
 @app.get("/get-sorted-mini-league-summary")
 def get_sorted_mini_league_summary():
     league_id = request.args.get("league_id", type=int)
-    max_show = request.args.get("max_show", default=10, type=int)
+    max_show = request.args.get("max_show", type=int)
     sort_by = request.args.get("sort_by") or "rank"
     order = (request.args.get("order") or "asc").lower()
     refresh = request.args.get("refresh") in ("1", "true", "yes")
@@ -713,7 +713,7 @@ def get_sorted_mini_league_summary():
     if league_id is None:
         return jsonify({"error": "Missing league_id"}), 400
     if not max_show or max_show < 1:
-        max_show = 10
+        max_show = 3
 
     # Identify "me"
     team_id = request.args.get("current_entry", type=int)
