@@ -1,16 +1,15 @@
-import os
-import json
-import time
-import logging
-import sqlite3
-import traceback
 from datetime import datetime, timezone, timedelta
-
+import json
 from flask import (
     Flask, flash, jsonify, redirect, render_template,
     request, Response, send_from_directory, session, url_for, g,
 )
-
+import logging
+import os
+import sqlite3
+import time
+import traceback
+from threading import Lock
 from werkzeug.exceptions import HTTPException
 
 from modules.aggregate_data import merge_team_and_global, filter_and_sort_players, sort_table_data
@@ -18,7 +17,7 @@ from modules.http_client import HTTP
 from modules.utils import (
     validate_team_id, get_max_users, get_static_data, get_current_gw,
     init_last_event_updated, ordinalformat,
-    thousands, millions, territory_icon, get_event_status_state,
+    thousands, millions, territory_icon, get_event_status_state, resolve_current_gw,
 )
 from modules.fetch_mini_leagues import (build_manager,
                                         get_league_name, get_live_points, get_team_ids_from_league, get_team_mini_league_breakdown,
@@ -30,6 +29,9 @@ from modules.fetch_manager_data import get_manager_data, get_manager_history
 from modules.fetch_fixtures import ensure_fixtures_for_gw
 from modules.fixtures_utils import build_team_fixture_cache, attach_upcoming_to_rows, add_fixture_metrics_to_blob
 from modules.live_cache import get_live_elements
+
+# Ensuring Data Integrity: By controlling access to shared data, locks help maintain the integrity and consistency of your application's data.
+_warmup_lock = Lock()
 
 # ── Logging config (controlled by env LOG_LEVEL) ─────────────────────────────
 LOG_LEVEL_NAME = os.environ.get("LOG_LEVEL", "INFO").upper()
@@ -97,28 +99,48 @@ SAFE_PATHS = {"/healthz", "/robots.txt",
               "/favicon.ico", "/apple-touch-icon.png"}
 SAFE_PREFIXES = ("/static/",)
 
+# app.py
+
 
 @app.before_request
 def before_every_request():
     p = (request.path or "/")
+
+    # Skip static/health/etc.
     if request.method == "OPTIONS" or p in SAFE_PATHS or any(p.startswith(pre) for pre in SAFE_PREFIXES):
         return
 
     t0 = time.perf_counter()
     try:
-        # 1) Clear team_id on index GET
+        # ── 0) Warmup once per process ─────────────────────────────
+        if not app.config.get("_WARMED_UP", False):
+            with _warmup_lock:
+                if not app.config.get("_WARMED_UP", False):
+                    try:
+                        _ = get_static_data(
+                            current_gw=-1,
+                            event_updated_iso=None,
+                            include_global_points=False
+                        )
+                        app.logger.info("[warmup] static_data preloaded")
+                    except Exception as e:
+                        app.logger.warning("[warmup] preload failed: %s", e)
+                    finally:
+                        app.config["_WARMED_UP"] = True
+
+        # ── 1) Clear team_id on index GET ──────────────────────────
         if request.endpoint == "index" and request.method == "GET":
             session.pop("team_id", None)
             app.logger.info("Cleared session team_id on GET to index route")
 
-        # 2) Resolve team_id (URL > session)
+        # ── 2) Resolve team_id (URL > session) ─────────────────────
         url_tid = (request.view_args or {}).get("team_id")
         if url_tid is not None:
             session["team_id"] = url_tid
             app.logger.debug("Session team_id set to %s", url_tid)
         g.team_id = url_tid if url_tid is not None else session.get("team_id")
 
-        # 3) Event-status snapshot (single source of truth; must not raise)
+        # ── 3) Event-status snapshot (single source of truth) ──────
         st = get_event_status_state()
         g.current_gw = st.get("gw")
         g.is_live = st.get("is_live")
@@ -128,28 +150,51 @@ def before_every_request():
             "message") or "The game is being updated and will be available soon."
         session["current_gw"] = g.current_gw
 
-        app.logger.info("status: gw=%s live=%s updating=%s msg=%s",
-                        g.current_gw, g.is_live, g.is_updating, g.fpl_status_msg)
+        # ── 3b) Fallback if current_gw is missing (e.g. cold start) ─
+        if not g.current_gw:
+            try:
+                sd = get_static_data(
+                    current_gw=-1,
+                    event_updated_iso=(g.event_last_update.isoformat()
+                                       if getattr(g, "event_last_update", None) else None),
+                    include_global_points=False
+                ) or {}
+                from modules.utils import resolve_current_gw  # ensure imported once
+                g.current_gw = resolve_current_gw(sd, None)
+                app.logger.info(
+                    "[fallback] resolved current_gw=%s via static_data", g.current_gw)
+            except Exception as e:
+                app.logger.warning("resolve_current_gw fallback failed: %s", e)
 
-        # 3a) Show friendly banner once per session
+        session["current_gw"] = g.current_gw
+
+        app.logger.info(
+            "status: gw=%s live=%s updating=%s msg=%s",
+            g.current_gw, g.is_live, g.is_updating, g.fpl_status_msg
+        )
+
+        # ── 3c) Friendly banner once per session ──────────────────
         if g.is_updating and not session.get("fpl_notice_shown"):
             flash(g.fpl_status_msg, "warning")
             session["fpl_notice_shown"] = True
 
-        # Optional: let data routes know they should avoid live fetches right now
+        # Optional: data routes should avoid live fetches right now
         g.skip_live_fetch = g.is_updating
 
-        # 4) Load manager once per request (prefer cache; avoid live fetch during updating)
+        # ── 4) Load manager (cached per process) ───────────────────
         g.manager = None
         if g.team_id:
             cache = g.__dict__.setdefault("_mgr_cache", {})
             if g.is_updating:
-                # Don’t hit FPL while updating; use cached manager if available, else placeholder
+                # Don’t hit FPL while updating; use cached manager or stub
                 if g.team_id in cache:
                     g.manager = cache[g.team_id]
                 else:
                     cache[g.team_id] = {
-                        "id": g.team_id, "first_name": "Unknown", "team_name": f"Manager {g.team_id}"}
+                        "id": g.team_id,
+                        "first_name": "Unknown",
+                        "team_name": f"Manager {g.team_id}",
+                    }
                     g.manager = cache[g.team_id]
             else:
                 if g.team_id not in cache:
@@ -161,7 +206,10 @@ def before_every_request():
                         app.logger.error(
                             "Failed to load manager %s: %s", g.team_id, e)
                         cache[g.team_id] = {
-                            "id": g.team_id, "first_name": "Unknown", "team_name": f"Manager {g.team_id}"}
+                            "id": g.team_id,
+                            "first_name": "Unknown",
+                            "team_name": f"Manager {g.team_id}",
+                        }
                 g.manager = cache[g.team_id]
 
     except Exception:

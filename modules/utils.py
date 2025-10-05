@@ -34,6 +34,32 @@ TIMEOUT_SHORT = (3, 6)   # connect, read
 TIMEOUT_MED = (3, 8)
 TIMEOUT_LONG = (3, 12)
 
+# utils.py
+
+
+def resolve_current_gw(static_data: dict | None, g_current: int | None = None) -> int | None:
+    # 1) Trust g.current_gw if it exists
+    if isinstance(g_current, int) and g_current > 0:
+        return g_current
+
+    events = (static_data or {}).get("events") or []
+
+    # 2) Normal case
+    for e in events:
+        if e.get("is_current"):
+            return int(e["id"])
+
+    # 3) While “Game updating”: use last is_previous
+    prev_ids = [int(e["id"]) for e in events if e.get("is_previous")]
+    if prev_ids:
+        return max(prev_ids)
+
+    # 4) Last resort: highest known id
+    if events:
+        return max(int(e["id"]) for e in events if "id" in e)
+
+    return None
+
 
 def _maintenance_forced() -> bool:
     return os.getenv("FPL_MAINTENANCE", "0").lower() in ("1", "true", "yes", "on")
