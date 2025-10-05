@@ -219,14 +219,10 @@ th:hover.sort {
 }
 
 /* Cursors */
-th {
-  cursor: default;
-  background-color: blueviolet;
-}
 th.sort,
 th.sort-team {
   cursor: pointer;
-} /* Changes the cursor to a pointer */
+} 
 td {
   cursor: default;
 }
@@ -1046,3 +1042,49 @@ th.sorted {
 }
 
 /* unknown */
+
+
+/* thead gradient horizontal scrolling */
+.thead-bg-primary-gradient {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  isolation: isolate;
+}
+
+.thead-bg-primary-gradient::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--purple) 0%, var(--primary) 100%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.thead-bg-primary-gradient th {
+  position: relative;
+  background: transparent;
+  color: #fff;
+  z-index: 1;
+}
+
+/* sticky header cell paints its own slice of the SAME gradient, aligned to scroll */
+.thead-bg-primary-gradient th.sticky-col {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+}
+
+.thead-bg-primary-gradient th.sticky-col::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  /* behind text, above siblings */
+  pointer-events: none;
+  background: linear-gradient(90deg, var(--purple) 0%, var(--primary) 100%);
+  /* Scroll-aligned slice of the full header gradient */
+  background-size: var(--header-w, 2000px) 100%;
+  background-position-x: calc(var(--scroll-x, 0px) * -1);
+}
+/* thead gradient horizontal scrolling END */

@@ -464,6 +464,20 @@
       });
     }
   });
+
+  document.querySelectorAll('.table-responsive').forEach(scroller => {
+      const thead = scroller.querySelector('.thead-bg-primary-gradient');
+      const stickyTh = thead && thead.querySelector('th.sticky-col');
+      if (!stickyTh) return;
+
+      const update = () => {
+        stickyTh.style.setProperty('--scroll-x', scroller.scrollLeft + 'px');
+        stickyTh.style.setProperty('--header-w', scroller.scrollWidth + 'px');
+      };
+      scroller.addEventListener('scroll', update, { passive: true });
+      window.addEventListener('resize', update);
+      update();
+    });
 </script>
 
 {% endblock %}
