@@ -713,7 +713,7 @@ def get_sorted_mini_league_summary():
     if league_id is None:
         return jsonify({"error": "Missing league_id"}), 400
     if not max_show or max_show < 1:
-        max_show = 3
+        max_show = 10
 
     # Identify "me"
     team_id = request.args.get("current_entry", type=int)
