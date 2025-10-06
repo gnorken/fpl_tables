@@ -2,70 +2,72 @@
 {% block title %}Talisman{% endblock %}
 
 {% block page_content %}
-<div class="table-responsive">
-    <table id="talisman-table" class="table table-borderless interactive-table table-striped text-nowrap text-center">
-        <thead class="th-bg-primary">
-            <tr>
-                <th colspan="1" id="top-players" class="sticky-col align-middle round-border-lg-top-left">↑ Top Five
-                </th>
-                <th colspan="2" class="round-border-lg-top-right"></th>
-                <th class="bg-purple round-border-lg-top bg-purple">Fixtures</th>
-                <th colspan="27" class="round-border-lg-top text-start text-lg-center ps-3">Talisman - Only one player per team</th>
-            </tr>
-            <tr>
-                <th id="entries" class="sticky-col"></th>
-
-                {# --- Overall columns (secondary) --- #}
-                <th data-sort="selected_by_percent" class="sort">%</th>
-                <th data-sort="now_cost" class="sort">£</th>
-
-                <th data-sort="next5_fdr_avg" class="bg-purple">Next 5 FDR</th>
-                <th data-sort="total_points" class="sort">P</th>
-                <th data-sort="starts" class="sort">S</th>
-                <th data-sort="minutes" class="sort">M</th>
-                <th data-sort="defensive_contribution" class="sort">DC</th>
-                <th data-sort="defensive_contribution_per_90" class="sort">DC90</th>
-                <th data-sort="clean_sheets" class="sort">CS</th>
-                <th data-sort="clean_sheets_per_90" class="sort">CS90</th>
-
-                <th data-sort="goals_scored" class="sort">G</th>
-                <th data-sort="expected_goals" class="sort">xG</th>
-                <th data-sort="goals_performance" class="sort">+/−</th>
-                <th data-sort="expected_goals_per_90" class="sort">xG90</th>
-                <th data-sort="assists" class="sort">A</th>
-                <th data-sort="expected_assists" class="sort">xA</th>
-                <th data-sort="assists_performance" class="sort">+/−</th>
-                <th data-sort="goals_assists" class="sort">GI</th>
-                <th data-sort="expected_goal_involvements" class="sort">xGI</th>
-                <th data-sort="goals_assists_performance" class="sort">+/−</th>
-
-                <th data-sort="dreamteam_count" class="sort">DT</th>
-                <th data-sort="bps" class="sort">BPS</th>
-                <th data-sort="penalties_saved" class="sort">PS</th>
-                <th data-sort="penalties_missed" class="sort">PM</th>
-                <th data-sort="yellow_cards" class="sort">YC</th>
-                <th data-sort="red_cards" class="sort">RC</th>
-                <th data-sort="goals_conceded" class="sort">GC</th>
-                <th data-sort="own_goals" class="sort">OG</th>
-
-            </tr>
-        </thead>
-
-        <tbody>
-            <!-- rows injected by script.js -->
-        </tbody>
-
-        <tfoot>
-            <tr class="th-bg-primary text-center">
-                <th class="sticky-col round-border-lg-btm-left"></th>
-                <th colspan="2" class="round-border-lg-btm-right"></th>
-                <th class="bg-purple round-border-lg-btm"></th>
-                <th colspan="27" class="round-border-lg-btm">
-                    <div id="loading" style="display:none;">Loading…</div>
-                </th>
-            </tr>
-        </tfoot>
-    </table>
+<div class="container-fluid">
+    <div class="table-responsive">
+        <table id="talisman-table" class="table table-borderless interactive-table table-striped text-nowrap text-center">
+            <thead class="th-bg-primary">
+                <tr>
+                    <th colspan="1" id="top-players" class="sticky-col align-middle round-border-lg-top-left">↑ Top Five
+                    </th>
+                    <th colspan="2" class="round-border-lg-top-right"></th>
+                    <th class="bg-purple round-border-lg-top bg-purple">Fixtures</th>
+                    <th colspan="27" class="round-border-lg-top text-start text-lg-center ps-3">Talisman - Only one player per team</th>
+                </tr>
+                <tr>
+                    <th id="entries" class="sticky-col"></th>
+    
+                    {# --- Overall columns (secondary) --- #}
+                    <th data-sort="selected_by_percent" class="sort">%</th>
+                    <th data-sort="now_cost" class="sort">£</th>
+    
+                    <th data-sort="next5_fdr_avg" class="bg-purple">Next 5 FDR</th>
+                    <th data-sort="total_points" class="sort">P</th>
+                    <th data-sort="starts" class="sort">S</th>
+                    <th data-sort="minutes" class="sort">M</th>
+                    <th data-sort="defensive_contribution" class="sort">DC</th>
+                    <th data-sort="defensive_contribution_per_90" class="sort">DC90</th>
+                    <th data-sort="clean_sheets" class="sort">CS</th>
+                    <th data-sort="clean_sheets_per_90" class="sort">CS90</th>
+    
+                    <th data-sort="goals_scored" class="sort">G</th>
+                    <th data-sort="expected_goals" class="sort">xG</th>
+                    <th data-sort="goals_performance" class="sort">+/−</th>
+                    <th data-sort="expected_goals_per_90" class="sort">xG90</th>
+                    <th data-sort="assists" class="sort">A</th>
+                    <th data-sort="expected_assists" class="sort">xA</th>
+                    <th data-sort="assists_performance" class="sort">+/−</th>
+                    <th data-sort="goals_assists" class="sort">GI</th>
+                    <th data-sort="expected_goal_involvements" class="sort">xGI</th>
+                    <th data-sort="goals_assists_performance" class="sort">+/−</th>
+    
+                    <th data-sort="dreamteam_count" class="sort">DT</th>
+                    <th data-sort="bps" class="sort">BPS</th>
+                    <th data-sort="penalties_saved" class="sort">PS</th>
+                    <th data-sort="penalties_missed" class="sort">PM</th>
+                    <th data-sort="yellow_cards" class="sort">YC</th>
+                    <th data-sort="red_cards" class="sort">RC</th>
+                    <th data-sort="goals_conceded" class="sort">GC</th>
+                    <th data-sort="own_goals" class="sort">OG</th>
+    
+                </tr>
+            </thead>
+    
+            <tbody>
+                <!-- rows injected by script.js -->
+            </tbody>
+    
+            <tfoot>
+                <tr class="th-bg-primary text-center">
+                    <th class="sticky-col round-border-lg-btm-left"></th>
+                    <th colspan="2" class="round-border-lg-btm-right"></th>
+                    <th class="bg-purple round-border-lg-btm"></th>
+                    <th colspan="27" class="round-border-lg-btm">
+                        <div id="loading" style="display:none;">Loading…</div>
+                    </th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
 </div>
 {% endblock %}
 
@@ -192,7 +194,7 @@
             { key: "minutes", className: "sort", dataColumn: "minutes" },
 
             { key: "defensive_contribution", className: "sort vert-border", dataColumn: "defcon" },
-            { key: "defensive_contribution_per_90", className: "sort-team", dataColumn: "defcon_90" },
+            { key: "defensive_contribution_per_90", className: "sort", dataColumn: "defcon_90" },
             { key: "clean_sheets", className: "sort vert-border", dataColumn: "clean_sheets" },
             { key: "clean_sheets_per_90", className: "sort", dataColumn: "clean_sheets_per_90", formatter: v => (v).toFixed(2) },
 

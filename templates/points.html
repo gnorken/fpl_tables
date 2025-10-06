@@ -179,7 +179,7 @@
             { key: "now_cost", className: "sort", dataColumn: "now_cost", formatter: v => `£${(v / 10).toFixed(1)}m` },
 
             // 16 primary columns
-            { key: "total_points_team", className: "sort-team vert-border", sortLevel: "primary", dataColumn: "total_points" },
+            { key: "total_points_team", className: "sort-team vert-border-secondary", sortLevel: "primary", dataColumn: "total_points" },
             { key: "captain_points_team", className: "sort-team", sortLevel: "primary", dataColumn: "captained_points" },
             { key: "benched_points_team", className: "sort-team text-primary", sortLevel: "primary", dataColumn: "benched_points" },
             { key: "points_per_game_team", className: "sort-team", sortLevel: "primary", dataColumn: "points_per_game", formatter: v => `${parseFloat(v).toFixed(1)}`  },
@@ -196,7 +196,7 @@
             { key: "yellow_cards_points_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "yellow_cards_points" },
             { key: "red_cards_points_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "red_cards_points" },
             { key: "own_goals_points_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "own_goals_points" },
-            { key: "penalties_missed_points_team", className: "sort-team text-danger", sortLevel: "primary", dataColumn: "penalties_missed_points" },
+            { key: "penalties_missed_points_team", className: "sort-team text-danger vert-border-secondary-end", sortLevel: "primary", dataColumn: "penalties_missed_points" },
 
             // 14 secondary columns
             { key: "total_points", className: "sort vert-border", sortLevel: "secondary", dataColumn: "total_points" },

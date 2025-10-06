@@ -68,10 +68,18 @@
   {% include "nav.html" %}
 
   <main class="flex-fill">
-    <div class="container-fluid m-0 p-0 p-lg-4">
+    {% block body_open %}
+    <div class="container-xxl m-0 p-0 m-lg-4 p-lg-4">
+      {% endblock %}
+
       {% block body %}{% endblock %}
+
+      {% block body_close %}
     </div>
+    {% endblock %}
   </main>
+
+
 
   <footer class="text-center py-3 bg-light border-top">
     <a href="/about">

@@ -492,76 +492,54 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   }
 
-  // 8.3) New cell-hover highlighting
+  // 8.3) New cell-hover highlighting (class-based)
   document.querySelectorAll("table.interactive-table").forEach((table) => {
-    let activeCells = [];
-
     function clearHighlights() {
-      activeCells.forEach((cell) => {
-        cell.style.backgroundColor = "";
-        cell.style.color = "";
+      table.querySelectorAll(".hi-on").forEach((cell) => {
+        cell.classList.remove("hi-on", "hi-orange", "hi-navy");
+        cell.style.removeProperty("border-radius");
         if (cell.dataset.wasTextDanger === "true") {
           cell.classList.add("text-danger");
           delete cell.dataset.wasTextDanger;
         }
-        cell.style.borderRadius = "";
       });
-      activeCells = [];
+    }
+
+    function setHighlight(cell, tone) {
+      // tone: "orange" | "navy"
+      if (cell.classList.contains("text-danger")) {
+        cell.dataset.wasTextDanger = "true";
+        cell.classList.remove("text-danger");
+      }
+      cell.classList.add("hi-on", tone === "orange" ? "hi-orange" : "hi-navy");
     }
 
     function highlightCells(td) {
       clearHighlights();
       const col = td.dataset.column;
-      const sortLevel = td.dataset.sortLevel;
+      const sortLevel = td.dataset.sortLevel; // "primary" or "secondary"
 
-      const primaryBg = sortLevel === "primary" ? "#D9722C" : "#203C73";
-      const matchBg = sortLevel === "primary" ? "#203C73" : "#D9722C";
+      // Match your original intent: when hovering a "primary" cell,
+      // the current cell uses orange, its partners use navy, and vice versa.
+      const currentTone = sortLevel === "primary" ? "orange" : "navy";
+      const partnerTone = sortLevel === "primary" ? "navy" : "orange";
 
       // Current cell
-      if (td.classList.contains("text-danger")) {
-        td.dataset.wasTextDanger = "true";
-        td.classList.remove("text-danger");
-      }
-      td.style.backgroundColor = primaryBg;
-      td.style.color = "#fff";
-      activeCells.push(td);
+      setHighlight(td, currentTone);
 
-      // Partner cells: only in the same row
+      // Partner cells in the same row with the same data-column
       const row = td.closest("tr");
       row.querySelectorAll(`td[data-column="${col}"]`).forEach((other) => {
-        if (other === td) return;
-        if (other.classList.contains("text-danger")) {
-          other.dataset.wasTextDanger = "true";
-          other.classList.remove("text-danger");
-        }
-        other.style.backgroundColor = matchBg;
-        other.style.color = "#fff";
-        activeCells.push(other);
+        if (other !== td) setHighlight(other, partnerTone);
       });
-    }
-
-    function clearHighlights2() {
-      activeCells.forEach((cell) => {
-        cell.style.backgroundColor = "";
-        cell.style.color = "";
-        if (cell.dataset.wasTextDanger === "true") {
-          cell.classList.add("text-danger");
-          delete cell.dataset.wasTextDanger;
-        }
-      });
-      activeCells = [];
     }
 
     table.addEventListener("mouseover", (e) => {
       const cell = e.target.closest("td, th");
-
-      // If not hovering a cell, or hovering a header <th> → clear
       if (!cell || cell.tagName === "TH") {
         clearHighlights();
         return;
       }
-
-      // Only highlight if the cell is in the highlightable set
       if (cell.matches("td[data-column][data-sort-level]")) {
         highlightCells(cell);
       } else {
@@ -569,7 +547,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    // Optional: reset when leaving the table entirely
     table.addEventListener("mouseleave", clearHighlights);
   });
 

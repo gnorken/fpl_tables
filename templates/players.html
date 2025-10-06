@@ -4,8 +4,7 @@
 {% block page_content %}
 <div class="container-fluid">
     <div class="table-responsive"><!-- horizontal scroll -->
-        <table id="players-table"
-            class="table table-borderless interactive-table table-striped text-center text-nowrap">
+        <table id="players-table" class="table table-borderless interactive-table table-striped text-center text-nowrap">
             <thead class="th-bg-primary text-center">
                 <tr class="sticky-top">
                     <th colspan="1" id="top-players" class="sticky-col align-middle round-border-lg-top-left">↑ Top Five
@@ -185,10 +184,10 @@
                             >
                             <div class="d-flex align-items-end ms-1">
                                 <div>${short}</div>
-                                <div class="small text-muted d-xl-inline">
+                                <div class="small d-none text-muted d-lg-inline">
                                     &nbsp;${positionMap[p.element_type] || p.element_type}
                                 </div>
-                                <div class="">&nbsp;&nbsp;&nbsp;&nbsp;</div>
+                                <div class=""></div>
                             </div>
                         </div>
                     </td>
