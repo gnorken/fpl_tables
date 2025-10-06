@@ -7,41 +7,42 @@
 <div class="container-fluid">
   <!-- ================= TABLE A: SUMMARY ================= -->
   <div class="table-responsive pe-2 mb-3">
+
     <table id="mini-league-summary" class="table table-sm interactive-table table-striped text-nowrap">
-      <thead class="thead-bg-primary-gradient">
+      <thead class="th-bg-primary">
         <tr class="text-center th-padding text-wrap" data-table="summary">
           <!-- Rank -->
-          <th data-sort="rank" class="sort round-border-lg-top-left">Rank</th>
-          <th data-sort="overall_rank" class="sort{% if league_id|int == 314 %} d-none {% endif %}">OR</th>
+          <th data-sort="rank" class="sort-mini round-border-lg-top-left">Rank</th>
+          <th data-sort="overall_rank" class="sort-mini {% if league_id|int == 314 %} d-none {% endif %}">OR</th>
 
           <!-- Manager info-->
-          <th data-sort="player_name" class="sort sticky-col text-start">Name</th>
-          <th data-sort="last_deadline_value" class="sort text-start">Value</th>
-          <th data-sort="years_active" class="sort text-start">Season</th>
+          <th data-sort="player_name" class="sticky-col sort-mini text-start">Name</th>
+          <th data-sort="last_deadline_value" class="sort-mini text-start">Value</th>
+          <th data-sort="years_active" class="sort-mini text-start">Season</th>
 
           <!-- Current GW -->
-          <th data-sort="captain_current_points" class="sort" colspan="2">GW{{ current_gw }} Captain</th>
-          <th data-sort="active_chip_sort" class="sort">GW{{ current_gw }} Chip</th>
-          <th data-sort="summary_event_points" class="sort">GW{{ current_gw }} Pts</th>
+          <th data-sort="captain_current_points" class="sort-mini" colspan="2">GW{{ current_gw }} Captain</th>
+          <th data-sort="active_chip_sort" class="sort-mini">GW{{ current_gw}} Chip</th>
+          <th data-sort="summary_event_points" class="sort-mini">GW{{ current_gw }} Points</th>
 
           <!-- Points -->
-          <th data-sort="total_points" class="sort">Total Points</th>
-          <th data-sort="pts_behind_league_leader" class="sort">Trailing</th>
-          <th data-sort="pts_behind_overall" class="sort">Trailing OR</th>
+          <th data-sort="total_points" class="sort-mini">Total Points</th>
+          <th data-sort="pts_behind_league_leader" class="sort-mini">T</th>
+          <th data-sort="pts_behind_overall" class="sort-mini">T OR</th>
 
           <!-- Chips -->
-          <th data-sort="wildcard1_gw" class="sort">WC</th>
-          <th data-sort="3xc_gw" class="sort text-center">TC</th>
-          <th data-sort="bboost_gw" class="sort">BB</th>
-          <th data-sort="freehit_gw" class="sort">FH</th>
+          <th data-sort="wildcard1_gw" class="sort-mini">WC</th>
+          <th data-sort="3xc_gw" class="sort-mini">TC</th>
+          <th data-sort="bboost_gw" class="sort-mini">BB</th>
+          <th data-sort="freehit_gw" class="sort-mini">FH</th>
 
           <!-- Transfers -->
-          <th data-sort="last_deadline_total_transfers" class="sort">Trans&shy;fers</th>
+          <th data-sort="last_deadline_total_transfers" class="sort-mini">Trans&shy;fers</th>
           <th data-sort="transfer_cost" class="sort round-border-lg-top-right">Hits</th>
         </tr>
       </thead>
       <tbody id="summary-body"></tbody>
-      <tfoot class="thead-bg-primary-gradient">
+      <tfoot class="th-bg-primary">
         <tr>
           <th colspan="18" class="round-border-btm text-center">
             <div id="loading-summary" style="display:none">Loading…</div>
@@ -54,7 +55,7 @@
   <!-- ================= TABLE B: BREAKDOWN ================= -->
   <div class="table-responsive pe-2">
     <table id="mini-league-breakdown" class="table table-sm interactive-table table-striped text-nowrap">
-      <thead class="thead-bg-primary-gradient">
+      <thead class="th-bg-primary">
         <tr class="text-center th-padding text-wrap" data-table="breakdown">
           <!-- Identity -->
           <th data-sort="rank" class="sort round-border-lg-top-left">Rank</th>
@@ -62,22 +63,22 @@
           <th data-sort="player_name" class="sort sticky-col text-start">Name</th>
 
           <!-- Breakdown -->
-          <th data-sort="captain_points_team" class="sort">Captain Points</th>
-          <th data-sort="goals_scored_team" class="sort">Goals</th>
-          <th data-sort="assists_team" class="sort">Assists</th>
-          <th data-sort="minutes_team" class="sort">Minutes</th>
-          <th data-sort="defensive_contribution_team" class="sort">DefCon Points</th>
-          <th data-sort="clean_sheets_team" class="sort">Clean Sheets</th>
-          <th data-sort="bonus_team" class="sort">Bonus Points</th>
-          <th data-sort="dreamteam_count_team" class="sort">Dream Team</th>
+          <th data-sort="captain_points_team" class="sort-mini">Captain Points</th>
+          <th data-sort="goals_scored_team" class="sort-mini">Goals</th>
+          <th data-sort="assists_team" class="sort-mini">Assists</th>
+          <th data-sort="minutes_team" class="sort-mini">Minutes</th>
+          <th data-sort="defensive_contribution_team" class="sort-mini">DefCon Points</th>
+          <th data-sort="clean_sheets_team" class="sort-mini">Clean Sheets</th>
+          <th data-sort="bonus_team" class="sort-mini">Bonus Points</th>
+          <th data-sort="dreamteam_count_team" class="sort-mini">Dream Team</th>
 
           <!-- Negatives -->
-          <th data-sort="yellow_cards_team" class="sort">Yellow Cards</th>
+          <th data-sort="yellow_cards_team" class="sort-mini">Yellow Cards</th>
           <th data-sort="red_cards_team" class="sort round-border-lg-top-right">Red Cards</th>
         </tr>
       </thead>
       <tbody id="breakdown-body"></tbody>
-      <tfoot class="thead-bg-primary-gradient">
+      <tfoot class="th-bg-primary">
         <tr>
           <th colspan="12" class="round-border-btm text-center">
             <div id="loading-breakdown">Loading…</div>
@@ -242,8 +243,8 @@
             ${badgeSrc ? `<img src="${badgeSrc}" alt="${teamName} badge" class="badge_mini_league" data-bs-toggle="tooltip" title="${teamName}" aria-label="${teamName}" onerror="this.style.display='none';">` : ""}
           </td>
           <td ${tdAttrs} class="pe-2">
-            <div class="fw-bold small">${capName}</div>
             <div class="small">${capText}</div>
+            <div class="fw-bold small">${capName}</div>
           </td>`;
       }
     },
@@ -465,19 +466,40 @@
     }
   });
 
-  document.querySelectorAll('.table-responsive').forEach(scroller => {
-      const thead = scroller.querySelector('.thead-bg-primary-gradient');
-      const stickyTh = thead && thead.querySelector('th.sticky-col');
-      if (!stickyTh) return;
 
-      const update = () => {
-        stickyTh.style.setProperty('--scroll-x', scroller.scrollLeft + 'px');
-        stickyTh.style.setProperty('--header-w', scroller.scrollWidth + 'px');
-      };
-      scroller.addEventListener('scroll', update, { passive: true });
-      window.addEventListener('resize', update);
-      update();
-    });
+  document.querySelectorAll('.table-responsive').forEach(scroller => {
+    const thead = scroller.querySelector('thead.thead-bg-primary-gradient');
+    if (!thead) return;
+
+    const ths = Array.from(thead.querySelectorAll('th'));
+
+    const updateHeaderMetrics = () => {
+      // Full scrollable width for the header gradient
+      const w = scroller.scrollWidth;
+      thead.style.setProperty('--header-w', w + 'px');
+
+      // Each cell needs its left offset within the header row
+      ths.forEach(th => {
+        th.style.setProperty('--th-left', th.offsetLeft + 'px');
+      });
+    };
+
+    const updateScroll = () => {
+      thead.style.setProperty('--scroll-x', scroller.scrollLeft + 'px');
+    };
+
+    // Init + observers
+    updateHeaderMetrics();
+    updateScroll();
+
+    scroller.addEventListener('scroll', updateScroll, { passive: true });
+
+    const ro = new ResizeObserver(updateHeaderMetrics);
+    ro.observe(scroller);
+    ro.observe(thead);
+    window.addEventListener('resize', updateHeaderMetrics);
+  });
+
 </script>
 
 {% endblock %}
