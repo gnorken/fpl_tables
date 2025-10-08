@@ -69,12 +69,14 @@
 
   <main class="flex-fill">
     {% block body_open %}
-    <div class="container-xxl m-0 p-0 m-lg-4 p-lg-4">
+    <div class="container-fluid px-0">
+      <div class="mx-auto px-2 px-lg-5" style="max-width: 1600px;">
       {% endblock %}
 
       {% block body %}{% endblock %}
 
       {% block body_close %}
+    </div>
     </div>
     {% endblock %}
   </main>

@@ -1,84 +1,81 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   0) LINK RESET
+   ───────────────────────────────────────────────────────────────────────────*/
 a,
 a:visited,
 a:hover,
 a:active {
-
     color: inherit;
     text-decoration: none;
 }
 
-/* turns off default underline on links */
-
-/* Define colors at the root level */
+/* ─────────────────────────────────────────────────────────────────────────────
+   1) DESIGN TOKENS
+   ───────────────────────────────────────────────────────────────────────────*/
 :root {
-    /* White, Neutral, Warm porcelain, Cool Pearl, Lavender mist */
+    /* Page bg options */
     --page-bg: #FFF;
-    /* --page-bg: #F6F7F9;  */
-    /* --page-bg: #FAF7F2;  */
-    /* --page-bg: #F5F7FB; */
-    /* --page-bg: #F6F3FA; */
 
     /* Brand */
     --primary: #203C73;
-    /* Navy blue */
+    /* navy */
     --secondary: #D9722C;
-    /* Burnt orange */
+    /* burnt orange */
 
     /* Feedback */
     --success: #2E7D32;
-    /* Muted deep green */
     --danger: #B22222;
-    /* Brick red */
     --warning: #E6A700;
-    /* Golden yellow */
     --info: #3C91E6;
-    /* Clear medium blue */
 
     /* Neutrals */
     --light: #F8F9FA;
-    /* Light grey-white */
     --dark: #212529;
-    /* Bootstrap default dark grey */
     --muted: #6C757D;
-    /* Muted text grey */
 
-    /* Optional accents */
+    /* Accents */
     --accent-1: #36558F;
-    /* Lighter blue tint of primary */
     --accent-2: #E89B6B;
-    /* Lighter orange tint of secondary */
     --accent-3: #F0D44C;
-    /* Rich warm yellow accent */
 
+    /* Brand extras */
     --highlight: #fff3b0;
-
     --purple: #38003c;
     --purple-comp: #043C00;
-    /* Complemantary to purple */
     --bright-green: #00ff85;
-    /* Bright green */
     --turqouise: #04f5ff;
-    /* Turqouise */
-    /* --red: #e90052;  */
     --yellow: #eaff04;
-    /* yellow */
 
     --text-light: #ffffff;
-    /* White for contrast */
     --text-dark: #37003c;
-    /* Dark purple */
     --primary-hover-color: #2c0030;
-    /* Slightly darker purple for hover */
     --secondary-hover-color: #00ef77;
-    /* Slightly darker purple for hover */
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   2) BASE
+   ───────────────────────────────────────────────────────────────────────────*/
+html,
+body {
+    overflow-x: clip;
+    /* avoid horizontal rubber banding */
+    overscroll-behavior-x: none;
+    /* iOS Safari 16+ */
+    background: #fff;
+}
+
+/* Max width wrapper for ultra-wide screens */
+.content-max {
+    max-width: 2400px;
+    margin-inline: auto;
+}
 
 body {
     background: var(--page-bg) !important;
     color: #111;
 }
 
+/* Text utilities */
 .text-color-light {
     color: var(--text-light) !important;
 }
@@ -87,15 +84,9 @@ body {
     color: var(--primary) !important;
 }
 
-/* for dropdown leagues */
-.red-text a {
-    color: var(--danger);
-}
-
-.green-text a {
-    color: green;
-}
-
+/* ─────────────────────────────────────────────────────────────────────────────
+   3) BUTTONS & SIMPLE BG UTILITIES
+   ───────────────────────────────────────────────────────────────────────────*/
 .btn-outline-primary {
     color: var(--primary) !important;
     border-color: var(--primary) !important;
@@ -116,7 +107,6 @@ body {
 }
 
 .bg-purple {
-    /* background: linear-gradient(90deg, rgba(56, 0, 60, 1) 0%, rgba(143, 0, 153, 1) 100%) !important; */
     background-color: var(--purple) !important;
 }
 
@@ -124,159 +114,213 @@ body {
     color: var(--purple) !important;
 }
 
-/* Mini-league name */
-.league-name {
-    background: linear-gradient(90deg, var(--purple) 0%, var(--primary) 100%) !important;
-    color: white;
-    padding: 8px 20px;
-    border-radius: 5px;
-    display: inline-block;
-    /* text-align: center; */
-    /* box-shadow: rgba(0, 0, 0, 0.45) 2px 2px 3px; */
-    /* box-shadow: rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px; */
-}
-
-/* Fixed-width rank so badge/text always line up */
-.rank {
-    flex: 0 0 3ch;
-    /* reserve space for up to 3 digits */
-    padding-right: .25rem;
-    font-variant-numeric: tabular-nums;
-    /* monospaced numerals */
-    /* line-height: 1; */
-    /* tidy vertical rhythm */
-    border-right: 1px solid rgba(0, 0, 0, .1);
-}
-
-/* Keep badge a fixed box so layout is stable */
-.badge-20 {
-    width: 20px;
-    height: 20px;
-    flex: 0 0 20px;
-    object-fit: contain;
-}
-
-/* Badge in the mini league table */
-.badge_mini_league {
-    width: 2rem;
-}
-
-
-/* TABLE */
-/* table colours */
-.bg-team {
-    background-color: var(--secondary) !important;
-    color: white !important;
-}
-
-/* th team */
-.bg-team a {
-    background-color: var(--secondary) !important;
-    color: white !important;
-}
-
-/* th links */
-
-.th-bg-primary th {
-    background-color: var(--primary);
-    color: white;
-}
-
-/* th */
-.thead-bg-primary-gradient {
-    background: linear-gradient(90deg, var(--purple) 0%, var(--primary) 100%) !important;
-    color: white;
-}
-
-/* th */
-/* Let the row’s background show through each <th> */
-.thead-bg-primary-gradient th {
-    background: transparent !important;
-    /* overrides any per-cell bg */
-    color: #fff;
-}
-
-.th-bg-primary th a {
-    background-color: var(--primary);
-    color: white;
-}
-
-/* th links */
-
-.td-red td {
-    background-color: var(--secondary);
-    color: white;
-}
-
 .bg-secondary {
     background-color: var(--primary) !important;
     color: var(--text-light);
 }
 
-
 .bg-secondary:hover {
     background-color: var(--warning) !important;
 }
 
-.bg-yellow {
-    background-color: var(----accent-3);
-    color: black;
+/* ─────────────────────────────────────────────────────────────────────────────
+   4) NAV / HEADER BITS
+   ───────────────────────────────────────────────────────────────────────────*/
+#header-gw {
+    font-size: .7rem;
 }
 
-.bg-purple-comp {
-    background-color: var(--purple-comp);
-    color: white;
+#flag span {
+    font-size: 2.1em;
+    border-radius: 5px;
 }
 
-td.green-text {
-    color: green;
+#header-team-name h2 {
+    font-size: 1rem;
 }
 
-/* +/- columns */
-td.red-text {
-    color: red;
+#tables-btn.show {
+    background-color: var(--accent-3);
 }
 
-/* +/- columns */
+.dropdown-item:active,
+.dropdown-item:hover {
+    background-color: #fff;
+    color: var(--secondary) !important;
+}
 
-/* In order to overlap the player images */
-table {
+.active {
+    background-color: var(--accent-3) !important;
+    color: #000 !important;
+}
+
+.live-indicator {
+    font-weight: 700;
+    letter-spacing: .5px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   5) TABLES
+   ───────────────────────────────────────────────────────────────────────────*/
+
+/* 5.0 Base & container stacking context */
+.table-responsive {
     position: relative;
-    z-index: 2;
+    z-index: 20;
 }
 
-/* TABLE HEADERS */
+@media (max-width: 768px) {
+
+    /* below md */
+    .tooltip {
+        display: none !important;
+    }
+}
+
+
+/* Soft base tint for the whole column */
+td.sort-team {
+    background-color: rgba(217, 114, 44, 0.1) !important;
+    /* var(--secondary) @ 10% */
+}
+
+/* Hover highlight overlays (sit above any base bg, striping, or sticky hacks) */
+.hi-on.hi-orange {
+    box-shadow: inset 0 0 0 9999px #D9722C !important;
+    /* secondary */
+    color: #fff !important;
+}
+
+.hi-on.hi-navy {
+    box-shadow: inset 0 0 0 9999px #203C73 !important;
+    /* primary */
+    color: #fff !important;
+}
+
+.interactive-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    /* ensure a base bg even if Bootstrap vars are transparent */
+    --bs-table-bg: #fff !important;
+}
+
+/* 5.1 Header (SOLID, no gradient) */
+.thead-bg-primary-gradient {
+    /* keep your existing class name */
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background-color: var(--primary) !important;
+    color: #fff;
+}
+
+.thead-bg-primary-gradient th {
+    position: sticky;
+    /* header cells themselves stick */
+    top: 0;
+    background-color: var(--primary) !important;
+    /* OPAQUE */
+    color: #fff;
+    z-index: 1;
+}
+
+.thead-bg-primary-gradient th.sticky-col {
+    left: 0;
+    z-index: 5;
+    /* above other header cells */
+    background-color: var(--primary) !important;
+}
+
+/* 5.2 Sticky column (BODY): force opacity + keep Bootstrap striping/hover */
+.interactive-table :is(td, th).sticky-col {
+    position: -webkit-sticky;
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background-clip: padding-box;
+}
+
+/* The key: paint a real bg AND reproduce Bootstrap’s accent overlay */
+.interactive-table td.sticky-col {
+    background-color: var(--bs-table-bg, #fff) !important;
+    box-shadow: inset 0 0 0 9999px var(--bs-table-accent-bg, transparent) !important;
+}
+
+/* Hover state (Bootstrap sets --bs-table-accent-bg on the row) */
+.table.table-hover>tbody>tr:hover>td.sticky-col {
+    background-color: var(--bs-table-bg, #fff) !important;
+    box-shadow: inset 0 0 0 9999px var(--bs-table-hover-bg, transparent) !important;
+}
+
+/* Striped rows (odd) */
+.table.table-striped>tbody>tr:nth-of-type(odd)>td.sticky-col {
+    background-color: var(--bs-table-bg, #fff) !important;
+    box-shadow: inset 0 0 0 9999px var(--bs-table-striped-bg, transparent) !important;
+}
+
+/* Active rows */
+.table>tbody>tr.table-active>td.sticky-col {
+    background-color: var(--bs-table-bg, #fff) !important;
+    box-shadow: inset 0 0 0 9999px var(--bs-table-active-bg, transparent) !important;
+}
+
+/* Sticky TD divider (visual edge) */
+.interactive-table td.sticky-col::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 2px;
+    height: 100%;
+    background: var(--bs-border-color, #dee2e6);
+    pointer-events: none;
+    z-index: 3;
+}
+
+/* No divider on sticky header cell */
+.interactive-table th.sticky-col::after {
+    content: none;
+}
+
+/* 5.3 Table header hover & padding */
+th.sort,
+th.sort-mini,
+th.sort-team {
+    cursor: pointer;
+}
+
 th:hover.sort-team {
-    color: var(--primary) !important;
+    color: var(--primary);
 }
 
 th:hover.sort {
     color: var(--secondary);
 }
 
-/* Cursors */
-th.sort,
-th.sort-team {
-    cursor: pointer;
+th:hover.sort-mini {
+    background-color: var(--primary) !important;
 }
 
-td {
-    cursor: default;
+/* Pad back some space for .table-sm */
+.th-padding th {
+    padding: .6rem;
 }
 
-/* BORDERS */
-
-/* custom borders for the table */
+/* 5.4 Borders & radii */
 .vert-border {
     border-left: 1px solid rgb(222, 226, 230);
 }
 
 .vert-border-secondary {
-    border-left: 0.1px solid var(--secondary);
+    border-left: .1px solid var(--secondary);
+}
+
+.vert-border-secondary-end {
+    border-right: .1px solid var(--secondary);
 }
 
 .vert-border-primary {
-    border-left: 0.1px solid var(--primary);
+    border-left: .1px solid var(--primary);
 }
 
 .vert-border-end {
@@ -284,7 +328,7 @@ td {
 }
 
 .vert-border-end-primary {
-    border-right: 0.1px solid var(--primary);
+    border-right: .1px solid var(--primary);
 }
 
 .vert-border-white {
@@ -299,7 +343,6 @@ td {
     border-bottom: 1px solid whitesmoke !important;
 }
 
-/* Rounded borders */
 .round-border {
     border-radius: 20px;
 }
@@ -328,8 +371,7 @@ td {
     border-radius: 0 0 20px 0;
 }
 
-/* lg - round borders */
-@media (min-width: 992px) {
+@media (min-width:992px) {
     .round-border-lg-top {
         border-radius: 20px 20px 0 0;
     }
@@ -355,254 +397,104 @@ td {
     }
 }
 
-/* Borders END */
-
-.player-image-container {
-    position: relative;
-    /* overflow: hidden;  Prevent images from spilling outside */
-    height: 140px;
-    /* You might need to set an explicit height depending on your layout */
-    z-index: 3;
-    /* Make sure this is higher than the table's z-index */
-}
-
-/* All child wrappers should be absolute */
-.player-image-container div {
-    position: absolute;
-    /* top: 20px; */
-}
-
-@media (min-width: 768px) {
-    .player-image-container div {
-        position: absolute;
-        top: 0px;
-    }
-}
-
-/* .player-image-container div:after {
-  content: "";
-  background-color: white;
-  opacity: 50%;
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  height: 50%;
-} */
-
-.table-responsive {
-    position: relative;
-    /* Ensure it creates a stacking context */
-    z-index: 20;
-    /* Higher than the player images */
-}
-
-/* Overlap effect with different left offsets and stacking orders */
-.player-image-1 {
-    left: 0;
-    z-index: 10;
-}
-
-.player-image-2 {
-    left: 17%;
-    /* Adjust this value for desired overlap */
-    z-index: 9;
-}
-
-.player-image-3 {
-    left: 34%;
-    z-index: 8;
-}
-
-.player-image-4 {
-    left: 51%;
-    z-index: 7;
-}
-
-.player-image-5 {
-    left: 68%;
-    z-index: 6;
-}
-
-/* Responsive image sizing */
-.overlap-img {
-    max-width: 150px;
-    /* or use a percentage */
-    /* width: auto; */
-}
-
-/* info-club */
-.badge-width {
-    width: 100%;
-    /* allow it to shrink with the container */
-    max-width: 120px;
-    /* but never exceed 120px */
-    height: auto;
-    /* keep aspect ratio */
+/* 5.5 Table color helpers */
+.bg-team {
+    background-color: var(--secondary) !important;
+    color: #fff !important;
 }
 
 
 
-.skeleton-loader-container {
-    width: 100%;
-    height: 190px;
-    background: linear-gradient(90deg, #FFF 0%, #FFF 50%, #FFF 75%);
-    background-size: 100% 100%;
-    animation: skeleton-animation 1.5s infinite ease-in-out;
+.bg-team a {
+    color: #fff !important;
+}
+
+.th-bg-primary th {
+    background-color: var(--primary);
+    color: #fff;
+}
+
+.th-bg-primary th a {
+    color: #fff;
 }
 
 
-/* header */
-
-#header-gw {
-    font-size: 0.7rem;
+td.green-text {
+    color: green;
 }
 
-#flag span {
-    font-size: 2.1em;
+td.red-text {
+    color: red;
+}
+
+/* League name pill (still uses gradient) */
+.league-name {
+    background: linear-gradient(90deg, var(--purple) 0%, var(--primary) 100%) !important;
+    color: #fff;
+    padding: 8px 20px;
     border-radius: 5px;
+    display: inline-block;
 }
 
-#header-team-name h2 {
-    font-size: 1rem;
+/* Clickable cells / hover underline */
+.table .clickable-cell {
+    position: relative;
+    cursor: pointer;
 }
 
-#tables-btn.show {
-    background-color: var(--accent-3);
+.table .clickable-cell a {
+    display: block;
+    color: inherit;
+    text-decoration: none;
 }
 
-
-
-.dropdown-item:active {
-    /* Just when clicking on it */
-    background-color: white;
-    color: var(--secondary) !important;
+.table .clickable-cell:hover {
+    background-color: var(--highlight);
 }
 
-.dropdown-item:hover {
-    /* Just when clicking on it */
-    background-color: white;
-    color: var(--secondary) !important;
+.table .clickable-cell:hover .underline,
+.table .clickable-cell:focus-within .underline {
+    text-decoration: underline;
 }
 
-.active {
-    background-color: var(--accent-3) !important;
+.table .clickable-cell a:hover .underline,
+.table .clickable-cell a:focus-visible .underline {
+    text-decoration: underline;
+}
+
+/* 5.6 Sorted TH background tab */
+th.sorted {
+    position: relative;
+    z-index: 1;
     color: black !important;
 }
 
-
-/* SLIDERS */
-/* make every form-label a full-width block and center its text */
-
-#filter .slider-narrow {
-    max-width: 85%;
-    width: 100%;
-}
-
-
-.noUi-horizontal .noUi-tooltip {
-    transform: translateX(-50%) !important;
-    white-space: nowrap;
-    padding: 2px 4px;
-    font-size: 0.85rem;
-}
-
-/* Change the color of the "connect" section (the range between handles) */
-#price-slider .noUi-connect {
-    background: rgb(13, 110, 253);
-}
-
-#minutes-slider .noUi-connect {
-    background: rgb(13, 110, 253);
-}
-
-/* SLIDERS END */
-
-/* Chips page */
-.team-player {
-    /* photo */
-    width: 100%;
-    max-width: 150px;
-    position: relative;
-    z-index: 2;
-    padding-top: 1rem;
-}
-
-
-.text-overlay {
-    /* On chips */
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-    background-color: var(--purple);
-    color: white;
-    padding: 0 1rem;
-    z-index: 1;
-    /* width: 100%; */
-
-}
-
-.chips-text {
-    font-size: x-large;
-    top: 20%;
-    left: 0;
-    z-index: 1;
-}
-
-.chips-text-points {
-    width: 100%;
-    bottom: 0%;
-    left: 0%;
-    z-index: 3;
-}
-
-#bench-player-2 {
-    border-left: 1px solid rgba(var(--bs-dark-rgb));
-    /* --bs-border-opacity: 1; */
-    /* border-right: 1px solid rgba(var(--bs-dark-rgb), var(--bs-border-opacity)); */
-}
-
-/* #bench-player-3 {
-  border-right: 1px solid gray;
-} */
-
-/* Chips page end */
-
-
-/* Sticky cols */
-/* Sticky basics (no box-shadow edits) */
-.interactive-table :is(td, th).sticky-col {
-    position: -webkit-sticky;
-    position: sticky;
-    left: 0;
-    z-index: 2;
-    background-clip: padding-box;
-}
-
-/* Body cells: keep solid base so they’re not see-through */
-.interactive-table td.sticky-col {
-    background-color: var(--bs-table-bg);
-}
-
-/* Divider ONLY on TDs */
-.interactive-table td.sticky-col::after {
+th.sorted.sort-team::before,
+th.sorted::before {
     content: "";
     position: absolute;
-    top: 0;
-    right: 0;
-    width: 2px;
-    height: 100%;
-    background: var(--bs-border-color, #dee2e6);
-    pointer-events: none;
-    z-index: 3;
+    inset: 0;
+    z-index: -2;
+    background-color: var(--primary);
 }
 
-/* Headers: no divider at all */
-.interactive-table th.sticky-col::after {
-    content: none;
+th.sorted.sort-team::before {
+    background-color: var(--secondary);
 }
 
-/* sticky-cols end*/
+th.sorted.sort-team::after,
+th.sorted::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-color: #fff;
+    border-radius: 10px 10px 0 0;
+}
 
-/* mini league current team highlighter */
+/* ─────────────────────────────────────────────────────────────────────────────
+   6) MINI LEAGUE HIGHLIGHTERS
+   ───────────────────────────────────────────────────────────────────────────*/
 .table tbody tr.highlight-current>* {
     border-top: 2px solid var(--secondary) !important;
     border-bottom: 2px solid var(--secondary) !important;
@@ -616,457 +508,9 @@ td {
     border-right: 2px solid var(--secondary) !important;
 }
 
-/**/
-
-/* mini league cell highlighter */
-.highlight {
-    /* background-color: #fff3b0 !important; */
-}
-
-/* Loading... */
-@keyframes dots {
-    0% {
-        content: '.';
-    }
-
-    10% {
-        content: '..';
-    }
-
-    20% {
-        content: '...';
-    }
-
-    100% {
-        content: '....';
-    }
-}
-
-#loading::after {
-    content: '';
-    animation: dots 1s steps(1, end) infinite;
-}
-
-/* Chart.js */
-.chart-container {
-    position: relative;
-    width: 100%;
-    max-width: 100%;
-    height: 300px;
-    /* You can adjust this */
-    margin: 0 auto;
-}
-
-
-/* MEDIA QUERIES */
-
-@media (min-width: 768px) {
-    .chart-container {
-        height: 400px;
-    }
-}
-
-@media (min-width: 1200px) {
-    .chart-container {
-        height: 500px;
-    }
-}
-
-@media (max-width: 768px) {
-
-    /* below md */
-    .tooltip {
-        display: none !important;
-    }
-}
-
-/* Media Queries END */
-
-/* log/linear scale buttons */
-.toggle-group {
-    position: absolute;
-    bottom: -5%;
-    /* 5% up from the bottom of the container */
-    right: 2%;
-    /* 2% in from the right edge */
-
-}
-
-/* scroll box for manager history and gameweek history */
-.manager-scrollable-table {
-    max-height: 500px;
-    overflow-y: auto;
-    /* border: 1px solid gray; */
-    border-radius: 5px;
-}
-
-/* Media query for small screens */
-@media (max-width: 576px) {
-    .manager-scrollable-table {
-        max-height: 200px;
-    }
-}
-
-
-/* make the table header stick to the top of that scrollable box */
-.manager-scrollable-table thead th {
-    position: sticky;
-    top: 0;
-    background: white;
-    /* or whatever your table’s bg is */
-    z-index: 2;
-    /* sit above the body rows */
-    /* optional: add a little shadow so you see the separation */
-    box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
-}
-
-
-/* Trying to fix the rubber banding dislodging my NAV */
-html,
-body {
-    overflow-x: clip;
-    /* or: hidden; */
-    overscroll-behavior-x: none;
-    /* Safari/iOS 16+ */
-    background: white;
-    /* match your nav/page bg so bounce never shows white */
-}
-
-
-
-/* Check boxes */
-/* Change the ON colour of the switch */
-.form-check-input:checked {
-    background-color: var(--primary);
-    border-color: var(--primary);
-}
-
-/* Optional: Change hover/focus border */
-/* .form-check-input:focus {
-  border-color: var(--accent-1); 
-  box-shadow: 0 0 0 0.25rem var(--accent-2);
-} */
-
-/* Change the label colour */
-.form-check-label {
-    color: var(--dark);
-}
-
-/* SLIDERS */
-/* Track - unfilled portion */
-.noUi-target {
-    background: #e0e0e0;
-    /* light grey */
-    border-radius: 4px;
-    border: none;
-}
-
-/* Track - filled portion */
-.noUi-connect {
-    background: var(--primary) !important;
-    /* navy */
-}
-
-/* Handle */
-.noUi-handle {
-    /* background: var(--secondary); */
-    /* burnt orange */
-    /* border: 2px solid var(--primary) !important; */
-    border-radius: 50%;
-    box-shadow: none;
-}
-
-/* Handle hover/focus */
-.noUi-handle:hover,
-.noUi-handle:focus {
-    /* background: var(--accent-3); */
-    /* your warm yellow accent */
-    border-color: var(--primary);
-}
-
-/* Remove default handle stripes */
-.noUi-handle:before,
-.noUi-handle:after {
-    display: none;
-}
-
-
-/* .team {
-  background-color: rgb(217,114, 44, 0.1) ;
-} */
-
-.th-padding th {
-    padding: 0.6rem;
-}
-
-
-/* Team colors */
-.team-1 {
-    background-color: #ef0107 !important;
-    color: white !important;
-}
-
-/* Manchester United */
-.team-3 {
-    background-color: #ef0107 !important;
-    color: white !important;
-}
-
-/* Arsenal */
-.team-4 {
-    background-color: #241f20 !important;
-    color: white !important;
-}
-
-/* Newcastle */
-.team-6 {
-    background-color: #ffffff !important;
-}
-
-/* Tottenham */
-.team-7 {
-    background-color: #7a263a !important;
-    color: white !important;
-}
-
-/* Aston Villa */
-.team-8 {
-    background-color: #034694 !important;
-    color: white !important;
-}
-
-/* Chelsea */
-.team-9 {
-    background-color: #1b458f !important;
-}
-
-/* Leicester City */
-.team-11 {
-    background-color: #274488 !important;
-    color: white !important;
-}
-
-/* Everton */
-.team-13 {
-    background-color: #0101e8 !important;
-    color: white !important;
-}
-
-/* Leicester */
-.team-14 {
-    background-color: #dd0000 !important;
-    color: white !important;
-}
-
-/* Liverpool */
-.team-17 {
-    background-color: #e53233 !important;
-    color: white !important;
-}
-
-/* Nottingham Forest */
-.team-20 {
-    background-color: #ff0000 !important;
-}
-
-/* Southampton */
-.team-31 {
-    background-color: #0a4af5 !important;
-    color: white !important;
-}
-
-/* Crystal Palace */
-.team-39 {
-    background-color: #fdb913 !important;
-}
-
-/* Wolves */
-.team-36 {
-    background-color: #0057b8 !important;
-    color: white !important;
-}
-
-/* Brighton */
-.team-43 {
-    background-color: #3a64a3 !important;
-    color: white !important;
-}
-
-/* Ipswich */
-.team-43 .team-43 {
-    background-color: #6cabdd !important;
-}
-
-/* Manchester City */
-.team-54 {
-    background-color: #ffffff !important;
-}
-
-/* Fulham */
-
-.team-91 {
-    background-color: #da291c !important;
-    color: white !important;
-}
-
-/* Bournemouth */
-.team-94 {
-    background-color: #d20000 !important;
-    color: white !important;
-}
-
-/* Brentford */
-.default-team {
-    background-color: #eeeeee !important;
-}
-
-/* West Ham */
-.team-21 {
-    background-color: #7A263A !important;
-    color: #1bb1e7 !important;
-}
-
-/* Burnley */
-.team-90 {
-    background-color: #6C1D45 !important;
-    color: #99D6EA !important;
-}
-
-/* Leeds */
-.team-2 {
-    background-color: #FFCD00 !important;
-    color: #1D428A !important;
-}
-
-/* Sunderland */
-.team-56 {
-    background-color: #000000 !important;
-    color: #fd1220 !important;
-}
-
-/* Fallback */
-
-.interactive-table {
-    border-collapse: separate;
-    border-spacing: 0;
-    /* ingen “glippe” rundt tabellen */
-}
-
-
-/* Hover links in table */
-/* Base */
-.table .clickable-cell {
-    position: relative;
-    cursor: pointer;
-}
-
-.table .clickable-cell a {
-    display: block;
-    color: inherit;
-    text-decoration: none;
-}
-
-/* Hover background for the whole cell */
-.table .clickable-cell:hover {
-    background-color: var(--highlight);
-}
-
-/* A) Underline when the WHOLE CELL is hovered or focused (big hit area) */
-.table .clickable-cell:hover .underline,
-.table .clickable-cell:focus-within .underline {
-    text-decoration: underline;
-}
-
-/* B) Underline only when the LINK itself is hovered or keyboard-focused */
-.table .clickable-cell a:hover .underline,
-.table .clickable-cell a:focus-visible .underline {
-    text-decoration: underline;
-}
-
-/**/
-
-
-
-/* Sorted TH background tab */
-/* Table header row */
-th.sorted {
-    position: relative;
-    z-index: 1;
-    /* Ensure text stays above the pseudo-element */
-}
-
-/* Curved background for the sorted team header */
-th.sorted.sort-team::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: var(--red);
-    /* Match the table header */
-    z-index: -2;
-    /* Ensure the pseudo-element stays behind the text */
-}
-
-th.sorted.sort-team::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: white;
-    /* Your desired header background color */
-    border-radius: 10px 10px 0 0;
-    /* Match the header cell's rounded corners */
-    z-index: -1;
-    /* Ensure the pseudo-element stays behind the text */
-}
-
-/* Curved background for the sorted header (totals) */
-th.sorted::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: var(--primary);
-    /* Match the table header */
-    z-index: -2;
-    /* Ensure the pseudo-element stays behind the text */
-}
-
-/* Curved background for the sorted header (totals) */
-th.sorted::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: white;
-    /* Your desired header background color */
-    border-radius: 10px 10px 0 0;
-    /* Match the header cell's rounded corners */
-    z-index: -1;
-    /* Ensure the pseudo-element stays behind the text */
-}
-
-th.sorted {
-    color: black !important;
-}
-
-/**/
-
-/* in the NAV*/
-.live-indicator {
-    font-weight: 700;
-    letter-spacing: 0.5px;
-}
-
-/* Fixtures */
+/* ─────────────────────────────────────────────────────────────────────────────
+   7) FIXTURES TAGS
+   ───────────────────────────────────────────────────────────────────────────*/
 .fx5-col {
     text-align: center;
 }
@@ -1088,7 +532,6 @@ th.sorted {
     padding: 0 5px;
 }
 
-/* Difficulty tinting (keep it simple/neutral) */
 .dif_1 {
     background-color: #375523 !important;
 }
@@ -1112,54 +555,392 @@ th.sorted {
 }
 
 .dif_x {
-    opacity: 0.8;
+    opacity: .8;
 }
 
-/* unknown */
-
-
-/* thead gradient horizontal scrolling */
-.thead-bg-primary-gradient {
-    position: sticky;
-    top: 0;
-    z-index: 3;
-    isolation: isolate;
-}
-
-.thead-bg-primary-gradient::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, var(--purple) 0%, var(--primary) 100%);
-    z-index: 0;
-    pointer-events: none;
-}
-
-.thead-bg-primary-gradient th {
+/* ─────────────────────────────────────────────────────────────────────────────
+   8) OVERLAP IMAGES (HERO STRIP)
+   ───────────────────────────────────────────────────────────────────────────*/
+.player-image-container {
     position: relative;
-    background: transparent;
+    height: 140px;
+    z-index: 3;
+}
+
+.player-image-container div {
+    position: absolute;
+}
+
+@media (min-width:768px) {
+    .player-image-container div {
+        top: 0;
+    }
+}
+
+.overlap-img {
+    max-width: 150px;
+}
+
+.player-image-1 {
+    left: 0;
+    z-index: 10;
+}
+
+.player-image-2 {
+    left: 17%;
+    z-index: 9;
+}
+
+.player-image-3 {
+    left: 34%;
+    z-index: 8;
+}
+
+.player-image-4 {
+    left: 51%;
+    z-index: 7;
+}
+
+.player-image-5 {
+    left: 68%;
+    z-index: 6;
+}
+
+.badge-width {
+    width: 100%;
+    max-width: 120px;
+    height: auto;
+}
+
+.badge-20 {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    object-fit: contain;
+}
+
+.badge_mini_league {
+    width: 2rem;
+}
+
+.rank {
+    flex: 0 0 3ch;
+    padding-right: .25rem;
+    font-variant-numeric: tabular-nums;
+    border-right: 1px solid rgba(0, 0, 0, .1);
+}
+
+.skeleton-loader-container {
+    width: 100%;
+    height: 190px;
+    background: linear-gradient(90deg, #FFF 0%, #FFF 50%, #FFF 75%);
+    background-size: 100% 100%;
+    animation: skeleton-animation 1.5s infinite ease-in-out;
+}
+
+@keyframes skeleton-animation {
+    0% {
+        opacity: .85
+    }
+
+    50% {
+        opacity: .6
+    }
+
+    100% {
+        opacity: .85
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   9) MANAGER PAGE
+   ───────────────────────────────────────────────────────────────────────────*/
+.team-player {
+    width: 100%;
+    max-width: 150px;
+    position: relative;
+    z-index: 2;
+    padding-top: 1rem;
+}
+
+.text-overlay {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, .5);
+    background-color: var(--purple);
     color: #fff;
+    padding: 0 1rem;
     z-index: 1;
 }
 
-/* sticky header cell paints its own slice of the SAME gradient, aligned to scroll */
-.thead-bg-primary-gradient th.sticky-col {
-    position: sticky;
+.chips-text {
+    font-size: x-large;
+    top: 20%;
     left: 0;
-    z-index: 5;
+    z-index: 1;
+    position: relative;
 }
 
-.thead-bg-primary-gradient th.sticky-col::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    /* behind text, above siblings */
-    pointer-events: none;
-    background: linear-gradient(90deg, var(--purple) 0%, var(--primary) 100%);
-    /* Scroll-aligned slice of the full header gradient */
-    background-size: var(--header-w, 2000px) 100%;
-    background-position-x: calc(var(--scroll-x, 0px) * -1);
+.chips-text-points {
+    width: 100%;
+    bottom: 0;
+    left: 0;
+    z-index: 3;
+    position: relative;
 }
 
-/* thead gradient horizontal scrolling END */
+#bench-player-2 {
+    border-left: 1px solid rgba(var(--bs-dark-rgb));
+}
+
+.manager-scrollable-table {
+    max-height: 500px;
+    overflow-y: auto;
+    border-radius: 5px;
+}
+
+@media (max-width:576px) {
+    .manager-scrollable-table {
+        max-height: 200px;
+    }
+}
+
+.manager-scrollable-table thead th {
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 2;
+    box-shadow: 0 2px 2px -1px rgba(0, 0, 0, .1);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   10) SLIDERS (noUi)
+   ───────────────────────────────────────────────────────────────────────────*/
+#filter .slider-narrow {
+    max-width: 85%;
+    width: 100%;
+}
+
+.noUi-horizontal .noUi-tooltip {
+    transform: translateX(-50%) !important;
+    white-space: nowrap;
+    padding: 2px 4px;
+    font-size: .85rem;
+}
+
+#price-slider .noUi-connect,
+#minutes-slider .noUi-connect {
+    background: rgb(13, 110, 253);
+}
+
+.noUi-target {
+    background: #e0e0e0;
+    border-radius: 4px;
+    border: none;
+}
+
+.noUi-connect {
+    background: var(--primary) !important;
+}
+
+.noUi-handle {
+    border-radius: 50%;
+    box-shadow: none;
+}
+
+.noUi-handle:hover,
+.noUi-handle:focus {
+    border-color: var(--primary);
+}
+
+.noUi-handle:before,
+.noUi-handle:after {
+    display: none;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   11) FORM CHECK
+   ───────────────────────────────────────────────────────────────────────────*/
+.form-check-input:checked {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+
+.form-check-label {
+    color: var(--dark);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   12) TEAM COLORS (keep these as-is for your mapping)
+   ───────────────────────────────────────────────────────────────────────────*/
+.team-1,
+.team-3 {
+    background-color: #ef0107 !important;
+    color: #fff !important;
+}
+
+/* Man Utd/Arsenal label reuse */
+.team-4 {
+    background-color: #241f20 !important;
+    color: #fff !important;
+}
+
+.team-6 {
+    background-color: #ffffff !important;
+}
+
+.team-7 {
+    background-color: #7a263a !important;
+    color: #fff !important;
+}
+
+.team-8 {
+    background-color: #034694 !important;
+    color: #fff !important;
+}
+
+.team-9 {
+    background-color: #1b458f !important;
+}
+
+.team-11 {
+    background-color: #274488 !important;
+    color: #fff !important;
+}
+
+.team-13 {
+    background-color: #0101e8 !important;
+    color: #fff !important;
+}
+
+.team-14 {
+    background-color: #dd0000 !important;
+    color: #fff !important;
+}
+
+.team-17 {
+    background-color: #e53233 !important;
+    color: #fff !important;
+}
+
+.team-20 {
+    background-color: #ff0000 !important;
+}
+
+.team-31 {
+    background-color: #0a4af5 !important;
+    color: #fff !important;
+}
+
+.team-39 {
+    background-color: #fdb913 !important;
+}
+
+.team-36 {
+    background-color: #0057b8 !important;
+    color: #fff !important;
+}
+
+.team-43 {
+    background-color: #3a64a3 !important;
+    color: #fff !important;
+}
+
+.team-54 {
+    background-color: #ffffff !important;
+}
+
+.team-91 {
+    background-color: #da291c !important;
+    color: #fff !important;
+}
+
+.team-94 {
+    background-color: #d20000 !important;
+    color: #fff !important;
+}
+
+.default-team {
+    background-color: #eee !important;
+}
+
+.team-21 {
+    background-color: #7A263A !important;
+    color: #1bb1e7 !important;
+}
+
+.team-90 {
+    background-color: #6C1D45 !important;
+    color: #99D6EA !important;
+}
+
+.team-2 {
+    background-color: #FFCD00 !important;
+    color: #1D428A !important;
+}
+
+.team-56 {
+    background-color: #000 !important;
+    color: #fd1220 !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   13) CHARTS
+   ───────────────────────────────────────────────────────────────────────────*/
+.chart-container {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    height: 300px;
+    margin: 0 auto;
+}
+
+@media (min-width:768px) {
+    .chart-container {
+        height: 400px;
+    }
+}
+
+@media (min-width:1200px) {
+    .chart-container {
+        height: 500px;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   14) MISC
+   ───────────────────────────────────────────────────────────────────────────*/
+.red-text a {
+    color: var(--danger);
+}
+
+.green-text a {
+    color: green;
+}
+
+#loading::after {
+    content: '';
+    animation: dots 1s steps(1, end) infinite;
+}
+
+@keyframes dots {
+    0% {
+        content: '.'
+    }
+
+    10% {
+        content: '..'
+    }
+
+    20% {
+        content: '...'
+    }
+
+    100% {
+        content: '....'
+    }
+}
+
+/* Optional highlight placeholder */
+.highlight {}
+
+/* END
+   ───────────────────────────────────────────────────────────────────────────*/

@@ -67,7 +67,6 @@ body {
 /* Max width wrapper for ultra-wide screens */
 .content-max {
   max-width: 2400px;
-  /* Bootstrap's container-xxl default */
   margin-inline: auto;
 }
 
@@ -205,33 +204,6 @@ td.sort-team {
   --bs-table-bg: #fff !important;
 }
 
-/* 5.1 Header (SOLID, no gradient) */
-.thead-bg-primary-gradient {
-  /* keep your existing class name */
-  position: sticky;
-  top: 0;
-  z-index: 3;
-  background-color: var(--primary) !important;
-  color: #fff;
-}
-
-.thead-bg-primary-gradient th {
-  position: sticky;
-  /* header cells themselves stick */
-  top: 0;
-  background-color: var(--primary) !important;
-  /* OPAQUE */
-  color: #fff;
-  z-index: 1;
-}
-
-.thead-bg-primary-gradient th.sticky-col {
-  left: 0;
-  z-index: 5;
-  /* above other header cells */
-  background-color: var(--primary) !important;
-}
-
 /* 5.2 Sticky column (BODY): force opacity + keep Bootstrap striping/hover */
 .interactive-table :is(td, th).sticky-col {
   position: -webkit-sticky;
@@ -283,6 +255,18 @@ td.sort-team {
   content: none;
 }
 
+/* Header rad 1: venstre + top 0, foran alt */
+.table-scroll-viewport thead tr:first-child th.sticky-col {
+  top: 0;
+  z-index: 7;
+}
+
+/* Header rad 2: venstre + offset lik høyden på rad 1 */
+.table-scroll-viewport.sticky-2rows thead tr:nth-child(2) th.sticky-col {
+  top: var(--th-row1-h, 0px);
+  z-index: 6;
+}
+
 /* 5.3 Table header hover & padding */
 th.sort,
 th.sort-mini,
@@ -315,6 +299,7 @@ th:hover.sort-mini {
 .vert-border-secondary {
   border-left: .1px solid var(--secondary);
 }
+
 .vert-border-secondary-end {
   border-right: .1px solid var(--secondary);
 }
@@ -377,17 +362,11 @@ th:hover.sort-mini {
   }
 
   .round-border-lg-top-left {
-    border-radius: 20px 0 0 0;
-  }
-  .test{
-    content:"  yeah";
-    width:100px;
-    height:100px;
-    
+    border-top-left-radius: 20px;
   }
 
   .round-border-lg-top-right {
-    border-radius: 0 20px 0 0;
+    border-top-right-radius: 20px;
   }
 
   .round-border-lg-btm {
@@ -408,8 +387,6 @@ th:hover.sort-mini {
   background-color: var(--secondary) !important;
   color: #fff !important;
 }
-
-
 
 .bg-team a {
   color: #fff !important;
@@ -433,7 +410,7 @@ td.red-text {
   color: red;
 }
 
-/* League name pill (still uses gradient) */
+/* League name pill for mini leagues */
 .league-name {
   background: linear-gradient(90deg, var(--purple) 0%, var(--primary) 100%) !important;
   color: #fff;
@@ -484,7 +461,9 @@ th.sorted::before {
   background-color: var(--primary);
 }
 
-th.sorted.sort-team::before {background-color: var(--secondary); }
+th.sorted.sort-team::before {
+  background-color: var(--secondary);
+}
 
 th.sorted.sort-team::after,
 th.sorted::after {
@@ -948,3 +927,144 @@ th.sorted::after {
 
 /* END
    ───────────────────────────────────────────────────────────────────────────*/
+
+/* STEP 1: Only two sticky header rows */
+.table-scroll-viewport {
+  max-height: 65vh;
+  /* tweak if you like */
+  overflow: auto;
+  /* enables the sticky context */
+  position: relative;
+}
+
+/* Make header cells sticky */
+.table-scroll-viewport thead th {
+  position: sticky;
+  background-clip: padding-box;
+  /* avoid visual bleed */
+  z-index: 3;
+  /* NOTE: do NOT set background here; let your existing
+  .th-bg-primary th / .bg-team etc. handle colours */
+}
+
+/* First header row sticks at the top */
+.table-scroll-viewport.sticky-2rows thead tr:first-child th {
+  top: 0;
+  z-index: 5;
+  /* above row 2 */
+}
+
+/* Second header row sits directly beneath row 1 */
+.table-scroll-viewport.sticky-2rows thead tr:nth-child(2) th {
+  top: var(--th-row1-h, 0px);
+  /* set via tiny JS below or hard-code */
+  z-index: 4;
+}
+
+/* Two sticky header rows */
+.table-scroll-viewport thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background-clip: padding-box;
+}
+
+/* Row 1 on top */
+.table-scroll-viewport thead tr:first-child th {
+  top: 0;
+  z-index: 5;
+}
+
+/* Row 2 offset by row 1’s height (you already set --th-row1-h via JS) */
+.table-scroll-viewport.sticky-2rows thead tr:nth-child(2) th {
+  top: var(--th-row1-h, 0px);
+  z-index: 4;
+}
+
+/* Ensure header first-column cells also stick horizontally */
+.interactive-table :is(td, th).sticky-col {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+
+.table-scroll-viewport thead tr:first-child th.sticky-col {
+  top: 0;
+  z-index: 7;
+}
+
+.table-scroll-viewport.sticky-2rows thead tr:nth-child(2) th.sticky-col {
+  top: var(--th-row1-h, 0px);
+  z-index: 6;
+}
+
+/* SLITS */
+
+/* ── Slit fix (non-sorted headers) with corner-safe behaviour ─────────── */
+
+/* Base: right-side only bleed so borders stay aligned */
+.table-scroll-viewport thead tr > th:not(.sorted):not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: -2px;        /* cover inter-cell seam */
+  bottom: 0;
+  width: 2px;         /* use 3px if a hairline persists at some zooms */
+  background: inherit;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Keep paint inside box */
+.table-scroll-viewport thead tr > th:not(.sorted) {
+  background-clip: padding-box;
+}
+
+/* Base slit fix you said works (keep it) */
+.table-scroll-viewport thead tr>th:not(.sorted):not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: -2px;
+  /* right-side-only bleed covers seam */
+  bottom: 0;
+  width: 2px;
+  /* bump to 3px if a hairline persists */
+  background: inherit;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.table-scroll-viewport thead tr>th:not(.sorted) {
+  background-clip: padding-box;
+}
+
+/* Don't bleed across explicit group end borders */
+.table-scroll-viewport thead tr>th:not(.sorted):is(.vert-border-end, .vert-border-end-primary, .vert-border-end-white, .vert-border-secondary-end)::before {
+  right: 0;
+  width: 0;
+}
+
+
+/* BIG CONTAINER */
+:root {
+  --page-max-w: 1600px;
+}
+
+/* tweak: 1500–1800px is common */
+
+.page-wrap {
+  max-width: var(--page-max-w);
+  margin-left: auto;
+  margin-right: auto;
+  /* centers the whole page content */
+  padding-left: .5rem;
+  padding-right: .5rem;
+}
+
+@media (min-width: 992px) {
+  .page-wrap {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}

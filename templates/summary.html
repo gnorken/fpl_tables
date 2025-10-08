@@ -2,20 +2,20 @@
 {% block title %}Summary{% endblock %}
 
 {% block page_content %}
-<div class="container-fluid">
-    <div class="table-responsive"><!-- horizontal scroll -->
+<div class="col-12">
+    <div class="table-responsive table-scroll-viewport sticky-2rows">
         <table id="summary-table"
             class="interactive-table table table-borderless table-striped text-center text-nowrap">
             <thead class="th-bg-primary text-center">
-                <tr class="sticky-top">
-                    <th colspan="1" id="top-players" class="sticky-col align-middle round-border-lg-top-left">↑ Top Five
+                <tr>
+                    <th colspan="1" id="top-players" class="sticky-col align-middle">↑ Top Five
                     </th>
-                    <th colspan="2" class="round-border-lg-top-right"></th>
-                    <th colspan="14" class="bg-team round-border-lg-top ps-3 text-start text-lg-center"
+                    <th colspan="2" class=""></th>
+                    <th colspan="14" class="bg-team text-start text-lg-center"
                         title="Players that are or have been in {{ manager.team_name }} this season">
                         Stats for {{ manager.team_name }}
                     </th>
-                    <th colspan="12" class="round-border-lg-top ps-3 text-start text-lg-center">Player Totals</th>
+                    <th colspan="12" class="text-start text-lg-center">Player Totals</th>
                 </tr>
                 <tr class="">
                     <th id="entries" class="sticky-col"></th>
@@ -23,7 +23,7 @@
                     <th data-sort="now_cost" class="sort">£</th>
 
                     {# --- Team-specific columns (primary) --- #}
-                    <th data-sort="total_points_team" class="test123 sort-team bg-team">P</th>
+                    <th data-sort="total_points_team" class="sort-team bg-team">P</th>
                     <th data-sort="captain_points_team" class="sort-team bg-team">CP</th>
                     <th data-sort="captained_team" class="sort-team bg-team">C</th>
                     <th data-sort="appearances_team" class="sort-team bg-team d-none">Apps</th>
@@ -259,7 +259,6 @@
                                 <div class="small text-muted d-none d-xl-inline">
                                     &nbsp;${positionMap[p.element_type] || p.element_type}
                                 </div>
-                                <div class="">&nbsp;&nbsp;&nbsp;&nbsp;</div>
                             </div>
                         </div>
                     </td>
@@ -356,6 +355,20 @@
         ]
         // currentGw: {{ current_gw }}
     };
+
+
+    (() => {
+        const wraps = document.querySelectorAll('.table-scroll-viewport.sticky-2rows');
+        wraps.forEach(wrap => {
+            const row1 = wrap.querySelector('thead tr:first-child');
+            if (!row1) return;
+            const setTop = () => wrap.style.setProperty('--th-row1-h', (row1.getBoundingClientRect().height || 0) + 'px');
+            setTop();
+            addEventListener('resize', setTop, { passive: true });
+            if ('ResizeObserver' in window) new ResizeObserver(setTop).observe(row1);
+        });
+    })();
+
 </script>
 
 {% endblock %}
