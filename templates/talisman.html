@@ -2,8 +2,8 @@
 {% block title %}Talisman{% endblock %}
 
 {% block page_content %}
-<div class="container-fluid">
-    <div class="table-responsive">
+<div class="col-12">
+    <div class="table-responsive table-scroll-viewport sticky-2rows">
         <table id="talisman-table" class="table table-borderless interactive-table table-striped text-nowrap text-center">
             <thead class="th-bg-primary">
                 <tr>
@@ -223,6 +223,19 @@
             { key: "own_goals", className: "sort text-danger vert-border-end", dataColumn: "own_goals" },
         ]
     };
+
+
+    (() => {
+        const wraps = document.querySelectorAll('.table-scroll-viewport.sticky-2rows');
+        wraps.forEach(wrap => {
+            const row1 = wrap.querySelector('thead tr:first-child');
+            if (!row1) return;
+            const setTop = () => wrap.style.setProperty('--th-row1-h', (row1.getBoundingClientRect().height || 0) + 'px');
+            setTop();
+            addEventListener('resize', setTop, { passive: true });
+            if ('ResizeObserver' in window) new ResizeObserver(setTop).observe(row1);
+        });
+    })();
 </script>
 
 

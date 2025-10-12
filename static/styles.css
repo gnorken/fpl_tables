@@ -1003,20 +1003,22 @@ th.sorted::after {
 /* ── Slit fix (non-sorted headers) with corner-safe behaviour ─────────── */
 
 /* Base: right-side only bleed so borders stay aligned */
-.table-scroll-viewport thead tr > th:not(.sorted):not(:last-child)::before {
+.table-scroll-viewport thead tr>th:not(.sorted):not(:last-child)::before {
   content: "";
   position: absolute;
   top: 0;
-  right: -2px;        /* cover inter-cell seam */
+  right: -2px;
+  /* cover inter-cell seam */
   bottom: 0;
-  width: 2px;         /* use 3px if a hairline persists at some zooms */
+  width: 2px;
+  /* use 3px if a hairline persists at some zooms */
   background: inherit;
   z-index: -1;
   pointer-events: none;
 }
 
 /* Keep paint inside box */
-.table-scroll-viewport thead tr > th:not(.sorted) {
+.table-scroll-viewport thead tr>th:not(.sorted) {
   background-clip: padding-box;
 }
 

@@ -4,70 +4,72 @@
 {% block title %}By Teams{% endblock %}
 
 {% block page_content %}
-<div class="table-responsive">
-    <table id="teams-table" class="interactive-table table table-borderless table-striped text-center text-nowrap">
-        <thead class="th-bg-primary text-center">
-            <tr>
-                <th id="top-players" class="sticky-col align-middle round-border-lg-top">↑ Top Five
-                </th>
-                <th colspan="18" class="bg-team round-border-lg-top"
-                    title="Players that are or have been in {{ manager.team_name }} this season">
-                    Stats for {{ manager.team_name }}
-                </th>
-                <th colspan="13" class="round-border-lg-top">Team Totals</th>
-            </tr>
-            <tr>
-                <th id="entries" class="sticky-col"></th>
-
-                {# — 18 primary cols (per-team) — #}
-                <th data-sort="starts_team" class="sort-team bg-team">S</th>
-                <th data-sort="minutes_team" class="sort-team bg-team">Min</th>
-                <th data-sort="clean_sheets_team" class="sort-team bg-team">CS</th>
-                <th data-sort="assists_team" class="sort-team bg-team">A</th>
-                <th data-sort="expected_assists_team" class="sort-team bg-team">xA</th>
-                <th data-sort="goals_scored_team" class="sort-team bg-team">G</th>
-                <th data-sort="expected_goals_team" class="sort-team bg-team">xG</th>
-                <th data-sort="captained_team" class="sort-team bg-team">C</th>
-                <th data-sort="dreamteam_count_team" class="sort-team bg-team">DT</th>
-                <th data-sort="bonus_team" class="sort-team bg-team">B</th>
-                <th data-sort="penalties_saved_team" class="sort-team bg-team">PS</th>
-                <th data-sort="starts_benched_team" class="sort-team bg-team">bS</th>
-                <th data-sort="minutes_benched_team" class="sort-team bg-team">bM</th>
-                <th data-sort="yellow_cards_team" class="sort-team bg-team">YC</th>
-                <th data-sort="red_cards_team" class="sort-team bg-team">RC</th>
-                <th data-sort="goals_conceded_team" class="sort-team bg-team">GC</th>
-                <th data-sort="own_goals_team" class="sort-team bg-team">OG</th>
-                <th data-sort="penalties_missed_team" class="sort-team bg-team">PM</th>
-
-                {# — 13 secondary overall cols — #}
-                <th data-sort="clean_sheets" class="sort">CS</th>
-                <th data-sort="assists" class="sort">A</th>
-                <th data-sort="expected_assists" class="sort">xA</th>
-                <th data-sort="goals_scored" class="sort">G</th>
-                <th data-sort="expected_goals" class="sort">xG</th>
-                <th data-sort="dreamteam_count" class="sort">DT</th>
-                <th data-sort="bonus" class="sort">B</th>
-                <th data-sort="penalties_saved" class="sort">PS</th>
-                <th data-sort="yellow_cards" class="sort">YC</th>
-                <th data-sort="red_cards" class="sort">RC</th>
-                <th data-sort="goals_conceded" class="sort">GC</th>
-                <th data-sort="own_goals" class="sort">OG</th>
-                <th data-sort="penalties_missed" class="sort">PM</th>
-            </tr>
-        </thead>
-
-        <tbody id="teams-table-body"></tbody>
-
-        <tfoot>
-            <tr class="th-bg-primary text-center">
-                <th class="sticky-col round-border-lg-btm"></th>
-                <th colspan="18" class="bg-team round-border-lg-btm">
-                    <div id="loading" style="display:none;">Loading…</div>
-                </th>
-                <th colspan="13" class="round-border-lg-btm"></th>
-            </tr>
-        </tfoot>
-    </table>
+<div class="col-12">
+    <div class="table-responsive table-scroll-viewport sticky-2rows">
+        <table id="teams-table" class="interactive-table table table-borderless table-striped text-center text-nowrap">
+            <thead class="th-bg-primary text-center">
+                <tr>
+                    <th id="top-players" class="sticky-col align-middle round-border-lg-top">↑ Top Five
+                    </th>
+                    <th colspan="18" class="bg-team round-border-lg-top"
+                        title="Players that are or have been in {{ manager.team_name }} this season">
+                        Stats for {{ manager.team_name }}
+                    </th>
+                    <th colspan="13" class="round-border-lg-top">Team Totals</th>
+                </tr>
+                <tr>
+                    <th id="entries" class="sticky-col"></th>
+    
+                    {# — 18 primary cols (per-team) — #}
+                    <th data-sort="starts_team" class="sort-team bg-team">S</th>
+                    <th data-sort="minutes_team" class="sort-team bg-team">Min</th>
+                    <th data-sort="clean_sheets_team" class="sort-team bg-team">CS</th>
+                    <th data-sort="assists_team" class="sort-team bg-team">A</th>
+                    <th data-sort="expected_assists_team" class="sort-team bg-team">xA</th>
+                    <th data-sort="goals_scored_team" class="sort-team bg-team">G</th>
+                    <th data-sort="expected_goals_team" class="sort-team bg-team">xG</th>
+                    <th data-sort="captained_team" class="sort-team bg-team">C</th>
+                    <th data-sort="dreamteam_count_team" class="sort-team bg-team">DT</th>
+                    <th data-sort="bonus_team" class="sort-team bg-team">B</th>
+                    <th data-sort="penalties_saved_team" class="sort-team bg-team">PS</th>
+                    <th data-sort="starts_benched_team" class="sort-team bg-team">bS</th>
+                    <th data-sort="minutes_benched_team" class="sort-team bg-team">bM</th>
+                    <th data-sort="yellow_cards_team" class="sort-team bg-team">YC</th>
+                    <th data-sort="red_cards_team" class="sort-team bg-team">RC</th>
+                    <th data-sort="goals_conceded_team" class="sort-team bg-team">GC</th>
+                    <th data-sort="own_goals_team" class="sort-team bg-team">OG</th>
+                    <th data-sort="penalties_missed_team" class="sort-team bg-team">PM</th>
+    
+                    {# — 13 secondary overall cols — #}
+                    <th data-sort="clean_sheets" class="sort">CS</th>
+                    <th data-sort="assists" class="sort">A</th>
+                    <th data-sort="expected_assists" class="sort">xA</th>
+                    <th data-sort="goals_scored" class="sort">G</th>
+                    <th data-sort="expected_goals" class="sort">xG</th>
+                    <th data-sort="dreamteam_count" class="sort">DT</th>
+                    <th data-sort="bonus" class="sort">B</th>
+                    <th data-sort="penalties_saved" class="sort">PS</th>
+                    <th data-sort="yellow_cards" class="sort">YC</th>
+                    <th data-sort="red_cards" class="sort">RC</th>
+                    <th data-sort="goals_conceded" class="sort">GC</th>
+                    <th data-sort="own_goals" class="sort">OG</th>
+                    <th data-sort="penalties_missed" class="sort">PM</th>
+                </tr>
+            </thead>
+    
+            <tbody id="teams-table-body"></tbody>
+    
+            <tfoot>
+                <tr class="th-bg-primary text-center">
+                    <th class="sticky-col round-border-lg-btm"></th>
+                    <th colspan="18" class="bg-team round-border-lg-btm">
+                        <div id="loading" style="display:none;">Loading…</div>
+                    </th>
+                    <th colspan="13" class="round-border-lg-btm"></th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
 </div>
 {% endblock %}
 
@@ -185,6 +187,19 @@
             { key: "penalties_missed", className: "sort text-danger vert-border-end", sortLevel: "secondary", dataColumn: "penalties_missed" }
         ]
     };
+
+
+    (() => {
+        const wraps = document.querySelectorAll('.table-scroll-viewport.sticky-2rows');
+        wraps.forEach(wrap => {
+            const row1 = wrap.querySelector('thead tr:first-child');
+            if (!row1) return;
+            const setTop = () => wrap.style.setProperty('--th-row1-h', (row1.getBoundingClientRect().height || 0) + 'px');
+            setTop();
+            addEventListener('resize', setTop, { passive: true });
+            if ('ResizeObserver' in window) new ResizeObserver(setTop).observe(row1);
+        });
+    })();
 </script>
 
 

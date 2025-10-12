@@ -2,8 +2,8 @@
 {% block title %}Summary{% endblock %}
 
 {% block page_content %}
-<div class="container-fluid">
-    <div class="table-responsive"><!-- horizontal scroll -->
+<div class="col-12">
+    <div class="table-responsive  table-scroll-viewport sticky-2rows"><!-- horizontal scroll -->
         <table id="players-table" class="table table-borderless interactive-table table-striped text-center text-nowrap">
             <thead class="th-bg-primary text-center">
                 <tr class="sticky-top">
@@ -249,6 +249,18 @@
                 ]
         // currentGw: {{ current_gw }}
     };
+
+    (() => {
+            const wraps = document.querySelectorAll('.table-scroll-viewport.sticky-2rows');
+            wraps.forEach(wrap => {
+                const row1 = wrap.querySelector('thead tr:first-child');
+                if (!row1) return;
+                const setTop = () => wrap.style.setProperty('--th-row1-h', (row1.getBoundingClientRect().height || 0) + 'px');
+                setTop();
+                addEventListener('resize', setTop, { passive: true });
+                if ('ResizeObserver' in window) new ResizeObserver(setTop).observe(row1);
+            });
+        })();
 </script>
 
 {% endblock %}

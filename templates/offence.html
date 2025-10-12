@@ -2,67 +2,69 @@
 {% block title %}Top Scorers{% endblock %}
 
 {% block page_content %}
-<div class="table-responsive">
-    <table id="offence-table" class="interactive-table table table-borderless table-striped text-center text-nowrap">
-        <thead class="th-bg-primary">
-            <tr class="text-center">
-                <th id="top-players" class="sticky-col round-border-lg-top-left">↑ Top Five
-                </th>
-                <th colspan="2" class="round-border-lg-top-right"></th>
-                <th colspan="15"  class="bg-team round-border-lg-top text-start text-lg-center">Stats for {{ manager.team_name }}</th>
-                <th colspan="11" class="round-border-lg-top text-start text-lg-center">Player Totals</th>
-            </tr>
-            <tr class="text-center">
-                <th colspan="1" id="entries" data-sort="entries" class="sticky-col">Players</th>
-                <th data-sort="selected_by_percent" class="sort">%</th>
-                <th data-sort="now_cost" class="sort">£</th>
-                
-                <!-- Team columns -->
-                <th data-sort="total_points_team" class="sort-team bg-team">P</th>
-                <th data-sort="goals_scored_team" class="sort-team bg-team">G</th>
-                <th data-sort="expected_goals_team" class="sort-team bg-team">xG</th>
-                <th data-sort="goals_performance_team" class="sort-team bg-team">+/-</th>
-                <th data-sort="expected_goals_per_90_team" class="sort-team bg-team">xG90</th>
-                <th data-sort="goals_benched_team" class="sort-team bg-team">bG</th>
-                <th data-sort="goals_captained_team" class="sort-team bg-team">cG</th>
-                <th data-sort="assists_team" class="sort-team bg-team">A</th>
-                <th data-sort="expected_assists_team" class="sort-team bg-team">xA</th>
-                <th data-sort="assists_performance_team" class="sort-team bg-team">+/-</th>
-                <th data-sort="assists_benched_team" class="sort-team bg-team">bA</th>
-                <th data-sort="assists_captained_team" class="sort-team bg-team">cA</th>
-                <th data-sort="goals_assists_team" class="sort-team bg-team">GI</th>
-                <th data-sort="expected_goal_involvements_team" class="sort-team bg-team">xGI</th>
-                <th data-sort="goals_assists_performance_team" class="sort-team bg-team">+/-</th>
-                <!-- <th data-sort="goals_assists_performance_team_vs_total" class="sort-team bg-team">+/-</th> -->
-                
-                <!-- overall columns -->
-                <th data-sort="total_points" class="sort">P</th>
-                <th data-sort="goals_scored" class="sort">G</th>
-                <th data-sort="expected_goals" class="sort">xG</th>
-                <th data-sort="goals_performance" class="sort">+/-</th>
-                <th data-sort="expected_goals_per_90" class="sort">xG90</th>
-                <th data-sort="assists" class="sort">A</th>
-                <th data-sort="expected_assists" class="sort">xA</th>
-                <th data-sort="assists_performance" class="sort">+/-</th>
-                <th data-sort="goals_assists" class="sort">GI</th>
-                <th data-sort="expected_goal_involvements" class="sort">xGI</th>
-                <th data-sort="goals_assists_performance" class="sort">+/-</th>
-            </tr>
-        </thead>
-        <tbody id="player-table-body">
-            <!-- rows get injected here -->
-        </tbody>
-        <tfoot>
-            <tr class="th-bg-primary text-center">
-                <th colspan="1" class="sticky-col round-border-lg-btm-left"></th>
-                <th colspan="2" class="th-bg-primary round-border-lg-btm-right"></th>
-                <th colspan="15" class="bg-team align-middle round-border-lg-btm">
-                    <div id="loading" style="display:none">Loading...</div>
-                </th>
-                <th colspan="11" class="round-border-btm"></th>
-            </tr>
-        </tfoot>
-    </table>
+<div class="col-12">
+    <div class="table-responsive table-scroll-viewport sticky-2rows">
+        <table id="offence-table" class="interactive-table table table-borderless table-striped text-center text-nowrap">
+            <thead class="th-bg-primary">
+                <tr class="text-center">
+                    <th id="top-players" class="sticky-col round-border-lg-top-left">↑ Top Five
+                    </th>
+                    <th colspan="2" class="round-border-lg-top-right"></th>
+                    <th colspan="15"  class="bg-team round-border-lg-top text-start text-lg-center">Stats for {{ manager.team_name }}</th>
+                    <th colspan="11" class="round-border-lg-top text-start text-lg-center">Player Totals</th>
+                </tr>
+                <tr class="text-center">
+                    <th colspan="1" id="entries" data-sort="entries" class="sticky-col">Players</th>
+                    <th data-sort="selected_by_percent" class="sort">%</th>
+                    <th data-sort="now_cost" class="sort">£</th>
+                    
+                    <!-- Team columns -->
+                    <th data-sort="total_points_team" class="sort-team bg-team">P</th>
+                    <th data-sort="goals_scored_team" class="sort-team bg-team">G</th>
+                    <th data-sort="expected_goals_team" class="sort-team bg-team">xG</th>
+                    <th data-sort="goals_performance_team" class="sort-team bg-team">+/-</th>
+                    <th data-sort="expected_goals_per_90_team" class="sort-team bg-team">xG90</th>
+                    <th data-sort="goals_benched_team" class="sort-team bg-team">bG</th>
+                    <th data-sort="goals_captained_team" class="sort-team bg-team">cG</th>
+                    <th data-sort="assists_team" class="sort-team bg-team">A</th>
+                    <th data-sort="expected_assists_team" class="sort-team bg-team">xA</th>
+                    <th data-sort="assists_performance_team" class="sort-team bg-team">+/-</th>
+                    <th data-sort="assists_benched_team" class="sort-team bg-team">bA</th>
+                    <th data-sort="assists_captained_team" class="sort-team bg-team">cA</th>
+                    <th data-sort="goals_assists_team" class="sort-team bg-team">GI</th>
+                    <th data-sort="expected_goal_involvements_team" class="sort-team bg-team">xGI</th>
+                    <th data-sort="goals_assists_performance_team" class="sort-team bg-team">+/-</th>
+                    <!-- <th data-sort="goals_assists_performance_team_vs_total" class="sort-team bg-team">+/-</th> -->
+                    
+                    <!-- overall columns -->
+                    <th data-sort="total_points" class="sort">P</th>
+                    <th data-sort="goals_scored" class="sort">G</th>
+                    <th data-sort="expected_goals" class="sort">xG</th>
+                    <th data-sort="goals_performance" class="sort">+/-</th>
+                    <th data-sort="expected_goals_per_90" class="sort">xG90</th>
+                    <th data-sort="assists" class="sort">A</th>
+                    <th data-sort="expected_assists" class="sort">xA</th>
+                    <th data-sort="assists_performance" class="sort">+/-</th>
+                    <th data-sort="goals_assists" class="sort">GI</th>
+                    <th data-sort="expected_goal_involvements" class="sort">xGI</th>
+                    <th data-sort="goals_assists_performance" class="sort">+/-</th>
+                </tr>
+            </thead>
+            <tbody id="player-table-body">
+                <!-- rows get injected here -->
+            </tbody>
+            <tfoot>
+                <tr class="th-bg-primary text-center">
+                    <th colspan="1" class="sticky-col round-border-lg-btm-left"></th>
+                    <th colspan="2" class="th-bg-primary round-border-lg-btm-right"></th>
+                    <th colspan="15" class="bg-team align-middle round-border-lg-btm">
+                        <div id="loading" style="display:none">Loading...</div>
+                    </th>
+                    <th colspan="11" class="round-border-btm"></th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
 </div>
 {% endblock %}
 
@@ -191,6 +193,18 @@ window.tableConfig.lookup = {
 };
 }) ();
 
+
+(() => {
+    const wraps = document.querySelectorAll('.table-scroll-viewport.sticky-2rows');
+    wraps.forEach(wrap => {
+        const row1 = wrap.querySelector('thead tr:first-child');
+        if (!row1) return;
+        const setTop = () => wrap.style.setProperty('--th-row1-h', (row1.getBoundingClientRect().height || 0) + 'px');
+        setTop();
+        addEventListener('resize', setTop, { passive: true });
+        if ('ResizeObserver' in window) new ResizeObserver(setTop).observe(row1);
+    });
+})();
 </script>
 
 
