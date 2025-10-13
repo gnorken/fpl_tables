@@ -57,18 +57,30 @@ a:active {
    ───────────────────────────────────────────────────────────────────────────*/
 html,
 body {
-  overflow-x: clip;
-  /* avoid horizontal rubber banding */
-  overscroll-behavior-x: none;
-  /* iOS Safari 16+ */
+  max-width: 100%;
+  overflow-x: hidden;
+  /* use hidden, not clip */
   background: #fff;
 }
 
+/* Optional (Chrome/Edge/Firefox): stop horizontal overscroll chaining */
+html,
+body {
+  overscroll-behavior-x: none;
+}
+
+/* 0) Trygg base – hindrer at padding/border øker bredde */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 /* Max width wrapper for ultra-wide screens */
-.content-max {
+/* .content-max {
   max-width: 2400px;
   margin-inline: auto;
-}
+} */
 
 body {
   background: var(--page-bg) !important;
@@ -928,7 +940,7 @@ th.sorted::after {
 /* END
    ───────────────────────────────────────────────────────────────────────────*/
 
-/* STEP 1: Only two sticky header rows */
+/* STEP 1: Only two sticky header rows gammel */
 .table-scroll-viewport {
   max-height: 65vh;
   /* tweak if you like */
@@ -936,6 +948,7 @@ th.sorted::after {
   /* enables the sticky context */
   position: relative;
 }
+
 
 /* Make header cells sticky */
 .table-scroll-viewport thead th {
