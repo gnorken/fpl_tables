@@ -942,9 +942,14 @@ th.sorted::after {
 
 /* STEP 1: Only two sticky header rows gammel */
 .table-scroll-viewport {
-  max-height: 65vh;
+  max-height: 60vh;
   /* tweak if you like */
   overflow: auto;
+  /* Prevents scroll chaining and rubber banding */
+  max-width: 100vw;
+  -webkit-overflow-scrolling: touch;
+  /* prevents wrapper > viewport */
+  overscroll-behavior: contain;
   /* enables the sticky context */
   position: relative;
 }
