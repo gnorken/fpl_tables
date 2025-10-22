@@ -1,0 +1,47 @@
+SLITS
+/* ── Slit fix (non-sorted headers) with corner-safe behaviour ─────────── */
+
+/* Base: right-side only bleed so borders stay aligned */
+.table-scroll-viewport thead tr>th:not(.sorted):not(:last-child)::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: -2px;
+    /* cover inter-cell seam */
+    bottom: 0;
+    width: 2px;
+    /* use 3px if a hairline persists at some zooms */
+    background: inherit;
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* Keep paint inside box */
+.table-scroll-viewport thead tr>th:not(.sorted) {
+    background-clip: padding-box;
+}
+
+/* Base slit fix you said works (keep it) */
+.table-scroll-viewport thead tr>th:not(.sorted):not(:last-child)::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: -2px;
+    /* right-side-only bleed covers seam */
+    bottom: 0;
+    width: 2px;
+    /* bump to 3px if a hairline persists */
+    background: inherit;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.table-scroll-viewport thead tr>th:not(.sorted) {
+    background-clip: padding-box;
+}
+
+/* Don't bleed across explicit group end borders */
+.table-scroll-viewport thead tr>th:not(.sorted):is(.vert-border-end, .vert-border-end-primary, .vert-border-end-white, .vert-border-secondary-end)::before {
+    right: 0;
+    width: 0;
+}

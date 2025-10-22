@@ -940,83 +940,88 @@ th.sorted::after {
 /* END
    ───────────────────────────────────────────────────────────────────────────*/
 
-/* STEP 1: Only two sticky header rows gammel */
+/* Viewport */
 .table-scroll-viewport {
-  max-height: 60vh;
-  /* tweak if you like */
-  overflow: auto;
-  /* Prevents scroll chaining and rubber banding */
-  max-width: 100vw;
-  -webkit-overflow-scrolling: touch;
-  /* prevents wrapper > viewport */
-  overscroll-behavior: contain;
-  /* enables the sticky context */
   position: relative;
+  /* nødvendig for sticky-kontext */
+  max-height: 60vh;
+  max-width: 100vw;
+  overflow: auto;
+  /* vertikal + horisontal ved behov */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
+/* Stabil kolonnebredde for sticky */
+.table-sticky {
+  table-layout: fixed;
+  width: 100%;
+}
 
-/* Make header cells sticky */
+/* ---------- Sticky HEADER (2 rader) ---------- */
 .table-scroll-viewport thead th {
   position: sticky;
   background-clip: padding-box;
-  /* avoid visual bleed */
-  z-index: 3;
-  /* NOTE: do NOT set background here; let your existing
-  .th-bg-primary th / .bg-team etc. handle colours */
+  /* hindrer “bleed” */
 }
 
-/* First header row sticks at the top */
+/* Rad 1 øverst */
 .table-scroll-viewport.sticky-2rows thead tr:first-child th {
   top: 0;
   z-index: 5;
-  /* above row 2 */
+  /* over rad 2 */
 }
 
-/* Second header row sits directly beneath row 1 */
+/* Rad 2 ligger rett under rad 1 */
 .table-scroll-viewport.sticky-2rows thead tr:nth-child(2) th {
   top: var(--th-row1-h, 0px);
-  /* set via tiny JS below or hard-code */
+  /* JS sets --th-row-1 */
   z-index: 4;
 }
 
-/* Two sticky header rows */
-.table-scroll-viewport thead th {
-  position: sticky;
-  top: 0;
-  z-index: 3;
-  background-clip: padding-box;
-}
-
-/* Row 1 on top */
-.table-scroll-viewport thead tr:first-child th {
-  top: 0;
-  z-index: 5;
-}
-
-/* Row 2 offset by row 1’s height (you already set --th-row1-h via JS) */
-.table-scroll-viewport.sticky-2rows thead tr:nth-child(2) th {
-  top: var(--th-row1-h, 0px);
-  z-index: 4;
-}
-
-/* Ensure header first-column cells also stick horizontally */
-.interactive-table :is(td, th).sticky-col {
+/* Sticky first columns (header/body/footer) */
+.interactive-table :is(th, td).sticky-col {
   position: sticky;
   left: 0;
   z-index: 2;
+  /* legges over body-celler */
 }
 
+/* Kollisjon: første kolonne inne i header-radene må ligge over andre header-celler på samme rad */
 .table-scroll-viewport thead tr:first-child th.sticky-col {
-  top: 0;
   z-index: 7;
 }
 
 .table-scroll-viewport.sticky-2rows thead tr:nth-child(2) th.sticky-col {
-  top: var(--th-row1-h, 0px);
   z-index: 6;
 }
 
-/* SLITS */
+/* ---------- Sticky FOOTER ---------- */
+.table-scroll-viewport tfoot th,
+.table-scroll-viewport tfoot td {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+
+  /* under header, over body */
+  /* background: var(--bs-body-bg); */
+  /* match Bootstrap-tema */
+  /* border-top: 1px solid var(--bs-border-color); */
+  box-shadow: 0 -10px 7px 0 rgba(0, 0, 0, .2);
+  /* subtil “løft”-effekt */
+}
+
+/* Venstre hjørne i footer må over de andre footer-cellene */
+.table-scroll-viewport tfoot .sticky-col {
+  z-index: 8;
+}
+
+
+/* Anbefalt: sikre bakgrunn også i header for å dekke striper under */
+/* .table-scroll-viewport thead th {
+  background: var(--bs-body-bg);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .05);
+} */
 
 /* ── Slit fix (non-sorted headers) with corner-safe behaviour ─────────── */
 
@@ -1065,7 +1070,6 @@ th.sorted::after {
   width: 0;
 }
 
-
 /* BIG CONTAINER */
 :root {
   --page-max-w: 1600px;
@@ -1088,3 +1092,5 @@ th.sorted::after {
     padding-right: 1rem;
   }
 }
+
+

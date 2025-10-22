@@ -2,20 +2,20 @@
 {% block title %}Summary{% endblock %}
 
 {% block page_content %}
-<div class="col-12 px-0 pb-5 mb-5">
+<div class="col-12 px-0 ">
     <div class="table-responsive table-scroll-viewport sticky-2rows">
         <table id="summary-table"
             class="interactive-table table table-borderless table-striped text-center text-nowrap">
             <thead class="th-bg-primary text-center">
                 <tr>
-                    <th colspan="1" id="top-players" class="sticky-col align-middle">↑ Top Five
+                    <th colspan="1" id="top-players" class="sticky-col align-middle ound-border-lg-top-left">↑ Top Five
                     </th>
-                    <th colspan="2" class=""></th>
-                    <th colspan="14" class="bg-team text-start text-lg-center"
+                    <th colspan="2" class="ound-border-lg-top-right"></th>
+                    <th colspan="14" id="fix-me" class="bg-team text-start text-lg-center ound-border-lg-top"
                         title="Players that are or have been in {{ manager.team_name }} this season">
                         Stats for {{ manager.team_name }}
                     </th>
-                    <th colspan="12" class="text-start text-lg-center">Player Totals</th>
+                    <th colspan="12" class="text-start text-lg-center ound-border-lg-top">Player Totals</th>
                 </tr>
                 <tr class="">
                     <th id="entries" class="sticky-col"></th>
@@ -116,7 +116,7 @@
             <tfoot>
                 <tr class="th-bg-primary text-center">
                     <th class="sticky-col round-border-lg-btm-left"></th>
-                    <th colspan="2" class="th-bg-primary round-border-lg-btm-right">
+                    <th colspan="2" class="th-bg-primary round-border-lg-btm-right"></th>
                     <th colspan="14" class="bg-team round-border-lg-btm">
                         <div id="loading" style="display:none;">Loading…</div>
                     </th>
