@@ -127,11 +127,11 @@ body {
 }
 
 .bg-secondary {
-  background-color: var(--primary) !important;
+  background-color: var(--secondary) !important;
   color: var(--text-light);
 }
 
-.bg-secondary:hover {
+x.bg-secondary:hover {
   background-color: var(--warning) !important;
 }
 

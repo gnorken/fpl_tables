@@ -4,15 +4,21 @@
 
 {% block page_content %}
 
-<div class="container-fluid">
-  <!-- ================= TABLE A: SUMMARY ================= -->
-  <div class="table-responsive pe-2 mb-3">
+<div class="container-fluid p-0 px-lg-3">
 
-    <table id="mini-league-summary" class="table table-sm interactive-table table-striped text-nowrap">
+  <!-- Always visible league name -->
+  <div class="league-header  bg-body">
+    <div class="fw-semibold text-truncate bg-primary text-light p-2">
+      {{ league_name }}
+    </div>
+  </div>
+  <!-- ================= TABLE A: SUMMARY ================= -->
+  <div class="table-responsive">
+    <table id="mini-league-summary" class="table table-sm interactive-table table-striped table-borderless text-nowrap">
       <thead class="th-bg-primary">
         <tr class="text-center th-padding text-wrap" data-table="summary">
           <!-- Rank -->
-          <th data-sort="rank" class="sort-mini round-border-lg-top-left">Rank</th>
+          <th data-sort="rank" class="sort-mini">Rank</th>
           <th data-sort="overall_rank" class="sort-mini {% if league_id|int == 314 %} d-none {% endif %}">OR</th>
 
           <!-- Manager info-->
@@ -38,7 +44,7 @@
 
           <!-- Transfers -->
           <th data-sort="last_deadline_total_transfers" class="sort-mini">Trans&shy;fers</th>
-          <th data-sort="transfer_cost" class="sort round-border-lg-top-right">Hits</th>
+          <th data-sort="transfer_cost" class="sort">Hits</th>
         </tr>
       </thead>
       <tbody id="summary-body"></tbody>
@@ -108,7 +114,7 @@
     player_name: "Manager name and team name",
     team_name: "Team name",
     years_active: "Nationality and years active as an FPL manager",
-    last_deadline_value: "Team value and money in the bank",
+    last_deadline_value: "Team value",
     total_points: "Total points",
     pts_behind_league_leader: "Trailing mini league leader by",
     pts_behind_overall: "Trailing overall leader by",

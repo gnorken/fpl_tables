@@ -554,9 +554,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const slider = document.getElementById("price-slider");
   if (slider && window.noUiSlider && !slider.noUiSlider) {
     noUiSlider.create(slider, {
-      start: [4, 14.5],
+      start: [4, 15],
       connect: true,
-      range: { min: 4, max: 14.5 },
+      range: { min: 4, max: 15 },
       step: 0.1,
       tooltips: true,
       format: wNumb({ decimals: 1, prefix: "£" }),
